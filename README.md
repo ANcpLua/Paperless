@@ -7,7 +7,7 @@ A document management system with features including archiving, OCR processing, 
 ### Sprint 1: REST Service API
 - ASP.NET Core 7.0+
 - Swagger/OpenAPI (Swashbuckle.AspNetCore)
-- API Controller implementation(hardcoded with openapi is this intended? Could be easly done manualy e.g. https://github.com/ANcpLua/TourPlanner/blob/main/API/Controllers/TourController.cs
+- API Controller implementation(hardcoded with openapi is this intended? Could be easly done manualy e.g. https://github.com/ANcpLua/TourPlanner/blob/main/API/Controllers/TourController.cs or https://git.technikum-wien.at/swen/swen3/csharp/npaperless-api-mock/-/tree/main/Controllers?ref_type=heads 
 
 ### Sprint 2: Web-UI Integration
 - Option A: React maybe even with Fluent UI https://react.fluentui.dev/?path=/docs/concepts-introduction--docs
