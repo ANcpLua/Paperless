@@ -43,6 +43,7 @@ app.MapGet("/documents", () =>
     {
         new { Id = 1, Title = "hardcoded1", FileName = "alexander.pdf", UploadDate = DateTime.UtcNow.AddDays(-1) },
         new { Id = 2, Title = "hardcoded2", FileName = "stephanie.pdf", UploadDate = DateTime.UtcNow }
+        new { Id = 3, Title = "hardcoded3", FileName = "jasmin.pdf", UploadDate = DateTime.UtcNow }
     };
     return Results.Ok(documents);
 })
