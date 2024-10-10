@@ -92,7 +92,8 @@ app.MapGet("/documents/search", (string query) =>
     var searchResults = new[]
     {
         new { Id = 1, Title = "Search Result 1", FileName = "result1.pdf", Relevance = 0.95 },
-        new { Id = 2, Title = "Search Result 2", FileName = "result2.pdf", Relevance = 0.85 }
+        new { Id = 2, Title = "Search Result 2", FileName = "result2.pdf", Relevance = 0.85 },
+        new { Id = 3, Title = "Search Result 3", FileName = "result3.pdf", Relevance = 1.00 }
     };
     return Results.Ok(searchResults);
 })
