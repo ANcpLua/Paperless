@@ -1,9 +1,11 @@
-# SWEN3 
-## Alexander Nachtann und Stephanie Rauscher
-A document management system with features including archiving, OCR processing, tagging, and full-text search.
+<h2 align="center">Alexander Nachtann, Jasmin Mondre and Stephanie Rauscher
+<p>2024/2025 SWKOM</h2>
+</p>
+<h3 align="center">A document management system with features including archiving, OCR processing, tagging, and full-text search.
+<p></p>
 
 ## Sprint Overview and Technologies
-
+  
 ### Sprint 1: REST Service API
 - ASP.NET Core 7.0+
 - Swagger/OpenAPI (Swashbuckle.AspNetCore)
