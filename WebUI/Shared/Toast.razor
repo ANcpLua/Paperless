@@ -1,0 +1,48 @@
+@if (Show)
+{
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast show align-items-center text-white bg-@Type border-0" 
+             role="alert" 
+             aria-live="assertive" 
+             aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi @GetIcon()"></i>
+                    @Message
+                </div>
+                <button type="button" 
+                        class="btn-close btn-close-white me-2 m-auto" 
+                        @onclick="OnClose">
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool Show { get; set; }
+
+    [Parameter]
+    public string Message { get; set; } = "";
+
+    [Parameter]
+    public string Type { get; set; } = "success";
+
+    [Parameter]
+    public EventCallback<bool> ShowChanged { get; set; }
+
+    private string GetIcon() => Type switch
+    {
+        "success" => "bi-check-circle",
+        "danger" => "bi-exclamation-circle",
+        "warning" => "bi-exclamation-triangle",
+        "info" => "bi-info-circle",
+        _ => "bi-bell"
+    };
+
+    private async Task OnClose()
+    {
+        await ShowChanged.InvokeAsync(false);
+    }
+}
