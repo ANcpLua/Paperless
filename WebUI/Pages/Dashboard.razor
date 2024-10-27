@@ -1,0 +1,22 @@
+@page "/"
+@inject IDocumentService DocumentService
+
+<h3>Hello World Test</h3>
+<button @onclick="TestHelloWorld">Run Test</button>
+<p>@message</p>
+
+@code {
+    private string message = string.Empty;
+
+    private async Task TestHelloWorld()
+    {
+        try
+        {
+            message = "Hello World";
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+        }
+    }
+}
