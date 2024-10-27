@@ -1,12 +1,12 @@
 {
   "mainAssemblyName": "WebUI",
   "resources": {
-    "hash": "sha256-SRTnHouAOAsahHyOvUiHhKqbNpU1G2LMgL/JTV3z4AQ=",
+    "hash": "sha256-xHDcCwBmkIpk3f6HltRl8Pb7c+6U0J68kXL0tquO07s=",
     "jsModuleNative": {
-      "dotnet.native.8.0.10.5h2l3u7uc8.js": "sha256-QVxMlY7ohmjgde/bZMA0dlWDAeuUP+tEfkiSdg4DFcE="
+      "dotnet.native.8.0.10.6kj5ewlccw.js": "sha256-QVxMlY7ohmjgde/bZMA0dlWDAeuUP+tEfkiSdg4DFcE="
     },
     "jsModuleRuntime": {
-      "dotnet.runtime.8.0.10.2o1kcbjc14.js": "sha256-FjrgL9dY6dc2yUoXDWowSfachSgM8O29qUMWDQOJKRI="
+      "dotnet.runtime.8.0.10.1y3zstc8zo.js": "sha256-FjrgL9dY6dc2yUoXDWowSfachSgM8O29qUMWDQOJKRI="
     },
     "wasmNative": {
       "dotnet.native.wasm": "sha256-4ymhDbG5daKbi9yL1L574jRRiFFQhiOrDJU5YAYALU4="
@@ -208,10 +208,10 @@
       "mscorlib.wasm": "sha256-KvqZaNpjwhrOuzE4b4aMFsI+VUTyiWfoDI4zn4l9BM8=",
       "netstandard.wasm": "sha256-v+s7sWxtOM6bnOvC0jFrtnm6uMfbDymwl2nHNgbS2LM=",
       "System.Private.CoreLib.wasm": "sha256-pklll63uFQoY6vaD3vbluS9osYiJWLLLmob1yHFgepI=",
-      "WebUI.wasm": "sha256-1ch7kZkElIe3LOY/BSbLrSKamSO5bWOtRhcM9ZoX55w="
+      "WebUI.wasm": "sha256-YzAT9Np7IUbeIHPFyzru74ANhqKHPnBxrAuq1NUH42c="
     },
     "pdb": {
-      "WebUI.pdb": "sha256-cvehqvS30X3X80ksPB3fKY15Sl0O0ipYQW7WEBjneqQ="
+      "WebUI.pdb": "sha256-jza54XHtczSBXeN/8A5pYM0J3sZ/iLUHnG9dsFtlRus="
     }
   },
   "cacheBootResources": true,
