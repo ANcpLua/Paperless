@@ -1,0 +1,31 @@
+root = true
+
+[*.cs]
+insert_final_newline = true
+csharp_space_after_cast = false
+csharp_space_between_method_call_name_and_opening_parenthesis = false
+indent_size = 4
+indent_style = space
+
+# ReSharper properties
+resharper_align_multiline_array_and_object_initializer = false
+resharper_align_multiline_calls_chain = true
+resharper_csharp_continuous_indent_multiplier = 1
+resharper_csharp_max_line_length = 129
+resharper_csharp_wrap_after_invocation_lpar = false
+resharper_csharp_wrap_arguments_style = wrap_if_long
+resharper_instance_members_qualify_declared_in = base_class
+resharper_place_constructor_initializer_on_same_line = true
+resharper_place_expr_property_on_single_line = true
+resharper_place_simple_initializer_on_single_line = true
+resharper_space_before_array_rank_brackets = false
+resharper_space_before_empty_method_parentheses = false
+resharper_space_before_method_parentheses = false
+resharper_space_within_single_line_array_initializer_braces = true
+resharper_use_continuous_indent_inside_initializer_braces = false
+resharper_wrap_after_invocation_lpar = false
+resharper_wrap_arguments_style = wrap_if_long
+
+# Microsoft .NET properties
+csharp_space_before_open_square_brackets = false
+csharp_space_between_method_declaration_name_and_open_parenthesis = false

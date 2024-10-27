@@ -13,35 +13,35 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = browser
 build_property.RootNamespace = WebUI
 build_property.RootNamespace = WebUI
-build_property.ProjectDir = C:\Users\steff\source\repos\SWEN3\WebUI\
+build_property.ProjectDir = C:\Users\anfh2\RiderProjects\SWEN33\WebUI\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = false
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Users\steff\source\repos\SWEN3\WebUI
+build_property.MSBuildProjectDirectory = C:\Users\anfh2\RiderProjects\SWEN33\WebUI
 build_property._RazorSourceGeneratorDebug = 
 
-[C:/Users/steff/source/repos/SWEN3/WebUI/App.razor]
+[C:/Users/anfh2/RiderProjects/SWEN33/WebUI/App.razor]
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/steff/source/repos/SWEN3/WebUI/Pages/Dashboard.razor]
+[C:/Users/anfh2/RiderProjects/SWEN33/WebUI/Pages/Dashboard.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/steff/source/repos/SWEN3/WebUI/Pages/Documents.razor]
+[C:/Users/anfh2/RiderProjects/SWEN33/WebUI/Pages/Documents.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRG9jdW1lbnRzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/steff/source/repos/SWEN3/WebUI/Shared/Toast.razor]
+[C:/Users/anfh2/RiderProjects/SWEN33/WebUI/Shared/Toast.razor]
 build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXFRvYXN0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/steff/source/repos/SWEN3/WebUI/_Imports.razor]
+[C:/Users/anfh2/RiderProjects/SWEN33/WebUI/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/steff/source/repos/SWEN3/WebUI/Layout/MainLayout.razor]
+[C:/Users/anfh2/RiderProjects/SWEN33/WebUI/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE1haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-ns5wnobzi8

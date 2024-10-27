@@ -1873,27 +1873,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\steff\\.nuget\\packages\\": {}
+    "C:\\Users\\anfh2\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\steff\\source\\repos\\SWEN3\\WebUI\\WebUI.csproj",
+      "projectUniqueName": "C:\\Users\\anfh2\\RiderProjects\\SWEN33\\WebUI\\WebUI.csproj",
       "projectName": "WebUI",
-      "projectPath": "C:\\Users\\steff\\source\\repos\\SWEN3\\WebUI\\WebUI.csproj",
-      "packagesPath": "C:\\Users\\steff\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\steff\\source\\repos\\SWEN3\\WebUI\\obj\\",
+      "projectPath": "C:\\Users\\anfh2\\RiderProjects\\SWEN33\\WebUI\\WebUI.csproj",
+      "packagesPath": "C:\\Users\\anfh2\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\anfh2\\RiderProjects\\SWEN33\\WebUI\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\steff\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\anfh2\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -1906,6 +1903,11 @@
         "warnAsError": [
           "NU1605"
         ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
       }
     },
     "frameworks": {
