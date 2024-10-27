@@ -59,3 +59,6 @@ http://localhost:8081/swagger
 - PUT /documents/{id}
 - DELETE /documents/{id}
 - GET /documents/search (placeholder for future implementation)
+
+## Sprint 2: Web-UI Integration (Sprint 2) 
+Blazor WebAssembly hardcoded endpoint to api controller (Microsoft.AspNetCore.Components.WebAssembly)
