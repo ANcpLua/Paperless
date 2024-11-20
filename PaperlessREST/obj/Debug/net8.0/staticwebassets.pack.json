@@ -1,0 +1,61 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\documents.html",
+      "PackagePath": "staticwebassets\\documents.html"
+    },
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\favicon.ico",
+      "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\upload.html",
+      "PackagePath": "staticwebassets\\upload.html"
+    },
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\uploads\\2dwzdhyz.0iy.pdf",
+      "PackagePath": "staticwebassets\\uploads\\2dwzdhyz.0iy.pdf"
+    },
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\uploads\\cfuwymyl.iqe.pdf",
+      "PackagePath": "staticwebassets\\uploads\\cfuwymyl.iqe.pdf"
+    },
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\uploads\\gbd4ibi2.tu5.pdf",
+      "PackagePath": "staticwebassets\\uploads\\gbd4ibi2.tu5.pdf"
+    },
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\uploads\\kcx1v51w.o0m.pdf",
+      "PackagePath": "staticwebassets\\uploads\\kcx1v51w.o0m.pdf"
+    },
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\uploads\\qbviby0y.3m3.pdf",
+      "PackagePath": "staticwebassets\\uploads\\qbviby0y.3m3.pdf"
+    },
+    {
+      "Id": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\wwwroot\\uploads\\xz355zy0.uxl.pdf",
+      "PackagePath": "staticwebassets\\uploads\\xz355zy0.uxl.pdf"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.PaperlessREST.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.PaperlessREST.props",
+      "PackagePath": "build\\PaperlessREST.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.PaperlessREST.props",
+      "PackagePath": "buildMultiTargeting\\PaperlessREST.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.PaperlessREST.props",
+      "PackagePath": "buildTransitive\\PaperlessREST.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
