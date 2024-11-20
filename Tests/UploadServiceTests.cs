@@ -50,15 +50,12 @@ public class UploadServiceTests
         };
 
         _mockRepo.Setup(r => r.Upload(It.IsAny<PostgreSQL.Entities.Document>(), It.IsAny<CancellationToken>()))
-                 .ReturnsAsync((PostgreSQL.Entities.Document doc, CancellationToken ct) =>
+                 .ReturnsAsync((PostgreSQL.Entities.Document doc, CancellationToken _) => new PostgreSQL.Entities.Document
                  {
-                     return new PostgreSQL.Entities.Document
-                     {
-                         Id = 1,
-                         Name = doc.Name,
-                         FilePath = doc.FilePath,
-                         DateUploaded = doc.DateUploaded
-                     };
+                     Id = 1,
+                     Name = doc.Name,
+                     FilePath = doc.FilePath,
+                     DateUploaded = doc.DateUploaded
                  });
 
         // Act
@@ -71,7 +68,7 @@ public class UploadServiceTests
     }
 
     [Test]
-    public async Task Upload_InvalidDocument_ThrowsValidationException() {
+    public Task Upload_InvalidDocument_ThrowsValidationException() {
         // Arrange
         var formFile = CreateMockFormFile("test.invalid", "application/octet-stream", 11 * 1024 * 1024);
         var uploadDto = new DocumentUploadDto {
@@ -81,7 +78,8 @@ public class UploadServiceTests
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<ValidationException>(() => _service.Upload(uploadDto));
-        Assert.That(ex.Message, Is.EqualTo("Validation failed: \r\n -- Name: 'Name' must not be empty. Severity: Error"));
+        Assert.That(ex.Message, Is.EqualTo("Validation failed: \r\n -- Name: 'Name' darf nicht leer sein. Severity: Error"));
+        return Task.CompletedTask;
     }
 
     private static IFormFile CreateMockFormFile(string fileName, string contentType, long length)

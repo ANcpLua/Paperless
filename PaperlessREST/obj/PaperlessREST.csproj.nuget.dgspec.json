@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\PaperlessREST.csproj": {}
+    "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PaperlessREST\\PaperlessREST.csproj": {}
   },
   "projects": {
-    "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\PaperlessREST.csproj": {
+    "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PaperlessREST\\PaperlessREST.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\PaperlessREST.csproj",
+        "projectUniqueName": "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PaperlessREST\\PaperlessREST.csproj",
         "projectName": "PaperlessREST",
-        "projectPath": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\PaperlessREST.csproj",
-        "packagesPath": "C:\\Users\\jasmi\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PaperlessREST\\obj\\",
+        "projectPath": "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PaperlessREST\\PaperlessREST.csproj",
+        "packagesPath": "C:\\Users\\anfh2\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PaperlessREST\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\jasmi\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\anfh2\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -32,8 +32,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PostgreSQL\\PostgreSQL.csproj": {
-                "projectPath": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PostgreSQL\\PostgreSQL.csproj"
+              "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PostgreSQL\\PostgreSQL.csproj": {
+                "projectPath": "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PostgreSQL\\PostgreSQL.csproj"
               }
             }
           }
@@ -101,24 +101,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.403/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PostgreSQL\\PostgreSQL.csproj": {
+    "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PostgreSQL\\PostgreSQL.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PostgreSQL\\PostgreSQL.csproj",
+        "projectUniqueName": "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PostgreSQL\\PostgreSQL.csproj",
         "projectName": "PostgreSQL",
-        "projectPath": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PostgreSQL\\PostgreSQL.csproj",
-        "packagesPath": "C:\\Users\\jasmi\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\jasmi\\source\\repos\\Paperless\\Paperless\\PostgreSQL\\obj\\",
+        "projectPath": "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PostgreSQL\\PostgreSQL.csproj",
+        "packagesPath": "C:\\Users\\anfh2\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\anfh2\\Documents\\GitHub\\SWEN3\\PostgreSQL\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\jasmi\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\anfh2\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -187,7 +187,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.403/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
