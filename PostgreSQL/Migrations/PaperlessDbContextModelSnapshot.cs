@@ -26,28 +26,31 @@ namespace PostgreSQL.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("Id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("DateUploaded")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DateUploaded");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FilePath")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("FilePath");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("Name");
+                        .HasColumnType("text");
+
+                    b.Property<string>("OcrText")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Documents", (string)null);
+                    b.ToTable("Documents");
                 });
 #pragma warning restore 612, 618
         }

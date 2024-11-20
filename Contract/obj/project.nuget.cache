@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "KZmZz81a/zI=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\anfh2\\RiderProjects\\SWEN3\\Contract\\Contract.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\anfh2\\.nuget\\packages\\microsoft.aspnetcore.http.features\\5.0.17\\microsoft.aspnetcore.http.features.5.0.17.nupkg.sha512",
+    "C:\\Users\\anfh2\\.nuget\\packages\\microsoft.extensions.primitives\\5.0.1\\microsoft.extensions.primitives.5.0.1.nupkg.sha512",
+    "C:\\Users\\anfh2\\.nuget\\packages\\system.io.pipelines\\5.0.2\\system.io.pipelines.5.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}

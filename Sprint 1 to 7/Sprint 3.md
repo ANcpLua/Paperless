@@ -1,8 +1,6 @@
-# Sprint 1
-Web api rider  docker enbaled minimal api 
-restapi documented with swagger returning hardcoded openapi(); endpoint /documents
-![image](https://github.com/user-attachments/assets/143be42a-6bf8-477e-b3b2-1ce23597610a)
-![image](https://github.com/user-attachments/assets/955756bf-b44b-4f25-89ff-e528c592d14f)
-![image](https://github.com/user-attachments/assets/b3028569-5c2c-4711-829d-10dd1ad61274)
+# Sprint 3
+Mapping DAL to BL to DTO
+Docker Working
+![image](https://github.com/user-attachments/assets/9a15e3fc-bd06-423e-a784-5d892d930cbd)
 
-sprintn 2 will be WebGUI
+![image](https://github.com/user-attachments/assets/b5345ffe-7744-496e-861c-760046d2bf36)

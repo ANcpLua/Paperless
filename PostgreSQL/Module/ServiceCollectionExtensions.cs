@@ -4,16 +4,17 @@ using Microsoft.Extensions.DependencyInjection;
 using PostgreSQL.Data;
 using PostgreSQL.Persistence;
 
-namespace PostgreSQL.Module
+namespace PostgreSQL.Module;
+
+public static class ServiceCollectionExtensions
 {
-    public static class ServiceCollectionExtensions
+    public static void AddPostgreSqlServices(this IServiceCollection services, IConfiguration configuration)
     {
-        public static IServiceCollection AddPostgreSqlServices(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddDbContext<PaperlessDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-            services.AddScoped<IDocumentRepository, DocumentRepository>();
-            return services;
-        }
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        services.AddDbContext<PaperlessDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+                npgsqlOptions.MigrationsAssembly("PostgreSQL")));
+
+        services.AddScoped<IDocumentRepository, DocumentRepository>();
     }
 }

@@ -1,25 +1,26 @@
+using Contract;
 using FluentValidation;
-using PaperlessREST.Models;
 
 namespace PaperlessREST.Validation;
 
-public class DocumentUploadDtoValidator : AbstractValidator<DocumentUploadDto>
+public class DocumentUploadDtoValidator : AbstractValidator<DocumentDto>
 {
-    private static readonly string[] AllowedFileTypes = { ".pdf", ".doc", ".docx", ".txt" };
-    private const int MaxFileSizeInMb = 10;
-
     public DocumentUploadDtoValidator()
     {
-        RuleFor(x => x.Title)
+        RuleFor(x => x.Name)
             .NotEmpty()
-            .MaximumLength(100);
+            .WithMessage("Document name cannot be empty.");
 
         RuleFor(x => x.File)
             .NotNull()
-            .Must(f => f.Length <= MaxFileSizeInMb * 1024 * 1024)
-            .WithMessage($"File size must be less than {MaxFileSizeInMb}MB")
-            .Must(f => AllowedFileTypes.Any(t =>
-                Path.GetExtension(f.FileName).Equals(t, StringComparison.OrdinalIgnoreCase)))
-            .WithMessage($"File type must be one of: {string.Join(", ", AllowedFileTypes)}");
+            .WithMessage("File is required.")
+            .Must(file => file != null && IsAllowedContentType(file.ContentType))
+            .WithMessage("File must be a PDF, PNG, or JPG.");
+    }
+
+    private bool IsAllowedContentType(string contentType)
+    {
+        var allowedContentTypes = new[] { "application/pdf", "image/png", "image/jpeg" };
+        return allowedContentTypes.Contains(contentType);
     }
 }

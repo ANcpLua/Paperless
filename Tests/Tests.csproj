@@ -11,6 +11,9 @@
 
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="6.0.0"/>
+        <PackageReference Include="EasyNetQ" Version="7.8.0" />
+        <PackageReference Include="EasyNetQ.Management.Client" Version="3.0.0" />
+        <PackageReference Include="FluentAssertions" Version="7.0.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
         <PackageReference Include="Moq" Version="4.20.72" />
         <PackageReference Include="NUnit" Version="3.14.0"/>
@@ -24,6 +27,13 @@
 
     <ItemGroup>
       <ProjectReference Include="..\PaperlessREST\PaperlessREST.csproj" />
+      <ProjectReference Include="..\PostgreSQL\PostgreSQL.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="EndToEndTests\HelloWorld.pdf">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

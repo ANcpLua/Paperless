@@ -1,8 +1,5 @@
-# Sprint 1
-Web api rider  docker enbaled minimal api 
-restapi documented with swagger returning hardcoded openapi(); endpoint /documents
-![image](https://github.com/user-attachments/assets/143be42a-6bf8-477e-b3b2-1ce23597610a)
-![image](https://github.com/user-attachments/assets/955756bf-b44b-4f25-89ff-e528c592d14f)
-![image](https://github.com/user-attachments/assets/b3028569-5c2c-4711-829d-10dd1ad61274)
+# Sprint 5: OCR Worker (Tesseract) & MinIO
 
-sprintn 2 will be WebGUI
+| **OCR Worker (Tesseract)** | **MinIO** |
+|-----------------------------|-------------------------------|
+| ![OCR Worker](https://github.com/user-attachments/assets/d0c7fc79-bf34-4e32-9b92-e134d659dd02) | ![MinIO](https://github.com/user-attachments/assets/249a4978-f25c-4db2-9843-a9da2948866e) |

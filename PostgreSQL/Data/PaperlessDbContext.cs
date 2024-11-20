@@ -1,40 +1,24 @@
-using PostgreSQL.Entities;
 using Microsoft.EntityFrameworkCore;
+using PostgreSQL.Entities;
 
 namespace PostgreSQL.Data;
 
 public class PaperlessDbContext : DbContext
 {
-    public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options) 
-        : base(options)
-    {
-    }
+    public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options) : base(options) { }
 
-    public DbSet<Document> Documents { get; set; } = null!;
+    public DbSet<Document> Documents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Document>(entity =>
         {
             entity.HasKey(e => e.Id);
-
-            entity.ToTable("Documents");
-
-            entity.Property(e => e.Id)
-                  .HasColumnName("Id")
-                  .IsRequired();
-
-            entity.Property(e => e.Name)
-                  .HasColumnName("Name")
-                  .IsRequired();
-
-            entity.Property(e => e.DateUploaded)
-                  .HasColumnName("DateUploaded")
-                  .IsRequired();
-
-            entity.Property(e => e.FilePath)
-                  .HasColumnName("FilePath")
-                  .IsRequired();
+            entity.Property(e => e.Name).IsRequired();
+            entity.Property(e => e.Content).IsRequired();
+            entity.Property(e => e.FilePath).IsRequired();
+            entity.Property(e => e.DateUploaded).IsRequired();
+            entity.Property(e => e.OcrText).IsRequired(false);
         });
 
         base.OnModelCreating(modelBuilder);
