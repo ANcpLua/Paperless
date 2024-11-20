@@ -7,17 +7,23 @@
 ## Sprint Overview and Technologies
   
 ### Sprint 1: REST Service API
-- ASP.NET Core 7.0+
+- ASP.NET Core 8
 - Swagger/OpenAPI (Swashbuckle.AspNetCore)
-- API Controller implementation(hardcoded with openapi is this intended? Could be easly done manualy e.g. https://github.com/ANcpLua/TourPlanner/blob/main/API/Controllers/TourController.cs or https://git.technikum-wien.at/swen/swen3/csharp/npaperless-api-mock/-/tree/main/Controllers?ref_type=heads 
+- API Controller(minimal api)
 
 ### Sprint 2: Web-UI Integration
-- Option A: React maybe even with Fluent UI https://react.fluentui.dev/?path=/docs/concepts-introduction--docs
-- Option B: Blazor WebAssembly (Microsoft.AspNetCore.Components.WebAssembly)
+- ~~Option A: React maybe even with Fluent UI https://react.fluentui.dev/?path=/docs/concepts-introduction--docs~~
+- ~~Option B: Blazor WebAssembly (Microsoft.AspNetCore.Components.WebAssembly)~~
+- Option C: good old html and js
 
 ### Sprint 3: DAL (Persistence)
 - Entity Framework Core (Microsoft.EntityFrameworkCore)
-- PostgreSQL (Npgsql.EntityFrameworkCore.PostgreSQL)
+- PostgreSQL (Npgsql.EntityFrameworkCore.PostgreSQL) to persist 
+- BL(domainmodel) entities
+- Unit Tests with a happy and unhappy path
+- Mapping using Automapper
+- Minimal API
+- Docker working
 
 ### Sprint 4: Message Broker
 - RabbitMQ (RabbitMQ.Client)
