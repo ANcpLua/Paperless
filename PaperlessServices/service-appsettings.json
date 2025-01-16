@@ -20,6 +20,6 @@
   },
   "OCR": {
     "Language": "eng",
-    "TessDataPath": "./tessdata"
+    "TessDataPath": null
   }
 } 
