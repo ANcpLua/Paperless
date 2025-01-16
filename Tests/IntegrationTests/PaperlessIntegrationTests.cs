@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 namespace Tests.IntegrationTests;
 
 [TestFixture]
-[Ignore("Disabled")]
 public class PaperlessIntegrationTests : TestBase
 {
     [SetUp]
