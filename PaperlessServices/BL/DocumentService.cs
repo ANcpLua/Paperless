@@ -236,11 +236,10 @@ public class DocumentService : IDocumentService
     }
 
     [LogOperation("Get", "DocumentService")]
-    public async Task<DocumentDto> GetDocument(int id, CancellationToken cancellationToken)
+    public async Task<DocumentDto?> GetDocument(int id, CancellationToken cancellationToken)
     {
         var operation = new LogOperationAttribute("Get", "DocumentService");
 
-        // Check DB info
         var csb = new NpgsqlConnectionStringBuilder(
             _configuration.GetConnectionString("DefaultConnection")
         );
@@ -253,7 +252,14 @@ public class DocumentService : IDocumentService
         // Retrieve doc
         var doc = await _repository.GetByIdAsync(id, cancellationToken);
         if (doc == null)
-            throw new KeyNotFoundException($"Document {id} not found");
+        {
+            await _logger.LogOperation(
+                operation,
+                "Info",
+                [$"Document {id} successfully deleted, skipping retrieval"]
+            );
+            return null;
+        }
 
         // Map to DTO
         var mapped = _mapper.Map<DocumentDto>(doc);
@@ -315,15 +321,15 @@ public class DocumentService : IDocumentService
             [$"Deleting doc {id}"]
         );
 
-        // Check entity existence
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
         if (entity == null)
         {
-            await _logger.LogOperationError(
+            await _logger.LogOperation(
                 operation,
-                nameof(DeleteDocument),
-                new KeyNotFoundException($"Doc {id} not found")
+                "Info",
+                [$"Doc {id} already gone, skipping delete"]
             );
+        
             return;
         }
 

@@ -18,13 +18,13 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link active" href="/index.html">Dashboard</a>
+                    <a class="nav-link" href="/index.html">Dashboard</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/documents.html">Documents</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/upload.html">Upload</a>
+                    <a class="nav-link active" href="/upload.html">Upload</a>
                 </li>
             </ul>
         </div>
@@ -41,7 +41,14 @@
             <form id="uploadForm">
                 <div class="mb-3">
                     <label class="form-label" for="file">Select File</label>
-                    <input class="form-control" id="file" name="file" required type="file">
+                    <input
+                            class="form-control"
+                            id="file"
+                            name="file"
+                            required
+                            type="file"
+                            accept="application/pdf"
+                    >
                 </div>
                 <button class="btn btn-primary" type="submit">Upload Document</button>
             </form>
