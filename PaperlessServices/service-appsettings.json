@@ -10,7 +10,7 @@
     "Password": "guest"
   },
   "MinIO": {
-    "Endpoint": "minio:9000",
+    "Endpoint": "localhost:9000",
     "AccessKey": "minioadmin",
     "SecretKey": "minioadmin",
     "BucketName": "documents"
