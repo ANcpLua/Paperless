@@ -16,6 +16,7 @@ public class ServicesBlEntityTests
         _validator = new BlValidation();
     }
 
+    #region Validate_ValidDocument_Passes
     [Test]
     public void Validate_ValidDocument_Passes()
     {
@@ -33,7 +34,9 @@ public class ServicesBlEntityTests
         // Assert
         Assert.That(result.IsValid, Is.True);
     }
+    #endregion
 
+    #region Validate_InvalidDocument_Fails
     [Test]
     public void Validate_InvalidDocument_Fails()
     {
@@ -57,6 +60,7 @@ public class ServicesBlEntityTests
             Assert.That(result.Errors, Has.Some.With.Property("PropertyName").EqualTo("DateUploaded"));
         });
     }
+    #endregion
     
     #region Name Validation Tests
     [TestCase("", "'Name' must not be empty.")]

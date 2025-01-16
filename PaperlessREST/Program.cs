@@ -1,93 +1,57 @@
-using EasyNetQ;
-using Elastic.Clients.Elasticsearch;
-using FluentValidation;
-using FluentValidation.AspNetCore;
-using Minio;
-using PaperlessREST.Validation;
+using Contract.Logger;
+using PaperlessREST;
+using PaperlessServices.AutoMapper;
 using PaperlessServices.BL;
-using PaperlessServices.Mapping;
-using PaperlessServices.Tesseract;
+using PaperlessServices.Extensions;
+using PaperlessServices.MinIoStorage;
 using PostgreSQL.Module;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddJsonFile("rest-appsettings.json", optional: false, reloadOnChange: true);
+
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("rest-appsettings.json", optional: false)
+    .AddJsonFile($"rest-appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables()  
+    .Build();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
+builder.Services.Configure<LoggerFilterOptions>(options => {
+    options.AddFilter("Microsoft", LogLevel.Warning);
+    options.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+    options.AddFilter("System", LogLevel.Warning);
+});
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddOperationLogging(
+    builder.Environment.EnvironmentName);
+builder.Services.AddAuthorizationBuilder(); 
+builder.Services.AddFluentValidationRules();
 builder.Services.AddPostgreSqlServices(builder.Configuration);
-builder.Services.AddSingleton<IBus>(_ =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("RabbitMQ");
-    return RabbitHutch.CreateBus(connectionString);
+builder.Services.AddElasticSearchEngine(builder.Configuration);
+builder.Services.AddMinioObjectStorage(builder.Configuration, builder.Environment);
+builder.Services.AddRabbitMqMessageBus(builder.Configuration, builder.Environment);
+builder.Services.AddSingleton<IMinioStorageService, MinioStorageService>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowAll", c => c
+        .AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader());
 });
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", corsPolicyBuilder =>
-        corsPolicyBuilder
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader());
-});
-
-ConfigureServices(builder.Services, builder.Configuration);
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<AutoMapperConfig>());
+builder.WebHost.UseKestrel(options => { options.ListenAnyIP(8081); });
 
 var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseCors("AllowAll");
 app.UseRouting();
 app.UseAuthorization();
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-    endpoints.MapFallbackToFile("/index.html");
-});
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.MapControllers();
 
 await app.RunAsync();
-
-static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
-{
-    // MinIO
-    services.AddSingleton<MinioClient>(_ =>
-        (MinioClient)new MinioClient()
-            .WithEndpoint(configuration["MinIO:Endpoint"])
-            .WithCredentials(
-                configuration["MinIO:AccessKey"],
-                configuration["MinIO:SecretKey"])
-            .WithSSL(false)
-            .Build());
-
-    // Elasticsearch 
-    services.AddSingleton<ElasticsearchClient>(_ =>
-    {
-        var elasticUri = configuration.GetConnectionString("ElasticSearch") ?? "http://localhost:9200";
-        var settings = new ElasticsearchClientSettings(new Uri(elasticUri))
-            .DefaultIndex("paperless-documents")  
-            .EnableDebugMode();
-        return new ElasticsearchClient(settings);
-    });
-
-    services.AddScoped<IDocumentService, DocumentService>();
-    services.AddSingleton<IStorageService, StorageService>();
-    services.AddScoped<OcrWorkerService>();
-    services.Configure<OcrOptions>(configuration.GetSection(OcrOptions.Ocr));
-    services.AddSingleton<IOcrClient, Ocr>();
-    services.AddValidatorsFromAssemblyContaining<DocumentUploadDtoValidator>();
-    services.AddFluentValidationAutoValidation();
-    services.AddAutoMapper(cfg => {
-        cfg.AddProfile<ServiceMapping>();
-    });
-}

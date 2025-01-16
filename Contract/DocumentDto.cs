@@ -9,6 +9,6 @@ public record DocumentDto
     public string Content { get; set; } = string.Empty;
     public string FilePath { get; set; } = string.Empty;
     public DateTime DateUploaded { get; set; }
-    public string? OcrText { get; set; }
+    public string OcrText { get; set; } = string.Empty;
     public IFormFile? File { get; init; }
 }

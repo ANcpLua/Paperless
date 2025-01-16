@@ -1,12 +1,49 @@
+# Server configuration
 server.name: "paperless-kibana"
-server.host: "0"
-elasticsearch.hosts: ["http://elasticsearch:9200"]
-monitoring.ui.container.elasticsearch.enabled: true
+server.host: "0.0.0.0"  # Changed from "0" to "0.0.0.0" for better Docker networking
+server.publicBaseUrl: "http://localhost:5601"
 
-kibana.defaultAppId: "discover"
+# Elasticsearch connection
+elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  requestTimeout: 30000
+  shardTimeout: 30000
 
-logging.root.level: "info"
-logging.quiet: false
+# Kibana configuration
+kibana:
+  defaultAppId: "discover"
+  index: ".kibana"
 
-ops.interval: 5000
-xpack.security.enabled: false
+# Monitoring settings
+monitoring:
+  ui:
+    container:
+      elasticsearch.enabled: true
+    enabled: true
+
+# Logging configuration
+logging:
+  root:
+    level: "info"
+  quiet: false
+  useUTC: true
+
+# Operations settings
+ops:
+  interval: 5000
+
+# Security settings
+xpack:
+  security:
+    enabled: false
+  reporting:
+    enabled: true
+  spaces:
+    enabled: true
+
+# Performance settings
+elasticsearch.pingTimeout: 1500
+elasticsearch.startupTimeout: 5000
+
+# Development settings (set to false in production)
+telemetry.enabled: false

@@ -1,10 +1,10 @@
 ﻿{
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=paperless;Username=postgres;Password=postgres",
-    "Rabbit": "host=rabbitmq;port=5672;username=guest;password=guest"
+    "DefaultConnection": "Host=postgres;Database=paperless;Username=postgres;Password=postgres",
+    "Rabbit": "host=localhost;port=5672;username=guest;password=guest"
   },
   "RabbitMQ": {
-    "Host": "localhost",
+    "Host": "rabbitmq",
     "Port": "5672",
     "Username": "guest",
     "Password": "guest"
@@ -20,6 +20,6 @@
   },
   "OCR": {
     "Language": "eng",
-    "TessDataPath": null
+    "TessDataPath": "./tessdata"
   }
 } 

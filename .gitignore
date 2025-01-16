@@ -1,0 +1,9 @@
+# Binaries
+*.dll
+*.exe
+*.pdb
+
+# Build directories
+/bin
+/obj
+

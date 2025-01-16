@@ -8,8 +8,9 @@
     <link href="css/index.css" rel="stylesheet">
 </head>
 <body>
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
+    <div class="container d-flex justify-content-center">
         <a class="navbar-brand" href="/">Paperless</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
@@ -31,7 +32,6 @@
 </nav>
 
 <div class="container mt-4">
-    <div id="alert-container"></div>
     <div class="row">
         <div class="col">
             <h1 class="text-center">Dashboard</h1>
@@ -39,33 +39,34 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col">
-            <div class="alert alert-info">
+    <div class="row justify-content-center">
+        <div class="col-auto">
+            <div class="alert alert-info text-center">
                 Welcome to <strong>Paperless</strong> - Your simple Document Management System!
             </div>
-            <p class="text-center">
+            <div class="text-center">
                 <a href="/documents.html" class="btn btn-primary me-2">View Documents</a>
                 <a href="/upload.html" class="btn btn-success">Upload New Document</a>
-            </p>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Search Section -->
-<div class="row mt-4">
-    <div class="col-md-8 offset-md-2">
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" id="searchInput" placeholder="Search for documents...">
-            <button class="btn btn-outline-primary" id="searchButton" type="button">Search</button>
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-md-8 offset-md-2">
+            <div class="input-group mb-3">
+                <label for="searchInput"></label><input type="text" class="form-control" id="searchInput" placeholder="Search for documents...">
+                <button class="btn btn-outline-primary" id="searchButton" type="button">Search</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="row mt-4">
-    <div class="col-md-8 offset-md-2">
-        <h3>Search Results</h3>
-        <ul id="searchResults" class="list-group"></ul>
+    <div class="row mt-4">
+        <div class="col-md-8 offset-md-2">
+            <h3>Search Results</h3>
+            <ul id="searchResults" class="list-group"></ul>
+        </div>
     </div>
 </div>
 

@@ -26,7 +26,21 @@ body {
     margin: 20px 0;
 }
 
-.alert {
-    display: none;
-    margin-top: 20px;
+#alert-container {
+    width: 100%;
+    max-width: 600px;
+    z-index: 1050;
+    pointer-events: none;
+}
+
+#alert-container .alert {
+    pointer-events: auto;
+    margin-top: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#alert-container .alert.fade-out {
+    opacity: 0;
 }

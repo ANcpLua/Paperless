@@ -1,9 +1,12 @@
+using System;
+using System.Collections.Generic;
 using AutoMapper;
 using Contract;
 using Microsoft.AspNetCore.Http;
 using Moq;
+using NUnit.Framework;
+using PaperlessServices.AutoMapper;
 using PaperlessServices.Entities;
-using PaperlessServices.Mapping;
 using PostgreSQL.Entities;
 
 namespace Tests.Mapper;
@@ -17,15 +20,12 @@ public class MappingTests
     [OneTimeSetUp]
     public void Initialize()
     {
-        _configuration = new MapperConfiguration(cfg =>
-        {
-            cfg.AddProfile<ServiceMapping>();
-        });
+        _configuration = new MapperConfiguration(cfg => { cfg.AddProfile<AutoMapperConfig>(); });
         _mapper = _configuration.CreateMapper();
     }
 
-    # region Mapping from Document to BlDocument
-    
+    #region Configuration Validation
+
     [Test]
     public void Configuration_IsValid()
     {
@@ -33,11 +33,87 @@ public class MappingTests
         _configuration.AssertConfigurationIsValid();
     }
 
+    #endregion
+
+    #region BlDocument to DocumentDto
+
     [Test]
-    public void Map_DocumentToBlDocument_MapsCorrectly()
+    public void Map_BlDocumentToDocumentDto_MapsCorrectly()
     {
         // Arrange
-        var source = new Document { Id = 1, Name = "Test Document", FilePath = "/test/path.pdf", DateUploaded = DateTime.UtcNow };
+        var source = new BlDocument
+        {
+            Id = 1,
+            Name = "Test Document",
+            FilePath = "/test/path.pdf",
+            DateUploaded = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc),
+            File = Mock.Of<IFormFile>(),
+            OcrText = "Sample OCR Text"
+        };
+
+        // Act
+        var result = _mapper.Map<DocumentDto>(source);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Id, Is.EqualTo(source.Id));
+            Assert.That(result.Name, Is.EqualTo(source.Name));
+            Assert.That(result.FilePath, Is.EqualTo(source.FilePath));
+            Assert.That(result.DateUploaded, Is.EqualTo(source.DateUploaded));
+            Assert.That(result.File, Is.Null); // Ignored
+            Assert.That(result.OcrText, Is.EqualTo(source.OcrText));
+        });
+    }
+
+    [Test]
+    public void Map_BlDocumentToDocumentDto_WithNullOcrText_MapsCorrectly()
+    {
+        // Arrange
+        var source = new BlDocument
+        {
+            Id = 2,
+            Name = "Document Without OCR",
+            FilePath = "/path/without/ocr.pdf",
+            DateUploaded = DateTime.UtcNow,
+            OcrText = null
+        };
+
+        // Act
+        var result = _mapper.Map<DocumentDto>(source);
+
+        // Assert
+        Assert.Multiple(() => { Assert.That(result.OcrText, Is.Null); });
+    }
+
+    [Test]
+    public void Map_NullBlDocumentToDocumentDto_ReturnsNull()
+    {
+        // Act
+        var result = _mapper.Map<DocumentDto>(null);
+
+        // Assert
+        Assert.That(result, Is.Null);
+    }
+
+    #endregion
+
+    #region DocumentDto to BlDocument
+
+    [Test]
+    public void Map_DocumentDtoToBlDocument_MapsCorrectly()
+    {
+        // Arrange
+        var mockFile = new Mock<IFormFile>();
+        var source = new DocumentDto
+        {
+            Id = 1,
+            Name = "Test Document",
+            FilePath = "/test/path.pdf",
+            DateUploaded = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc),
+            File = mockFile.Object,
+            OcrText = "Sample OCR Text"
+        };
 
         // Act
         var result = _mapper.Map<BlDocument>(source);
@@ -49,65 +125,45 @@ public class MappingTests
             Assert.That(result.Name, Is.EqualTo(source.Name));
             Assert.That(result.FilePath, Is.EqualTo(source.FilePath));
             Assert.That(result.DateUploaded, Is.EqualTo(source.DateUploaded));
-            Assert.That(result.File, Is.Null);  // Ignored
+            Assert.That(result.File, Is.EqualTo(source.File));
+            Assert.That(result.OcrText, Is.EqualTo(source.OcrText));
         });
     }
 
     [Test]
-    public void Map_BlDocumentToDocument_WithZeroId_DoesNotMapId()
+    public void Map_DocumentDtoToBlDocument_WithEmptyFilePath_SetsFilePathToNull()
     {
         // Arrange
-        var source = new BlDocument
-        {
-            Id = 0, // Default value
-            Name = "Test Document",
-            FilePath = "/test/path.pdf",
-            DateUploaded = DateTime.UtcNow
-        };
-        
-        // Act
-        var result = _mapper.Map<Document>(source);
-
-        // Assert
-        Assert.That(result.Id, Is.EqualTo(0));
-    }
-
-    # endregion
-    
-    # region Mapping from DocumentUploadDto to BlDocument
-    [Test]
-    public void Map_DocumentUploadDtoToBlDocument_MapsCorrectly()
-    {
-        // Arrange
-        var mockFile = new Mock<IFormFile>();
         var source = new DocumentDto
         {
-            Name = "Test Upload",
-            File = mockFile.Object
+            Name = "Document with Empty FilePath",
+            FilePath = string.Empty
         };
 
         // Act
         var result = _mapper.Map<BlDocument>(source);
 
         // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Name, Is.EqualTo(source.Name));
-            Assert.That(result.File, Is.EqualTo(source.File));
-            Assert.That(result.Id, Is.EqualTo(0)); //  default
-            Assert.That(result.FilePath, Is.Null); // ignored
-            Assert.That(result.DateUploaded.Date, Is.EqualTo(DateTime.UtcNow.Date));
-        });
+        Assert.That(result.FilePath, Is.Null);
     }
-    
+
     [Test]
-    public void Map_NullDocumentToBlDocument_ReturnsNull()
+    public void Map_DocumentDtoToBlDocument_WithDefaultDateUploaded_SetsToUtcNow()
     {
+        // Arrange
+        var source = new DocumentDto
+        {
+            Name = "Document with Default Date",
+            DateUploaded = default
+        };
+
         // Act
-        var result = _mapper.Map<BlDocument>(null);
+        var beforeMapping = DateTime.UtcNow;
+        var result = _mapper.Map<BlDocument>(source);
+        var afterMapping = DateTime.UtcNow;
 
         // Assert
-        Assert.That(result, Is.Null);
+        Assert.That(result.DateUploaded, Is.InRange(beforeMapping, afterMapping));
     }
 
     [Test]
@@ -120,13 +176,22 @@ public class MappingTests
         Assert.That(result, Is.Null);
     }
 
+    #endregion
+
+    #region Document to BlDocument
+
     [Test]
-    public void Map_PartialDocumentDtoToBlDocument_SetsDefaults()
+    public void Map_DocumentToBlDocument_MapsCorrectly()
     {
         // Arrange
-        var source = new DocumentDto
+        var source = new Document
         {
-            Name = "Partial Document"
+            Id = 1,
+            Name = "Test Document",
+            FilePath = "/test/path.pdf",
+            DateUploaded = DateTime.UtcNow,
+            Content = "Sample Content",
+            OcrText = "Sample OCR Text"
         };
 
         // Act
@@ -135,46 +200,44 @@ public class MappingTests
         // Assert
         Assert.Multiple(() =>
         {
+            Assert.That(result.Id, Is.EqualTo(source.Id));
             Assert.That(result.Name, Is.EqualTo(source.Name));
-            Assert.That(result.FilePath, Is.Null); // Default for missing FilePath
-            Assert.That(result.DateUploaded, Is.Not.EqualTo(default(DateTime))); // Defaults to current UTC date
+            Assert.That(result.FilePath, Is.EqualTo(source.FilePath));
+            Assert.That(result.DateUploaded, Is.EqualTo(source.DateUploaded));
+            Assert.That(result.Content, Is.EqualTo(source.Content));
+            Assert.That(result.OcrText, Is.EqualTo(source.OcrText));
+            Assert.That(result.File, Is.Null); // Ignored
         });
     }
 
     [Test]
-    public void Map_BlDocumentToDocumentDto_FileIsIgnored()
+    public void Map_DocumentToBlDocument_WithNullOcrText_SetsOcrTextToEmptyString()
     {
         // Arrange
-        var source = new BlDocument
+        var source = new Document
         {
-            Id = 1,
-            Name = "Test Document",
-            File = Mock.Of<IFormFile>()
+            Id = 2,
+            Name = "Document Without OCR",
+            FilePath = "/path/without/ocr.pdf",
+            DateUploaded = DateTime.UtcNow,
+            OcrText = null
         };
 
         // Act
-        var result = _mapper.Map<DocumentDto>(source);
+        var result = _mapper.Map<BlDocument>(source);
 
         // Assert
-        Assert.That(result.File, Is.Null);
+        Assert.That(result.OcrText, Is.EqualTo(string.Empty));
     }
 
     [Test]
-    public void Map_BlDocumentToDocument_MapsFilePathCorrectly()
+    public void Map_NullDocumentToBlDocument_ReturnsNull()
     {
-        // Arrange
-        var source = new BlDocument
-        {
-            Id = 1,
-            Name = "Test Document",
-            FilePath = "test.pdf"
-        };
-
         // Act
-        var result = _mapper.Map<Document>(source);
+        var result = _mapper.Map<BlDocument>(null);
 
         // Assert
-        Assert.That(result.FilePath, Is.EqualTo("test.pdf"));
+        Assert.That(result, Is.Null);
     }
 
     [Test]
@@ -183,8 +246,12 @@ public class MappingTests
         // Arrange
         var sourceList = new List<Document>
         {
-            new Document { Id = 1, Name = "Doc1", FilePath = "/path1.pdf" },
-            new Document { Id = 2, Name = "Doc2", FilePath = "/path2.pdf" }
+            new Document
+            {
+                Id = 1, Name = "Doc1", FilePath = "/path1.pdf", DateUploaded = DateTime.UtcNow, OcrText = "OCR1"
+            },
+            new Document
+                { Id = 2, Name = "Doc2", FilePath = "/path2.pdf", DateUploaded = DateTime.UtcNow, OcrText = null }
         };
 
         // Act
@@ -195,23 +262,164 @@ public class MappingTests
         {
             Assert.That(resultList.Count, Is.EqualTo(sourceList.Count));
             Assert.That(resultList[0].Name, Is.EqualTo(sourceList[0].Name));
-            Assert.That(resultList[1].FilePath, Is.EqualTo(sourceList[1].FilePath));
+            Assert.That(resultList[0].OcrText, Is.EqualTo(sourceList[0].OcrText));
+            Assert.That(resultList[1].OcrText, Is.EqualTo(string.Empty)); // Mapped to empty string
+        });
+    }
+
+    #endregion
+
+    #region BlDocument to Document
+
+    [Test]
+    public void Map_BlDocumentToDocument_MapsCorrectly()
+    {
+        // Arrange
+        var source = new BlDocument
+        {
+            Id = 1,
+            Name = "Test Document",
+            FilePath = "/test/path.pdf",
+            DateUploaded = DateTime.UtcNow,
+            Content = "Sample Content",
+            OcrText = "Sample OCR Text",
+            File = Mock.Of<IFormFile>()
+        };
+
+        // Act
+        var result = _mapper.Map<Document>(source);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Id, Is.EqualTo(source.Id));
+            Assert.That(result.Name, Is.EqualTo(source.Name));
+            Assert.That(result.FilePath, Is.EqualTo(source.FilePath));
+            Assert.That(result.DateUploaded, Is.EqualTo(source.DateUploaded));
+            Assert.That(result.Content, Is.EqualTo(source.Content));
+            Assert.That(result.OcrText, Is.EqualTo(source.OcrText));
+            // Content is mapped, File is ignored in Document
         });
     }
 
     [Test]
-    public void Map_DocumentWithLongFilePath_MapsCorrectly()
+    public void Map_BlDocumentToDocument_WithNullOcrText_SetsOcrTextToEmptyString()
+    {
+        // Arrange
+        var source = new BlDocument
+        {
+            Id = 2,
+            Name = "Document Without OCR",
+            FilePath = "/path/without/ocr.pdf",
+            DateUploaded = DateTime.UtcNow,
+            Content = "Content without OCR",
+            OcrText = null
+        };
+
+        // Act
+        var result = _mapper.Map<Document>(source);
+
+        // Assert
+        Assert.That(result.OcrText, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void Map_BlDocumentToDocument_WithNonZeroId_MapsId()
+    {
+        // Arrange
+        var source = new BlDocument
+        {
+            Id = 42,
+            Name = "Test Document",
+            FilePath = "/test/path.pdf",
+            DateUploaded = DateTime.UtcNow,
+            Content = "Sample Content",
+            OcrText = "Sample OCR Text"
+        };
+
+        // Act
+        var result = _mapper.Map<Document>(source);
+
+        // Assert
+        Assert.That(result.Id, Is.EqualTo(source.Id));
+    }
+
+    [Test]
+    public void Map_NullBlDocumentToDocument_ReturnsNull()
+    {
+        // Act
+        var result = _mapper.Map<Document>(null);
+
+        // Assert
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public void Map_BlDocumentToDocument_WithLongFilePath_MapsCorrectly()
     {
         // Arrange
         var longFilePath = new string('a', 500); // 500 characters
-        var source = new Document { Id = 1, Name = "Long Path Document", FilePath = longFilePath };
+        var source = new BlDocument
+        {
+            Id = 3,
+            Name = "Long Path Document",
+            FilePath = longFilePath,
+            DateUploaded = DateTime.UtcNow,
+            Content = "Content with long path",
+            OcrText = "OCR Text"
+        };
 
         // Act
-        var result = _mapper.Map<BlDocument>(source);
+        var result = _mapper.Map<Document>(source);
 
         // Assert
         Assert.That(result.FilePath, Is.EqualTo(longFilePath));
     }
+
+    [Test]
+    public void Map_BlDocumentToDocumentList_MapsCorrectly()
+    {
+        // Arrange
+        var sourceList = new List<BlDocument>
+        {
+            new BlDocument
+            {
+                Id = 1, Name = "Doc1", FilePath = "/path1.pdf", DateUploaded = DateTime.UtcNow, OcrText = "OCR1"
+            },
+            new BlDocument
+                { Id = 2, Name = "Doc2", FilePath = "/path2.pdf", DateUploaded = DateTime.UtcNow, OcrText = null }
+        };
+
+        // Act
+        var resultList = _mapper.Map<List<Document>>(sourceList);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(resultList.Count, Is.EqualTo(sourceList.Count));
+            Assert.That(resultList[0].Name, Is.EqualTo(sourceList[0].Name));
+            Assert.That(resultList[0].OcrText, Is.EqualTo(sourceList[0].OcrText));
+            Assert.That(resultList[1].OcrText, Is.EqualTo(string.Empty)); // Mapped to empty string
+        });
+    }
+
+    #endregion
+
+    #region Document to DocumentDto
+
+    [Test]
+    public void Map_NullDocumentToDocumentDto_ReturnsNull()
+    {
+        // Act
+        var result = _mapper.Map<DocumentDto>(null);
+
+        // Assert
+        Assert.That(result, Is.Null);
+    }
+
+    #endregion
+
+    #region Additional Edge Cases
 
     [Test]
     public void Map_DocumentWithInvalidDateUploaded_MapsCorrectly()
@@ -219,10 +427,11 @@ public class MappingTests
         // Arrange
         var source = new Document
         {
-            Id = 1,
+            Id = 3,
             Name = "Invalid Date Document",
-            FilePath = "/path.pdf",
-            DateUploaded = DateTime.MinValue
+            FilePath = "/invalid/date.pdf",
+            DateUploaded = DateTime.MinValue,
+            OcrText = "Invalid Date OCR"
         };
 
         // Act
@@ -233,111 +442,46 @@ public class MappingTests
     }
 
     [Test]
-    public void Map_DocumentToBlDocumentAndBack_RoundTrip()
+    public void Map_BlDocumentToDocument_WithFutureDateUploaded_MapsCorrectly()
     {
         // Arrange
-        var source = new Document
-        {
-            Id = 1,
-            Name = "Round Trip Document",
-            Content = "Sample Content",
-            FilePath = "/path.pdf",
-            DateUploaded = DateTime.UtcNow,
-            OcrText = "Sample OCR Text"
-        };
-
-        // Act
-        var intermediate = _mapper.Map<BlDocument>(source);
-        var result = _mapper.Map<Document>(intermediate);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Id, Is.EqualTo(source.Id));
-            Assert.That(result.Name, Is.EqualTo(source.Name));
-            Assert.That(result.Content, Is.EqualTo(source.Content));
-            Assert.That(result.FilePath, Is.EqualTo(source.FilePath));
-            Assert.That(result.DateUploaded, Is.EqualTo(source.DateUploaded));
-            Assert.That(result.OcrText, Is.EqualTo(source.OcrText));
-        });
-    }
-
-    [Test]
-    public void Map_BlDocumentToDocumentDto_MapsCorrectly()
-    {
-        // Arrange
+        var futureDate = DateTime.UtcNow.AddDays(10);
         var source = new BlDocument
         {
-            Id = 1,
-            Name = "Test Document",
-            FilePath = "/test/path.pdf",
-            DateUploaded = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc),
-            File = Mock.Of<IFormFile>()
-        };
-
-        // Act
-        var result = _mapper.Map<DocumentDto>(source);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Name, Is.EqualTo(source.Name));
-            Assert.That(result.FilePath, Is.EqualTo(source.FilePath));
-            Assert.That(result.DateUploaded, Is.EqualTo(source.DateUploaded));
-            Assert.That(result.File, Is.Null); // Ignored
-        });
-    }
-
-    # endregion
-    
-    # region Mapping from BlDocumentDto to Document
-    
-    [Test]
-    public void Map_DocumentDtoToBlDocument_MapsCorrectly()
-    {
-        // Arrange
-        var source = new DocumentDto
-        {
-            Id = 1,
-            Name = "Test Document",
-            FilePath = "/test/path.pdf",
-            DateUploaded = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc)
-        };
-
-        // Act
-        var result = _mapper.Map<BlDocument>(source);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Id, Is.EqualTo(source.Id));
-            Assert.That(result.Name, Is.EqualTo(source.Name));
-            Assert.That(result.FilePath, Is.EqualTo(source.FilePath));
-            Assert.That(result.DateUploaded, Is.EqualTo(source.DateUploaded));
-        });
-    }
-    
-    # endregion
-    
-    # region Mapping from BlDocument to Document
-    [Test]
-    public void Map_BlDocumentToDocument_WithNonZeroId_MapsId()
-    {
-        // Arrange
-        var source = new BlDocument
-        {
-            Id = 42,
-            Name = "Test Document",
-            FilePath = "/test/path.pdf",
-            DateUploaded = DateTime.UtcNow
+            Id = 4,
+            Name = "Future Date Document",
+            FilePath = "/future/date.pdf",
+            DateUploaded = futureDate,
+            OcrText = "Future OCR Text"
         };
 
         // Act
         var result = _mapper.Map<Document>(source);
 
         // Assert
-        Assert.That(result.Id, Is.EqualTo(source.Id));
+        Assert.That(result.DateUploaded, Is.EqualTo(futureDate));
     }
-    
-    # endregion
+
+    [Test]
+    public void Map_DocumentDtoToBlDocument_WithNullFile_MapsCorrectly()
+    {
+        // Arrange
+        var source = new DocumentDto
+        {
+            Id = 5,
+            Name = "Document Without File",
+            FilePath = "/no/file.pdf",
+            DateUploaded = DateTime.UtcNow,
+            File = null,
+            OcrText = "No File OCR"
+        };
+
+        // Act
+        var result = _mapper.Map<BlDocument>(source);
+
+        // Assert
+        Assert.That(result.File, Is.Null);
+    }
+
+    #endregion
 }

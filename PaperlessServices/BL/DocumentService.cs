@@ -1,151 +1,344 @@
-﻿using AutoMapper;
+﻿using System.Collections.Immutable;
+using AutoMapper;
 using Contract;
+using Contract.Logger;
 using EasyNetQ;
 using Elastic.Clients.Elasticsearch;
-using PostgreSQL.Entities;
-using PostgreSQL.Persistence;
+using FluentValidation;
+using FluentValidation.Results;
+using Npgsql;
 using PaperlessServices.Entities;
+using PaperlessServices.MinIoStorage;
+using PostgreSQL.Entities;
+using PostgreSQL.Repository;
 
 namespace PaperlessServices.BL;
 
 public class DocumentService : IDocumentService
 {
-    private readonly IStorageService _storageService;
+    private readonly IMinioStorageService _minioStorageService;
     private readonly IDocumentRepository _repository;
     private readonly IMapper _mapper;
-    private readonly ILogger<DocumentService> _logger;
     private readonly ElasticsearchClient _elasticClient;
     private readonly IBus _messageBus;
+    private readonly IConfiguration _configuration;
+    private readonly IValidator<BlDocument> _validator;
+    private readonly IOperationLogger _logger;
 
     public DocumentService(
-        IStorageService storageService,
+        IMinioStorageService minioStorageService,
         IDocumentRepository repository,
         IMapper mapper,
-        ILogger<DocumentService> logger,
         ElasticsearchClient elasticClient,
-        IBus messageBus)
+        IBus messageBus,
+        IConfiguration configuration,
+        IValidator<BlDocument> validator,
+        IOperationLogger logger)
     {
-        _storageService = storageService;
+        _minioStorageService = minioStorageService;
         _repository = repository;
         _mapper = mapper;
-        _logger = logger;
         _elasticClient = elasticClient;
         _messageBus = messageBus;
+        _configuration = configuration;
+        _validator = validator;
+        _logger = logger;
     }
 
-    public async Task<DocumentDto> Upload(DocumentDto documentDto, CancellationToken cancellationToken)
+    [LogOperation("Upload", "DocumentService")]
+    public async Task<DocumentDto?> Upload(DocumentDto documentDto, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting document upload for {DocumentName}", documentDto.Name);
+        var operation = new LogOperationAttribute("Upload", "DocumentService");
+        var transaction = await _repository.BeginTransactionAsync(cancellationToken);
 
+        // 1) Check if file exists
         if (documentDto.File == null)
-            throw new ArgumentException("File is required for upload");
+        {
+            await _logger.LogOperationError(operation, nameof(Upload),
+                new InvalidOperationException("No file provided"));
+            await transaction.RollbackAsync(cancellationToken);
+            return null;
+        }
 
-        documentDto.Name = GenerateUniqueDocumentName(documentDto.File.FileName);
+        // 2) Create a Document entity with a temp path
+        var document = new Document
+        {
+            Name = documentDto.File.FileName,
+            FilePath = "temp",
+            DateUploaded = DateTime.UtcNow
+        };
 
-        var fileName = documentDto.Name;
-        await using var stream = documentDto.File.OpenReadStream();
-        await _storageService.UploadFileAsync(fileName, stream, cancellationToken);
+        // 3) Map to BL object and validate
+        var blDocument = _mapper.Map<BlDocument>(document);
+        var validationResult = await _validator.ValidateAsync(blDocument, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            await LogValidationErrors(operation, "Upload", validationResult);
+            await transaction.RollbackAsync(cancellationToken);
+            return null;
+        }
 
-        var blDocument = _mapper.Map<BlDocument>(documentDto);
-        blDocument.FilePath = fileName;
-        blDocument.DateUploaded = DateTime.UtcNow;
-
-        var document = _mapper.Map<Document>(blDocument);
+        // 4) Save entity in DB
         var savedDocument = await _repository.Upload(document, cancellationToken);
-        var mappedDocument = _mapper.Map<BlDocument>(savedDocument);
-        var dto = _mapper.Map<DocumentDto>(mappedDocument);
+        await _logger.LogOperation(operation, "Database",
+            [$"Document saved with ID: {savedDocument.Id}"]);
 
-        await IndexDocument(dto, cancellationToken);
+        // 5) Upload the file to MinIO
+        var fileName = GenerateDocumentName(documentDto.File.FileName, savedDocument.Id);
+        await using var stream = documentDto.File.OpenReadStream();
+        var uploadResult = await _minioStorageService.UploadFileAsync(fileName, stream, cancellationToken);
 
-        var documentUploadedEvent = new DocumentUploadedEvent
+        // If MinIO upload fails
+        if (string.IsNullOrEmpty(uploadResult))
+        {
+            await _logger.LogOperationError(operation, nameof(Upload),
+                new InvalidOperationException("MinIO upload failed (empty file path returned)"));
+            await transaction.RollbackAsync(cancellationToken);
+            return null;
+        }
+
+        await _logger.LogOperation(operation, "MinIO",
+            [$"File uploaded: {fileName}"]);
+
+        // 6) Update DB record with the real file path
+        savedDocument.FilePath = fileName;
+        savedDocument.DateUploaded = DateTime.UtcNow;
+        blDocument = _mapper.Map<BlDocument>(savedDocument);
+        validationResult = await _validator.ValidateAsync(blDocument, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            await LogValidationErrors(operation, "Upload", validationResult);
+            await transaction.RollbackAsync(cancellationToken);
+            return null;
+        }
+
+        // 7) Update DB entity with final data
+        var updatedDoc = await _repository.UpdateAsync(savedDocument, cancellationToken);
+        await _logger.LogOperation(operation, "Database",
+            [$"Document metadata updated: {updatedDoc.Id}"]);
+
+        // 8) Index the document in Elasticsearch
+        var dto = _mapper.Map<DocumentDto>(updatedDoc);
+        var indexOk = await IndexDocument(dto, cancellationToken);
+        if (!indexOk)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return null;
+        }
+
+        // 9) Commit the database transaction
+        await transaction.CommitAsync(cancellationToken);
+
+        // 10) Publish an event to the message bus
+        var evt = new DocumentUploadedEvent
         {
             DocumentId = dto.Id,
             FileName = dto.FilePath,
             UploadedAt = dto.DateUploaded
         };
-
-        await _messageBus.PubSub.PublishAsync(documentUploadedEvent, "document.uploaded", cancellationToken);
-        _logger.LogInformation("Published DocumentUploadedEvent for DocumentId {DocumentId}", dto.Id);
+        await _messageBus.PubSub.PublishAsync(evt, "document.uploaded", cancellationToken);
+        await _logger.LogOperation(operation, "EventBus",
+            [$"Published upload event for doc {dto.Id}"]);
 
         return dto;
     }
 
-    private string GenerateUniqueDocumentName(string originalName)
+    [LogOperation("Update", "DocumentService")]
+    public async Task<DocumentDto?> UpdateDocument(DocumentDto? documentDto, CancellationToken cancellationToken)
     {
-        var uniqueId = Guid.NewGuid().ToString();
-        return $"{uniqueId}_{originalName}";
-    }
+        var operation = new LogOperationAttribute("Update", "DocumentService");
 
-    private async Task IndexDocument(DocumentDto document, CancellationToken cancellationToken)
-    {
-        var indexResponse = await _elasticClient.IndexAsync(
-            document,
-            request => request
-                .Index("paperless-documents")
-                .Id(document.Id.ToString())
-                .Refresh(Refresh.True),
-            cancellationToken);
-
-        if (!indexResponse.IsValidResponse)
+        // 1) Check if input is valid
+        if (documentDto == null)
         {
-            _logger.LogError("Failed to index document: {Error}", indexResponse.DebugInformation);
-            throw new Exception($"Failed to index document: {indexResponse.DebugInformation}");
+            await _logger.LogOperationError(operation, nameof(UpdateDocument),
+                new InvalidOperationException("No document provided"));
+            return null;
         }
-    }
 
-    public async Task<DocumentDto> UpdateDocument(DocumentDto documentDto, CancellationToken cancellationToken)
-    {
-        var document = await _repository.GetByIdAsync(documentDto.Id, cancellationToken);
-        if (document == null)
-            throw new KeyNotFoundException($"Document with ID {documentDto.Id} not found");
+        // 2) Log the start
+        await _logger.LogOperation(operation, "Start",
+            [$"Updating doc {documentDto.Id}"]);
 
-        document.Name = documentDto.Name;
-        document.OcrText = documentDto.OcrText;
-        var updatedDocument = await _repository.UpdateAsync(document, cancellationToken);
-        var mappedDocument = _mapper.Map<BlDocument>(updatedDocument);
-        var dto = _mapper.Map<DocumentDto>(mappedDocument);
-        await IndexDocument(dto, cancellationToken);
+        // 3) Retrieve existing record
+        var docEntity = await _repository.GetByIdAsync(documentDto.Id, cancellationToken);
+        if (docEntity == null)
+        {
+            await _logger.LogOperationError(operation, nameof(UpdateDocument),
+                new KeyNotFoundException($"Document {documentDto.Id} not found"));
+            return null;
+        }
+
+        // 4) Update fields and validate
+        docEntity.Name = documentDto.Name;
+        docEntity.OcrText = documentDto.OcrText;
+        var blDocument = _mapper.Map<BlDocument>(docEntity);
+        var validationResult = await _validator.ValidateAsync(blDocument, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            await LogValidationErrors(operation, "Update", validationResult);
+            return null;
+        }
+
+        // 5) Update record in DB
+        var updatedDoc = await _repository.UpdateAsync(docEntity, cancellationToken);
+        await _logger.LogOperation(operation, "Database",
+            [$"Doc {updatedDoc.Id} updated in DB"]);
+
+        // 6) Re-index in Elasticsearch
+        var dto = _mapper.Map<DocumentDto>(updatedDoc);
+        var successIndex = await IndexDocument(dto, cancellationToken);
+        if (!successIndex)
+        {
+            await _logger.LogOperationError(operation, nameof(UpdateDocument),
+                new InvalidOperationException($"Failed to re-index doc {dto.Id}"));
+            return null;
+        }
+
+        // 7) Finish
+        await _logger.LogOperation(operation, "Finish",
+            [$"Doc {dto.Id} successfully updated"]);
         return dto;
     }
 
+    [LogOperation("Get", "DocumentService")]
     public async Task<DocumentDto> GetDocument(int id, CancellationToken cancellationToken)
     {
-        var document = await _repository.GetByIdAsync(id, cancellationToken);
-        if (document == null)
-            throw new KeyNotFoundException($"Document with ID {id} not found");
+        var operation = new LogOperationAttribute("Get", "DocumentService");
 
-        var mappedDocument = _mapper.Map<BlDocument>(document);
-        return _mapper.Map<DocumentDto>(mappedDocument);
+        // Check DB info
+        var csb = new NpgsqlConnectionStringBuilder(
+            _configuration.GetConnectionString("DefaultConnection"));
+        await _logger.LogOperation(operation, "Database",
+            [$"Using Host={csb.Host}, DB={csb.Database}"]);
+
+        // Retrieve doc
+        var doc = await _repository.GetByIdAsync(id, cancellationToken);
+        if (doc == null)
+            throw new KeyNotFoundException($"Document {id} not found");
+
+        // Map to DTO
+        var mapped = _mapper.Map<DocumentDto>(doc);
+        await _logger.LogOperation(operation, "Success",
+            [$"Retrieved doc {mapped.Id}"]);
+
+        return mapped;
     }
 
+    [LogOperation("GetAll", "DocumentService")]
     public async Task<IEnumerable<DocumentDto>> GetAllDocuments(CancellationToken cancellationToken)
     {
-        var documents = await _repository.GetAllAsync(cancellationToken);
-        var mappedDocs = _mapper.Map<IEnumerable<BlDocument>>(documents);
-        return _mapper.Map<IEnumerable<DocumentDto>>(mappedDocs);
+        var operation = new LogOperationAttribute("GetAll", "DocumentService");
+        await _logger.LogOperation(operation, "Start",
+            ["Retrieving all docs"]);
+
+        // Fetch from DB
+        var docs = await _repository.GetAllAsync(cancellationToken);
+        var mappedBlDocs = _mapper.Map<List<BlDocument>>(docs);
+
+        // Validate each entity
+        foreach (var blDoc in mappedBlDocs)
+        {
+            var validationResult = await _validator.ValidateAsync(blDoc, cancellationToken);
+            if (validationResult.IsValid) continue;
+            await LogValidationErrors(operation, "GetAll", validationResult, blDoc.Id);
+            return ImmutableList<DocumentDto>.Empty;
+        }
+
+        // Map to DTO
+        var finalDtos = mappedBlDocs
+            .Select(bl => _mapper.Map<DocumentDto>(bl))
+            .ToList();
+
+        await _logger.LogOperation(operation, "Success",
+            [$"Retrieved {finalDtos.Count} docs"]);
+        return finalDtos;
     }
 
+    [LogOperation("Delete", "DocumentService")]
     public async Task DeleteDocument(int id, CancellationToken cancellationToken)
     {
-        var documentEntity = await _repository.GetByIdAsync(id, cancellationToken);
-        if (documentEntity == null)
-            throw new KeyNotFoundException($"Document with ID {id} not found");
+        var operation = new LogOperationAttribute("Delete", "DocumentService");
+        await _logger.LogOperation(operation, "Start",
+            [$"Deleting doc {id}"]);
 
+        // Check entity existence
+        var entity = await _repository.GetByIdAsync(id, cancellationToken);
+        if (entity == null)
+        {
+            await _logger.LogOperationError(operation, nameof(DeleteDocument),
+                new KeyNotFoundException($"Doc {id} not found"));
+            return;
+        }
+
+        // Remove file in MinIO
+        var filePath = entity.FilePath;
+        await _logger.LogOperation(operation, "MinIO",
+            [$"Deleting file {filePath}"]);
+        await _minioStorageService.DeleteFileAsync(filePath, cancellationToken);
+
+        // Remove record from DB
         await _repository.DeleteAsync(id, cancellationToken);
+        await _logger.LogOperation(operation, "Database",
+            [$"Doc {id} removed from DB"]);
 
+        // Remove from Elasticsearch
         var deleteResponse = await _elasticClient.DeleteAsync<DocumentDto>(
             id.ToString(),
             idx => idx.Index("paperless-documents"),
             cancellationToken);
-
         if (!deleteResponse.IsValidResponse)
         {
-            _logger.LogError("Failed to delete document {DocumentId} from Elasticsearch: {Error}", id,
-                deleteResponse.DebugInformation);
-            throw new Exception(
-                $"Failed to delete document {id} from Elasticsearch: {deleteResponse.DebugInformation}");
+            await _logger.LogOperationError(operation, nameof(DeleteDocument),
+                new Exception($"Failed to delete doc {id} from Elasticsearch:\n{deleteResponse.DebugInformation}"));
+            return;
         }
 
-        _logger.LogInformation("Document with ID {DocumentId} deleted successfully", id);
+        await _logger.LogOperation(operation, "Finish",
+            [$"Doc {id} successfully deleted"]);
+    }
+
+    [LogOperation("Index", "DocumentService", LogLevel.Debug)]
+    private async Task<bool> IndexDocument(DocumentDto document, CancellationToken cancellationToken)
+    {
+        var operation = new LogOperationAttribute("Index", "DocumentService", LogLevel.Debug);
+
+        // Send doc to Elasticsearch
+        var indexResponse = await _elasticClient.IndexAsync(document,
+            i => i.Index("paperless-documents")
+                  .Id(document.Id.ToString())
+                  .Refresh(Refresh.True),
+            cancellationToken);
+
+        // Check for server-side errors
+        if (!indexResponse.IsValidResponse)
+        {
+            var msg = $"Indexing failed for doc {document.Id}: {indexResponse.DebugInformation}";
+            await _logger.LogOperationError(operation, nameof(IndexDocument), new Exception(msg));
+            return false;
+        }
+
+        await _logger.LogOperation(operation, "Success",
+            [$"Doc {document.Id} indexed"]);
+        return true;
+    }
+
+    private string GenerateDocumentName(string originalName, int documentId)
+    {
+        return $"{documentId}_{originalName}";
+    }
+
+    private async Task LogValidationErrors(
+        LogOperationAttribute operation,
+        string stage,
+        ValidationResult validationResult,
+        int? docId = null)
+    {
+        foreach (var msg in validationResult.Errors.Select(error => docId.HasValue
+                     ? $"Doc ID {docId}: {error.ErrorMessage}"
+                     : error.ErrorMessage))
+        {
+            await _logger.LogOperationError(operation, stage, new ValidationException(msg));
+        }
     }
 }

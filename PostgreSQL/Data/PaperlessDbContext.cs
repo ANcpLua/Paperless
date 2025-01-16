@@ -16,7 +16,7 @@ public class PaperlessDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired();
             entity.Property(e => e.Content).IsRequired();
-            entity.Property(e => e.FilePath).IsRequired();
+            entity.Property(e => e.FilePath).IsRequired(false);
             entity.Property(e => e.DateUploaded).IsRequired();
             entity.Property(e => e.OcrText).IsRequired(false);
         });
