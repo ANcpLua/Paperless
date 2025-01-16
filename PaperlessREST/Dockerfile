@@ -1,37 +1,29 @@
+﻿# .NET 8.0 ASP.NET runtime as the base image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 8081
+
+# .NET 8.0 SDK for building the application
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-RUN dotnet tool install --global dotnet-ef
-ENV PATH="$PATH:/root/.dotnet/tools"
-
+# Copy the project files and restore dependencies
 COPY ["PaperlessREST/PaperlessREST.csproj", "PaperlessREST/"]
 COPY ["Contract/Contract.csproj", "Contract/"]
-COPY ["PaperlessServices/PaperlessServices.csproj", "PaperlessServices/"]
-COPY ["PostgreSQL/PostgreSQL.csproj", "PostgreSQL/"]
-
 RUN dotnet restore "PaperlessREST/PaperlessREST.csproj"
 
+# Copy the remaining source code and build the application
 COPY . .
 WORKDIR "/src/PaperlessREST"
-RUN dotnet publish "PaperlessREST.csproj" -c Release -o /app/publish
+RUN dotnet build "PaperlessREST.csproj" -c Release -o /app/build
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+# Publish the application
+FROM build AS publish
+RUN dotnet publish "PaperlessREST.csproj" -c Release -r linux-x64 --no-self-contained -o /app/publish
+
+# Create the final image to run the application
+FROM base AS final
 WORKDIR /app
-
-RUN apt-get update && \
-    apt-get install -y curl && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN dotnet tool install --global dotnet-ef
-ENV PATH="$PATH:/root/.dotnet/tools"
-
-COPY --from=build /app/publish .
-COPY PaperlessREST/rest-appsettings.json ./rest-appsettings.json
-
-HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:8081/ || exit 1
-
-ENV ASPNETCORE_ENVIRONMENT="Docker"
-EXPOSE 8081
-
-CMD /bin/bash -c 'dotnet ef database update && dotnet PaperlessREST.dll'
+COPY --from=publish /app/publish .
+COPY PaperlessREST/rest-appsettings.json /app/rest-appsettings.json
+ENTRYPOINT ["dotnet", "PaperlessREST.dll"]
