@@ -4,8 +4,8 @@ namespace Contract.Logger;
 
 public class OperationLogger : IOperationLogger
 {
-    private readonly ILogger _logger;
     private readonly string _environment;
+    private readonly ILogger _logger;
 
     public OperationLogger(ILogger logger, string environment)
     {
@@ -26,24 +26,6 @@ public class OperationLogger : IOperationLogger
         {
             _logger.Log(attribute.Level,
                 "[{Environment}][{Component}][{Category}] {Method} started",
-                _environment, attribute.Component, attribute.Category, methodName);
-        }
-
-        await Task.CompletedTask;
-    }
-
-    public async Task LogOperationComplete(LogOperationAttribute attribute, string methodName, object? result = null)
-    {
-        if (result != null && attribute.LogResponse)
-        {
-            _logger.Log(attribute.Level,
-                "[{Environment}][{Component}][{Category}] {Method} completed - Result: {Result}",
-                _environment, attribute.Component, attribute.Category, methodName, result);
-        }
-        else
-        {
-            _logger.Log(attribute.Level,
-                "[{Environment}][{Component}][{Category}] {Method} completed",
                 _environment, attribute.Component, attribute.Category, methodName);
         }
 

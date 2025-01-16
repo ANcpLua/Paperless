@@ -12,17 +12,17 @@ public static class DatabaseExtension
     public static void AddPostgreSqlServices(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
-        
+
         services.AddDbContext<PaperlessDbContext>(options =>
         {
             options.UseNpgsql(connectionString, npgsqlOptions =>
                 npgsqlOptions.MigrationsAssembly("PostgreSQL"));
-                
-            options.UseLoggerFactory(LoggerFactory.Create(builder => 
-                builder.AddFilter((category, level) => 
-                    category == DbLoggerCategory.Database.Command.Name && 
+
+            options.UseLoggerFactory(LoggerFactory.Create(builder =>
+                builder.AddFilter((category, level) =>
+                    category == DbLoggerCategory.Database.Command.Name &&
                     level == LogLevel.Warning)));
-                    
+
             options.EnableSensitiveDataLogging(false);
         });
 

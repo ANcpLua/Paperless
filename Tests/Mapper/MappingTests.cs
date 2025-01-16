@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
 using AutoMapper;
 using Contract;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using NUnit.Framework;
 using PaperlessServices.AutoMapper;
 using PaperlessServices.Entities;
 using PostgreSQL.Entities;
@@ -14,9 +11,6 @@ namespace Tests.Mapper;
 [TestFixture]
 public class MappingTests
 {
-    private IMapper _mapper;
-    private MapperConfiguration _configuration;
-
     [OneTimeSetUp]
     public void Initialize()
     {
@@ -24,7 +18,8 @@ public class MappingTests
         _mapper = _configuration.CreateMapper();
     }
 
-    #region Configuration Validation
+    private IMapper _mapper;
+    private MapperConfiguration _configuration;
 
     [Test]
     public void Configuration_IsValid()
@@ -32,10 +27,6 @@ public class MappingTests
         // Assert
         _configuration.AssertConfigurationIsValid();
     }
-
-    #endregion
-
-    #region BlDocument to DocumentDto
 
     [Test]
     public void Map_BlDocumentToDocumentDto_MapsCorrectly()
@@ -95,10 +86,6 @@ public class MappingTests
         // Assert
         Assert.That(result, Is.Null);
     }
-
-    #endregion
-
-    #region DocumentDto to BlDocument
 
     [Test]
     public void Map_DocumentDtoToBlDocument_MapsCorrectly()
@@ -176,10 +163,6 @@ public class MappingTests
         Assert.That(result, Is.Null);
     }
 
-    #endregion
-
-    #region Document to BlDocument
-
     [Test]
     public void Map_DocumentToBlDocument_MapsCorrectly()
     {
@@ -246,12 +229,11 @@ public class MappingTests
         // Arrange
         var sourceList = new List<Document>
         {
-            new Document
+            new()
             {
                 Id = 1, Name = "Doc1", FilePath = "/path1.pdf", DateUploaded = DateTime.UtcNow, OcrText = "OCR1"
             },
-            new Document
-                { Id = 2, Name = "Doc2", FilePath = "/path2.pdf", DateUploaded = DateTime.UtcNow, OcrText = null }
+            new() { Id = 2, Name = "Doc2", FilePath = "/path2.pdf", DateUploaded = DateTime.UtcNow, OcrText = null }
         };
 
         // Act
@@ -266,10 +248,6 @@ public class MappingTests
             Assert.That(resultList[1].OcrText, Is.EqualTo(string.Empty)); // Mapped to empty string
         });
     }
-
-    #endregion
-
-    #region BlDocument to Document
 
     [Test]
     public void Map_BlDocumentToDocument_MapsCorrectly()
@@ -382,12 +360,11 @@ public class MappingTests
         // Arrange
         var sourceList = new List<BlDocument>
         {
-            new BlDocument
+            new()
             {
                 Id = 1, Name = "Doc1", FilePath = "/path1.pdf", DateUploaded = DateTime.UtcNow, OcrText = "OCR1"
             },
-            new BlDocument
-                { Id = 2, Name = "Doc2", FilePath = "/path2.pdf", DateUploaded = DateTime.UtcNow, OcrText = null }
+            new() { Id = 2, Name = "Doc2", FilePath = "/path2.pdf", DateUploaded = DateTime.UtcNow, OcrText = null }
         };
 
         // Act
@@ -403,10 +380,6 @@ public class MappingTests
         });
     }
 
-    #endregion
-
-    #region Document to DocumentDto
-
     [Test]
     public void Map_NullDocumentToDocumentDto_ReturnsNull()
     {
@@ -416,10 +389,6 @@ public class MappingTests
         // Assert
         Assert.That(result, Is.Null);
     }
-
-    #endregion
-
-    #region Additional Edge Cases
 
     [Test]
     public void Map_DocumentWithInvalidDateUploaded_MapsCorrectly()
@@ -482,6 +451,4 @@ public class MappingTests
         // Assert
         Assert.That(result.File, Is.Null);
     }
-
-    #endregion
 }

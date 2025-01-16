@@ -1,5 +1,5 @@
-using Contract.Logger;
 using Contract;
+using Contract.Logger;
 using EasyNetQ;
 using PaperlessServices.BL;
 using PaperlessServices.MinIoStorage;
@@ -29,7 +29,8 @@ public class OcrWorkerService : BackgroundService
                 _subscriptionId,
                 HandleDocumentAsync,
                 x => x.WithTopic("document.uploaded"),
-                stoppingToken);
+                stoppingToken
+            );
 
             // Wait indefinitely unless canceled
             await Task.Delay(Timeout.Infinite, stoppingToken);
@@ -63,23 +64,21 @@ public class OcrWorkerService : BackgroundService
     private static Task<string> PerformOcr(Stream documentStream, string fileName, IOcrClient ocrClient)
     {
         if (!Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
-        {
-            // Depending on your approach, you can log or throw
             throw new NotSupportedException("Only PDF files are supported");
-        }
 
         documentStream.Position = 0;
         return Task.FromResult(ocrClient.OcrPdf(documentStream));
     }
 
     [LogOperation("OcrWorkerService", "PublishResult")]
-    private async Task PublishResultAsync(int documentId, string content, bool isError, DateTime processedAt, CancellationToken token)
+    private async Task PublishResultAsync(int documentId, string content, bool isError, DateTime processedAt,
+        CancellationToken token)
     {
         var message = new DocumentUploadedEvent
         {
             DocumentId = documentId,
             FileName = content,
-            UploadedAt = processedAt,
+            UploadedAt = processedAt
         };
 
         var topic = isError ? "document.processing.failed" : "document.processed";

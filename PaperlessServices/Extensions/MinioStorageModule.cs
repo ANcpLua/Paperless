@@ -10,7 +10,8 @@ public static class MinioStorageServiceCollectionExtensions
     {
         var bucketName = configuration["MinIO:BucketName"];
         if (string.IsNullOrEmpty(bucketName))
-            throw new InvalidOperationException("MinIO BucketName is not configured. Ensure MinIO:BucketName is set in service-appsettings.json");
+            throw new InvalidOperationException(
+                "MinIO BucketName is not configured. Ensure MinIO:BucketName is set in service-appsettings.json");
 
         services.AddSingleton<MinioClient>(_ =>
         {

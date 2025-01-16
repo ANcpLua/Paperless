@@ -10,16 +10,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("rest-appsettings.json", optional: false)
-    .AddJsonFile($"rest-appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables()  
+    .AddJsonFile("rest-appsettings.json", false)
+    .AddJsonFile($"rest-appsettings.{builder.Environment.EnvironmentName}.json", true)
+    .AddEnvironmentVariables()
     .Build();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
-builder.Services.Configure<LoggerFilterOptions>(options => {
+builder.Services.Configure<LoggerFilterOptions>(options =>
+{
     options.AddFilter("Microsoft", LogLevel.Warning);
     options.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
     options.AddFilter("System", LogLevel.Warning);
@@ -27,7 +28,7 @@ builder.Services.Configure<LoggerFilterOptions>(options => {
 builder.Services.AddControllers();
 builder.Services.AddOperationLogging(
     builder.Environment.EnvironmentName);
-builder.Services.AddAuthorizationBuilder(); 
+builder.Services.AddAuthorizationBuilder();
 builder.Services.AddFluentValidationRules();
 builder.Services.AddPostgreSqlServices(builder.Configuration);
 builder.Services.AddElasticSearchEngine(builder.Configuration);
@@ -35,7 +36,8 @@ builder.Services.AddMinioObjectStorage(builder.Configuration, builder.Environmen
 builder.Services.AddRabbitMqMessageBus(builder.Configuration, builder.Environment);
 builder.Services.AddSingleton<IMinioStorageService, MinioStorageService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
-builder.Services.AddCors(options => {
+builder.Services.AddCors(options =>
+{
     options.AddPolicy("AllowAll", c => c
         .AllowAnyOrigin()
         .AllowAnyMethod()

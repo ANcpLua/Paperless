@@ -1,6 +1,6 @@
 ﻿using System.Net;
-using Newtonsoft.Json;
 using Contract;
+using Newtonsoft.Json;
 
 namespace Tests.IntegrationTests;
 
@@ -8,10 +8,6 @@ namespace Tests.IntegrationTests;
 [Ignore("Disabled")]
 public class PaperlessIntegrationTests : TestBase
 {
-    private int _createdDocId;
-    private const string TestPdfName = "HelloWorld.pdf";
-    private string _testFilePath;
-
     [SetUp]
     public void SetUp()
     {
@@ -22,7 +18,12 @@ public class PaperlessIntegrationTests : TestBase
         );
     }
 
-    [Test, Order(1)]
+    private int _createdDocId;
+    private const string TestPdfName = "HelloWorld.pdf";
+    private string _testFilePath;
+
+    [Test]
+    [Order(1)]
     public async Task UploadDocument_ShouldReturnOkAndCreateDocument()
     {
         // Arrange
@@ -51,7 +52,8 @@ public class PaperlessIntegrationTests : TestBase
         _createdDocId = createdDoc.Id;
     }
 
-    [Test, Order(2)]
+    [Test]
+    [Order(2)]
     public async Task SearchDocument_ShouldFindUploadedDocument()
     {
         // Act
@@ -73,7 +75,8 @@ public class PaperlessIntegrationTests : TestBase
         });
     }
 
-    [Test, Order(3)]
+    [Test]
+    [Order(3)]
     public async Task DownloadDocument_ShouldReturnFile()
     {
         // Act
@@ -99,7 +102,8 @@ public class PaperlessIntegrationTests : TestBase
             "Downloaded file size should match original test PDF size");
     }
 
-    [Test, Order(4)]
+    [Test]
+    [Order(4)]
     public async Task DeleteDocument_ShouldReturnNoContentAndRemoveIt()
     {
         // Act

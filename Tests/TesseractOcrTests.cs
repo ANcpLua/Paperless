@@ -5,15 +5,15 @@ namespace Tests;
 [TestFixture]
 public class OcrTests
 {
-    private Ocr _ocr = null!;
-    
-    private readonly string _tessDataPath = null!;
-
     [SetUp]
     public void SetUp()
     {
         _ocr = new Ocr("eng", _tessDataPath);
     }
+
+    private Ocr _ocr = null!;
+
+    private readonly string _tessDataPath = null!;
 
     [Test]
     public void OcrPdf_WithNullStream_ShouldThrowArgumentNullException()

@@ -32,10 +32,7 @@ public class Ocr : IOcrClient
             images.Read(inputStream, settings); // Read PDF as images
 
             // Process each page/image
-            foreach (var image in images)
-            {
-                ProcessImage(image, stringBuilder);
-            }
+            foreach (var image in images) ProcessImage(image, stringBuilder);
 
             return stringBuilder.ToString().Trim();
         }
@@ -65,4 +62,3 @@ public class Ocr : IOcrClient
         stringBuilder.AppendLine(text); // Append extracted text
     }
 }
-        

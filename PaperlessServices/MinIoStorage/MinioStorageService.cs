@@ -6,8 +6,8 @@ namespace PaperlessServices.MinIoStorage;
 
 public class MinioStorageService : IMinioStorageService
 {
-    private readonly MinioClient _minioClient;
     private readonly string? _bucketName;
+    private readonly MinioClient _minioClient;
 
     public MinioStorageService(MinioClient minioClient, IConfiguration configuration)
     {
@@ -39,7 +39,8 @@ public class MinioStorageService : IMinioStorageService
     {
         await _minioClient.StatObjectAsync(
             new StatObjectArgs().WithBucket(_bucketName).WithObject(fileName),
-            cancellationToken);
+            cancellationToken
+        );
 
         var memoryStream = new MemoryStream();
         await _minioClient.GetObjectAsync(
@@ -47,7 +48,8 @@ public class MinioStorageService : IMinioStorageService
                 .WithBucket(_bucketName)
                 .WithObject(fileName)
                 .WithCallbackStream(stream => stream.CopyTo(memoryStream)),
-            cancellationToken);
+            cancellationToken
+        );
 
         memoryStream.Position = 0;
         return memoryStream;
@@ -67,12 +69,14 @@ public class MinioStorageService : IMinioStorageService
     private async Task EnsureBucketExistsAsync(CancellationToken cancellationToken)
     {
         var exists = await _minioClient.BucketExistsAsync(
-            new BucketExistsArgs().WithBucket(_bucketName), cancellationToken);
+            new BucketExistsArgs().WithBucket(_bucketName),
+            cancellationToken
+        );
 
         if (!exists)
-        {
             await _minioClient.MakeBucketAsync(
-                new MakeBucketArgs().WithBucket(_bucketName), cancellationToken);
-        }
+                new MakeBucketArgs().WithBucket(_bucketName),
+                cancellationToken
+            );
     }
 }

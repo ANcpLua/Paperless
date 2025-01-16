@@ -4,22 +4,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Minio;
 using Minio.DataModel.Args;
+using Minio.Exceptions;
 
 namespace Tests;
 
 [TestFixture]
 public class MinioTests
 {
-    private IMinioClient _minioClient = null!;
-    private IConfiguration _configuration = null!;
-    private IOperationLogger _logger = null!;
-    
-    private const string TestBucket = "documents";
-    private const string TestFileName = "HelloWorld.pdf";
-
-    private readonly string _testFilePath =
-        Path.Combine(TestContext.CurrentContext.TestDirectory, "IntegrationTests", "HelloWorld.pdf");
-
     [SetUp]
     public async Task Setup()
     {
@@ -52,7 +43,24 @@ public class MinioTests
         }
     }
 
-    [Test, Order(1)]
+    [TearDown]
+    public void TearDown()
+    {
+        if (_minioClient is IDisposable disposable) disposable.Dispose();
+    }
+
+    private IMinioClient _minioClient = null!;
+    private IConfiguration _configuration = null!;
+    private IOperationLogger _logger = null!;
+
+    private const string TestBucket = "documents";
+    private const string TestFileName = "HelloWorld.pdf";
+
+    private readonly string _testFilePath =
+        Path.Combine(TestContext.CurrentContext.TestDirectory, "IntegrationTests", "HelloWorld.pdf");
+
+    [Test]
+    [Order(1)]
     public async Task UploadFile_ToMinio_Succeeds()
     {
         // Arrange
@@ -82,7 +90,8 @@ public class MinioTests
             [$"Uploaded file: {TestFileName}"]);
     }
 
-    [Test, Order(2)]
+    [Test]
+    [Order(2)]
     public async Task GetFile_FromMinio_Succeeds()
     {
         // Arrange
@@ -112,7 +121,8 @@ public class MinioTests
             [$"Downloaded file: {TestFileName}"]);
     }
 
-    [Test, Order(3)]
+    [Test]
+    [Order(3)]
     public async Task DeleteFile_FromMinio_Succeeds()
     {
         // Arrange
@@ -129,19 +139,10 @@ public class MinioTests
                 .WithObject(TestFileName));
 
         // Assert
-        await act.Should().ThrowAsync<Minio.Exceptions.ObjectNotFoundException>();
+        await act.Should().ThrowAsync<ObjectNotFoundException>();
 
         var operationAttr = new LogOperationAttribute("Minio", "DeleteFile");
         await _logger.LogOperation(operationAttr, nameof(DeleteFile_FromMinio_Succeeds),
             [$"Deleted file: {TestFileName}"]);
-    }
-    
-    [TearDown]
-    public void TearDown()
-    {
-        if (_minioClient is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
     }
 }

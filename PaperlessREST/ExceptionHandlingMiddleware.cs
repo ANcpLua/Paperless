@@ -6,8 +6,8 @@ namespace PaperlessREST;
 
 public class ExceptionHandlingMiddleware
 {
-    private readonly RequestDelegate _next;
     private readonly IOperationLogger _logger;
+    private readonly RequestDelegate _next;
 
     public ExceptionHandlingMiddleware(RequestDelegate next, IOperationLogger logger)
     {
@@ -37,7 +37,7 @@ public class ExceptionHandlingMiddleware
         {
             ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
-            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred"),
+            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
         };
 
         context.Response.StatusCode = statusCode;

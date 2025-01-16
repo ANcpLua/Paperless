@@ -6,9 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("service-appsettings.json", optional: false)
-    .AddJsonFile($"service-appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables()  
+    .AddJsonFile("service-appsettings.json", false)
+    .AddJsonFile($"service-appsettings.{builder.Environment.EnvironmentName}.json", true)
+    .AddEnvironmentVariables()
     .Build();
 
 builder.Logging.ClearProviders();
@@ -26,7 +26,7 @@ builder.Services.AddAutoMapperProfiles();
 
 builder.Services.AddOperationLogging(
     builder.Environment.EnvironmentName);
-    
+
 var app = builder.Build();
 
 await app.RunAsync();

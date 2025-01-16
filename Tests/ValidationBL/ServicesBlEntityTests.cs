@@ -8,15 +8,14 @@ namespace Tests.ValidationBL;
 [TestFixture]
 public class ServicesBlEntityTests
 {
-    private IValidator<BlDocument> _validator = null!;
-
     [SetUp]
     public void Setup()
     {
         _validator = new BlValidation();
     }
 
-    #region Validate_ValidDocument_Passes
+    private IValidator<BlDocument> _validator = null!;
+
     [Test]
     public void Validate_ValidDocument_Passes()
     {
@@ -34,9 +33,7 @@ public class ServicesBlEntityTests
         // Assert
         Assert.That(result.IsValid, Is.True);
     }
-    #endregion
 
-    #region Validate_InvalidDocument_Fails
     [Test]
     public void Validate_InvalidDocument_Fails()
     {
@@ -60,9 +57,7 @@ public class ServicesBlEntityTests
             Assert.That(result.Errors, Has.Some.With.Property("PropertyName").EqualTo("DateUploaded"));
         });
     }
-    #endregion
-    
-    #region Name Validation Tests
+
     [TestCase("", "'Name' must not be empty.")]
     [TestCase("   ", "'Name' must not be empty.")]
     public async Task Validate_NameValidation_DetectsInvalidInput(string invalidName, string expectedError)
@@ -81,7 +76,7 @@ public class ServicesBlEntityTests
 
         // Assert
         validationResult.ShouldHaveValidationErrorFor(x => x.Name)
-                        .WithErrorMessage(expectedError);
+            .WithErrorMessage(expectedError);
     }
 
     [Test]
@@ -103,10 +98,6 @@ public class ServicesBlEntityTests
         validationResult.ShouldNotHaveValidationErrorFor(x => x.Name);
     }
 
-    #endregion
-
-    #region FilePath Validation Tests
-
     [TestCase("", "'File Path' must not be empty.")]
     [TestCase("   ", "'File Path' must not be empty.")]
     public async Task Validate_FilePathValidation_DetectsInvalidInput(string invalidPath, string expectedError)
@@ -125,7 +116,7 @@ public class ServicesBlEntityTests
 
         // Assert
         validationResult.ShouldHaveValidationErrorFor(x => x.FilePath)
-                        .WithErrorMessage(expectedError);
+            .WithErrorMessage(expectedError);
     }
 
     [Test]
@@ -147,10 +138,6 @@ public class ServicesBlEntityTests
         validationResult.ShouldNotHaveValidationErrorFor(x => x.FilePath);
     }
 
-    #endregion
-
-    #region DateUploaded Validation Tests
-
     [Test]
     public async Task Validate_DateUploadedValidation_DetectsFutureDate()
     {
@@ -168,7 +155,7 @@ public class ServicesBlEntityTests
 
         // Assert
         validationResult.ShouldHaveValidationErrorFor(x => x.DateUploaded)
-                        .WithErrorMessage("Upload date cannot be in the future.");
+            .WithErrorMessage("Upload date cannot be in the future.");
     }
 
     [Test]
@@ -189,6 +176,4 @@ public class ServicesBlEntityTests
         // Assert
         validationResult.ShouldNotHaveValidationErrorFor(x => x.DateUploaded);
     }
-
-    #endregion
 }

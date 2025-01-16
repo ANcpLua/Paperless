@@ -16,14 +16,14 @@ namespace PaperlessServices.BL;
 
 public class DocumentService : IDocumentService
 {
+    private readonly IConfiguration _configuration;
+    private readonly ElasticsearchClient _elasticClient;
+    private readonly IOperationLogger _logger;
+    private readonly IMapper _mapper;
+    private readonly IBus _messageBus;
     private readonly IMinioStorageService _minioStorageService;
     private readonly IDocumentRepository _repository;
-    private readonly IMapper _mapper;
-    private readonly ElasticsearchClient _elasticClient;
-    private readonly IBus _messageBus;
-    private readonly IConfiguration _configuration;
     private readonly IValidator<BlDocument> _validator;
-    private readonly IOperationLogger _logger;
 
     public DocumentService(
         IMinioStorageService minioStorageService,
@@ -54,8 +54,11 @@ public class DocumentService : IDocumentService
         // 1) Check if file exists
         if (documentDto.File == null)
         {
-            await _logger.LogOperationError(operation, nameof(Upload),
-                new InvalidOperationException("No file provided"));
+            await _logger.LogOperationError(
+                operation,
+                nameof(Upload),
+                new InvalidOperationException("No file provided")
+            );
             await transaction.RollbackAsync(cancellationToken);
             return null;
         }
@@ -80,8 +83,11 @@ public class DocumentService : IDocumentService
 
         // 4) Save entity in DB
         var savedDocument = await _repository.Upload(document, cancellationToken);
-        await _logger.LogOperation(operation, "Database",
-            [$"Document saved with ID: {savedDocument.Id}"]);
+        await _logger.LogOperation(
+            operation,
+            "Database",
+            new[] { $"Document saved with ID: {savedDocument.Id}" }
+        );
 
         // 5) Upload the file to MinIO
         var fileName = GenerateDocumentName(documentDto.File.FileName, savedDocument.Id);
@@ -91,14 +97,20 @@ public class DocumentService : IDocumentService
         // If MinIO upload fails
         if (string.IsNullOrEmpty(uploadResult))
         {
-            await _logger.LogOperationError(operation, nameof(Upload),
-                new InvalidOperationException("MinIO upload failed (empty file path returned)"));
+            await _logger.LogOperationError(
+                operation,
+                nameof(Upload),
+                new InvalidOperationException("MinIO upload failed (empty file path returned)")
+            );
             await transaction.RollbackAsync(cancellationToken);
             return null;
         }
 
-        await _logger.LogOperation(operation, "MinIO",
-            [$"File uploaded: {fileName}"]);
+        await _logger.LogOperation(
+            operation,
+            "MinIO",
+            new[] { $"File uploaded: {fileName}" }
+        );
 
         // 6) Update DB record with the real file path
         savedDocument.FilePath = fileName;
@@ -114,8 +126,11 @@ public class DocumentService : IDocumentService
 
         // 7) Update DB entity with final data
         var updatedDoc = await _repository.UpdateAsync(savedDocument, cancellationToken);
-        await _logger.LogOperation(operation, "Database",
-            [$"Document metadata updated: {updatedDoc.Id}"]);
+        await _logger.LogOperation(
+            operation,
+            "Database",
+            new[] { $"Document metadata updated: {updatedDoc.Id}" }
+        );
 
         // 8) Index the document in Elasticsearch
         var dto = _mapper.Map<DocumentDto>(updatedDoc);
@@ -136,9 +151,13 @@ public class DocumentService : IDocumentService
             FileName = dto.FilePath,
             UploadedAt = dto.DateUploaded
         };
+
         await _messageBus.PubSub.PublishAsync(evt, "document.uploaded", cancellationToken);
-        await _logger.LogOperation(operation, "EventBus",
-            [$"Published upload event for doc {dto.Id}"]);
+        await _logger.LogOperation(
+            operation,
+            "EventBus",
+            new[] { $"Published upload event for doc {dto.Id}" }
+        );
 
         return dto;
     }
@@ -151,21 +170,30 @@ public class DocumentService : IDocumentService
         // 1) Check if input is valid
         if (documentDto == null)
         {
-            await _logger.LogOperationError(operation, nameof(UpdateDocument),
-                new InvalidOperationException("No document provided"));
+            await _logger.LogOperationError(
+                operation,
+                nameof(UpdateDocument),
+                new InvalidOperationException("No document provided")
+            );
             return null;
         }
 
         // 2) Log the start
-        await _logger.LogOperation(operation, "Start",
-            [$"Updating doc {documentDto.Id}"]);
+        await _logger.LogOperation(
+            operation,
+            "Start",
+            new[] { $"Updating doc {documentDto.Id}" }
+        );
 
         // 3) Retrieve existing record
         var docEntity = await _repository.GetByIdAsync(documentDto.Id, cancellationToken);
         if (docEntity == null)
         {
-            await _logger.LogOperationError(operation, nameof(UpdateDocument),
-                new KeyNotFoundException($"Document {documentDto.Id} not found"));
+            await _logger.LogOperationError(
+                operation,
+                nameof(UpdateDocument),
+                new KeyNotFoundException($"Document {documentDto.Id} not found")
+            );
             return null;
         }
 
@@ -182,22 +210,32 @@ public class DocumentService : IDocumentService
 
         // 5) Update record in DB
         var updatedDoc = await _repository.UpdateAsync(docEntity, cancellationToken);
-        await _logger.LogOperation(operation, "Database",
-            [$"Doc {updatedDoc.Id} updated in DB"]);
+        await _logger.LogOperation(
+            operation,
+            "Database",
+            new[] { $"Doc {updatedDoc.Id} updated in DB" }
+        );
 
         // 6) Re-index in Elasticsearch
         var dto = _mapper.Map<DocumentDto>(updatedDoc);
         var successIndex = await IndexDocument(dto, cancellationToken);
         if (!successIndex)
         {
-            await _logger.LogOperationError(operation, nameof(UpdateDocument),
-                new InvalidOperationException($"Failed to re-index doc {dto.Id}"));
+            await _logger.LogOperationError(
+                operation,
+                nameof(UpdateDocument),
+                new InvalidOperationException($"Failed to re-index doc {dto.Id}")
+            );
             return null;
         }
 
         // 7) Finish
-        await _logger.LogOperation(operation, "Finish",
-            [$"Doc {dto.Id} successfully updated"]);
+        await _logger.LogOperation(
+            operation,
+            "Finish",
+            new[] { $"Doc {dto.Id} successfully updated" }
+        );
+
         return dto;
     }
 
@@ -208,9 +246,13 @@ public class DocumentService : IDocumentService
 
         // Check DB info
         var csb = new NpgsqlConnectionStringBuilder(
-            _configuration.GetConnectionString("DefaultConnection"));
-        await _logger.LogOperation(operation, "Database",
-            [$"Using Host={csb.Host}, DB={csb.Database}"]);
+            _configuration.GetConnectionString("DefaultConnection")
+        );
+        await _logger.LogOperation(
+            operation,
+            "Database",
+            new[] { $"Using Host={csb.Host}, DB={csb.Database}" }
+        );
 
         // Retrieve doc
         var doc = await _repository.GetByIdAsync(id, cancellationToken);
@@ -219,8 +261,11 @@ public class DocumentService : IDocumentService
 
         // Map to DTO
         var mapped = _mapper.Map<DocumentDto>(doc);
-        await _logger.LogOperation(operation, "Success",
-            [$"Retrieved doc {mapped.Id}"]);
+        await _logger.LogOperation(
+            operation,
+            "Success",
+            new[] { $"Retrieved doc {mapped.Id}" }
+        );
 
         return mapped;
     }
@@ -229,8 +274,11 @@ public class DocumentService : IDocumentService
     public async Task<IEnumerable<DocumentDto>> GetAllDocuments(CancellationToken cancellationToken)
     {
         var operation = new LogOperationAttribute("GetAll", "DocumentService");
-        await _logger.LogOperation(operation, "Start",
-            ["Retrieving all docs"]);
+        await _logger.LogOperation(
+            operation,
+            "Start",
+            new[] { "Retrieving all docs" }
+        );
 
         // Fetch from DB
         var docs = await _repository.GetAllAsync(cancellationToken);
@@ -240,9 +288,11 @@ public class DocumentService : IDocumentService
         foreach (var blDoc in mappedBlDocs)
         {
             var validationResult = await _validator.ValidateAsync(blDoc, cancellationToken);
-            if (validationResult.IsValid) continue;
-            await LogValidationErrors(operation, "GetAll", validationResult, blDoc.Id);
-            return ImmutableList<DocumentDto>.Empty;
+            if (!validationResult.IsValid)
+            {
+                await LogValidationErrors(operation, "GetAll", validationResult, blDoc.Id);
+                return ImmutableList<DocumentDto>.Empty;
+            }
         }
 
         // Map to DTO
@@ -250,8 +300,12 @@ public class DocumentService : IDocumentService
             .Select(bl => _mapper.Map<DocumentDto>(bl))
             .ToList();
 
-        await _logger.LogOperation(operation, "Success",
-            [$"Retrieved {finalDtos.Count} docs"]);
+        await _logger.LogOperation(
+            operation,
+            "Success",
+            new[] { $"Retrieved {finalDtos.Count} docs" }
+        );
+
         return finalDtos;
     }
 
@@ -259,43 +313,63 @@ public class DocumentService : IDocumentService
     public async Task DeleteDocument(int id, CancellationToken cancellationToken)
     {
         var operation = new LogOperationAttribute("Delete", "DocumentService");
-        await _logger.LogOperation(operation, "Start",
-            [$"Deleting doc {id}"]);
+        await _logger.LogOperation(
+            operation,
+            "Start",
+            new[] { $"Deleting doc {id}" }
+        );
 
         // Check entity existence
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
         if (entity == null)
         {
-            await _logger.LogOperationError(operation, nameof(DeleteDocument),
-                new KeyNotFoundException($"Doc {id} not found"));
+            await _logger.LogOperationError(
+                operation,
+                nameof(DeleteDocument),
+                new KeyNotFoundException($"Doc {id} not found")
+            );
             return;
         }
 
         // Remove file in MinIO
         var filePath = entity.FilePath;
-        await _logger.LogOperation(operation, "MinIO",
-            [$"Deleting file {filePath}"]);
+        await _logger.LogOperation(
+            operation,
+            "MinIO",
+            new[] { $"Deleting file {filePath}" }
+        );
         await _minioStorageService.DeleteFileAsync(filePath, cancellationToken);
 
         // Remove record from DB
         await _repository.DeleteAsync(id, cancellationToken);
-        await _logger.LogOperation(operation, "Database",
-            [$"Doc {id} removed from DB"]);
+        await _logger.LogOperation(
+            operation,
+            "Database",
+            new[] { $"Doc {id} removed from DB" }
+        );
 
         // Remove from Elasticsearch
         var deleteResponse = await _elasticClient.DeleteAsync<DocumentDto>(
             id.ToString(),
             idx => idx.Index("paperless-documents"),
-            cancellationToken);
+            cancellationToken
+        );
+
         if (!deleteResponse.IsValidResponse)
         {
-            await _logger.LogOperationError(operation, nameof(DeleteDocument),
-                new Exception($"Failed to delete doc {id} from Elasticsearch:\n{deleteResponse.DebugInformation}"));
+            await _logger.LogOperationError(
+                operation,
+                nameof(DeleteDocument),
+                new Exception($"Failed to delete doc {id} from Elasticsearch:\n{deleteResponse.DebugInformation}")
+            );
             return;
         }
 
-        await _logger.LogOperation(operation, "Finish",
-            [$"Doc {id} successfully deleted"]);
+        await _logger.LogOperation(
+            operation,
+            "Finish",
+            new[] { $"Doc {id} successfully deleted" }
+        );
     }
 
     [LogOperation("Index", "DocumentService", LogLevel.Debug)]
@@ -304,11 +378,13 @@ public class DocumentService : IDocumentService
         var operation = new LogOperationAttribute("Index", "DocumentService", LogLevel.Debug);
 
         // Send doc to Elasticsearch
-        var indexResponse = await _elasticClient.IndexAsync(document,
+        var indexResponse = await _elasticClient.IndexAsync(
+            document,
             i => i.Index("paperless-documents")
-                  .Id(document.Id.ToString())
-                  .Refresh(Refresh.True),
-            cancellationToken);
+                .Id(document.Id.ToString())
+                .Refresh(Refresh.True),
+            cancellationToken
+        );
 
         // Check for server-side errors
         if (!indexResponse.IsValidResponse)
@@ -318,8 +394,11 @@ public class DocumentService : IDocumentService
             return false;
         }
 
-        await _logger.LogOperation(operation, "Success",
-            [$"Doc {document.Id} indexed"]);
+        await _logger.LogOperation(
+            operation,
+            "Success",
+            new[] { $"Doc {document.Id} indexed" }
+        );
         return true;
     }
 
@@ -334,11 +413,10 @@ public class DocumentService : IDocumentService
         ValidationResult validationResult,
         int? docId = null)
     {
-        foreach (var msg in validationResult.Errors.Select(error => docId.HasValue
-                     ? $"Doc ID {docId}: {error.ErrorMessage}"
-                     : error.ErrorMessage))
-        {
+        foreach (var msg in validationResult.Errors.Select(error =>
+                     docId.HasValue
+                         ? $"Doc ID {docId}: {error.ErrorMessage}"
+                         : error.ErrorMessage))
             await _logger.LogOperationError(operation, stage, new ValidationException(msg));
-        }
     }
 }

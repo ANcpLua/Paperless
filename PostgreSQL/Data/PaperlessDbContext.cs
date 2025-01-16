@@ -5,7 +5,9 @@ namespace PostgreSQL.Data;
 
 public class PaperlessDbContext : DbContext
 {
-    public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options) : base(options) { }
+    public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options) : base(options)
+    {
+    }
 
     public DbSet<Document> Documents { get; set; }
 

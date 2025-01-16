@@ -14,7 +14,7 @@ public static class RabbitMqModule
             var port = configuration["RabbitMQ:Port"] ?? "5672";
             var username = configuration["RabbitMQ:Username"] ?? "guest";
             var password = configuration["RabbitMQ:Password"] ?? "guest";
-            
+
             var connectionString = $"host={host};port={port};username={username};password={password}";
             return RabbitHutch.CreateBus(connectionString);
         });

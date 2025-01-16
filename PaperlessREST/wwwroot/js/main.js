@@ -22,6 +22,7 @@
         setTimeout(() => alert.remove(), 300);
     }, 4700);
 }
+
 async function loadDocuments() {
     try {
         const response = await fetch('/documents');
@@ -51,11 +52,12 @@ async function loadDocuments() {
         showAlert("Failed to load documents", "danger");
     }
 }
+
 async function deleteDocument(id) {
     if (!confirm("Are you sure you want to delete this document?")) return;
 
     try {
-        const response = await fetch(`/documents/${id}`, { method: 'DELETE' });
+        const response = await fetch(`/documents/${id}`, {method: 'DELETE'});
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || "Failed to delete document");
@@ -67,6 +69,7 @@ async function deleteDocument(id) {
         showAlert(error.message, "danger");
     }
 }
+
 async function performSearch() {
     const searchInput = document.getElementById('searchInput');
     const resultsList = document.getElementById('searchResults');
@@ -104,6 +107,7 @@ async function performSearch() {
         showAlert("Failed to perform search", "danger");
     }
 }
+
 function handleUpload(e) {
     e.preventDefault();
     const formData = new FormData();
@@ -137,6 +141,7 @@ function handleUpload(e) {
             showAlert(error.message, "danger");
         });
 }
+
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('documentsTableBody')) {
         loadDocuments();

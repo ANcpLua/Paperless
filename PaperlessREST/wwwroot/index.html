@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Paperless - Document Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/index.css" rel="stylesheet">
@@ -12,7 +12,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container d-flex justify-content-center">
         <a class="navbar-brand" href="/">Paperless</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" data-bs-target="#navbarNav" data-bs-toggle="collapse" type="button">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -45,8 +45,8 @@
                 Welcome to <strong>Paperless</strong> - Your simple Document Management System!
             </div>
             <div class="text-center">
-                <a href="/documents.html" class="btn btn-primary me-2">View Documents</a>
-                <a href="/upload.html" class="btn btn-success">Upload New Document</a>
+                <a class="btn btn-primary me-2" href="/documents.html">View Documents</a>
+                <a class="btn btn-success" href="/upload.html">Upload New Document</a>
             </div>
         </div>
     </div>
@@ -56,7 +56,9 @@
     <div class="row mt-4">
         <div class="col-md-8 offset-md-2">
             <div class="input-group mb-3">
-                <label for="searchInput"></label><input type="text" class="form-control" id="searchInput" placeholder="Search for documents...">
+                <label for="searchInput"></label><input class="form-control" id="searchInput"
+                                                        placeholder="Search for documents..."
+                                                        type="text">
                 <button class="btn btn-outline-primary" id="searchButton" type="button">Search</button>
             </div>
         </div>
@@ -65,7 +67,7 @@
     <div class="row mt-4">
         <div class="col-md-8 offset-md-2">
             <h3>Search Results</h3>
-            <ul id="searchResults" class="list-group"></ul>
+            <ul class="list-group" id="searchResults"></ul>
         </div>
     </div>
 </div>

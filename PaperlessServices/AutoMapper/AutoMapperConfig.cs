@@ -24,7 +24,7 @@ public class AutoMapperConfig : Profile
 
         // Document <-> BlDocument
         CreateMap<Document, BlDocument>()
-            .ForMember(dest => dest.File, opt => opt.Ignore()) 
+            .ForMember(dest => dest.File, opt => opt.Ignore())
             .ForMember(dest => dest.OcrText, opt => opt.MapFrom(src => src.OcrText ?? string.Empty));
 
         CreateMap<BlDocument, Document>()

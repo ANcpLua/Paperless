@@ -14,15 +14,6 @@ namespace Tests.ControllersTests;
 [TestFixture]
 public class DocumentControllerTests
 {
-    private DocumentController _controller;
-    private Mock<IDocumentService> _documentService;
-    private Mock<IMinioStorageService> _storageService;
-    private Mock<ElasticsearchClient> _elasticClient;
-    private Mock<IBus> _bus;
-    private Mock<IMapper> _mapper;
-
-    private CancellationToken _cancellationToken;
-
     [SetUp]
     public void Setup()
     {
@@ -45,6 +36,15 @@ public class DocumentControllerTests
 
         _cancellationToken = CancellationToken.None;
     }
+
+    private DocumentController _controller;
+    private Mock<IDocumentService> _documentService;
+    private Mock<IMinioStorageService> _storageService;
+    private Mock<ElasticsearchClient> _elasticClient;
+    private Mock<IBus> _bus;
+    private Mock<IMapper> _mapper;
+
+    private CancellationToken _cancellationToken;
 
     [Test]
     public async Task Upload_ValidInput_ReturnsOkWithDocumentDto()
