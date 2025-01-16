@@ -1,4 +1,4 @@
-name: Dockerized CI with Tests
+name: Dockerized CI with IntegrationTests
 
 on:
   push:
@@ -25,8 +25,7 @@ jobs:
       - name: Install Docker Compose
         run: |
           DOCKER_COMPOSE_VERSION=2.20.2
-          curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" \
-               -o /usr/local/bin/docker-compose
+          curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           chmod +x /usr/local/bin/docker-compose
           docker-compose version
         shell: bash
@@ -36,33 +35,25 @@ jobs:
           docker compose -f compose.yaml up --build -d
         shell: bash
 
-      - name: Wait for containers to become healthy
+      - name: Run Migrations
         run: |
-          # Adjust this count if you have more or fewer containers with healthchecks
-          WAIT_FOR_HEALTHY_COUNT=7 
-          TIMEOUT=120
-          INTERVAL=5
+        shell: bash
 
-          echo "Waiting up to $TIMEOUT seconds for all containers to be healthy..."
-          end=$((SECONDS+TIMEOUT))
-
-          while [ $SECONDS -lt $end ]; do
-            healthy_count=$(docker ps --filter "health=healthy" --format '{{.Names}}' | wc -l)
-            if [ "$healthy_count" -eq "$WAIT_FOR_HEALTHY_COUNT" ]; then
-              echo "All $WAIT_FOR_HEALTHY_COUNT containers are healthy!"
-              break
-            else
-              echo "Currently $healthy_count healthy containers. Waiting..."
-              sleep $INTERVAL
+      # Wait until the main REST API is up on localhost:8081 
+      # so integration tests don’t fail immediately.
+      - name: Wait for Paperless REST container
+        run: |
+          echo "Waiting up to 120 seconds for the Paperless REST container to respond on port 8081..."
+          for i in {1..24}; do
+            if curl --silent --fail http://localhost:8081/; then
+              echo "Paperless REST is up!"
+              exit 0
             fi
+            echo "Still waiting..."
+            sleep 5
           done
-
-          final_healthy_count=$(docker ps --filter "health=healthy" --format '{{.Names}}' | wc -l)
-          if [ "$final_healthy_count" -ne "$WAIT_FOR_HEALTHY_COUNT" ]; then
-            echo "Not all containers became healthy in time."
-            docker ps
-            exit 1
-          fi
+          echo "Paperless REST service did not become ready in time!"
+          exit 1
         shell: bash
 
       - name: Restore .NET Dependencies

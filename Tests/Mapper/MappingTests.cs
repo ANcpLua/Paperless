@@ -276,7 +276,6 @@ public class MappingTests
             Assert.That(result.DateUploaded, Is.EqualTo(source.DateUploaded));
             Assert.That(result.Content, Is.EqualTo(source.Content));
             Assert.That(result.OcrText, Is.EqualTo(source.OcrText));
-            // Content is mapped, File is ignored in Document
         });
     }
 

@@ -1,6 +1,6 @@
 ﻿{
   "ConnectionStrings": {
-    "DefaultConnection": "Host=postgres;Database=paperless;Username=postgres;Password=postgres",
+    "DefaultConnection": "Host=localhost;Database=paperless;Username=postgres;Password=postgres",
     "Rabbit": "host=localhost;port=5672;username=guest;password=guest"
   },
   "RabbitMQ": {
@@ -10,7 +10,7 @@
     "Password": "guest"
   },
   "MinIO": {
-    "Endpoint": "localhost:9000",
+    "Endpoint": "minio:9000",
     "AccessKey": "minioadmin",
     "SecretKey": "minioadmin",
     "BucketName": "documents"

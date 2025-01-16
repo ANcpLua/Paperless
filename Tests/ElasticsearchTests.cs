@@ -13,8 +13,8 @@ public class ElasticsearchTests
     public async Task Setup()
     {
         var configBuilder = new ConfigurationBuilder()
-            .AddJsonFile("service-appsettings.json")
-            .AddEnvironmentVariables();
+                            .AddJsonFile("service-appsettings.json")
+                            .AddEnvironmentVariables();
 
         _configuration = configBuilder.Build();
 
@@ -99,8 +99,8 @@ public class ElasticsearchTests
             .Size(10)
             .Query(q => q
                 .MultiMatch(mm => mm
-                    .Query(searchQuery)
-                    .Fields(new[] { "name", "ocrText" })
+                                  .Query(searchQuery)
+                                  .Fields(new[] { "name", "ocrText" })
                 )
             )
         );
@@ -111,7 +111,7 @@ public class ElasticsearchTests
 
         searchResponse.Documents.Should().NotBeEmpty("No documents found in search results.");
         searchResponse.Documents.Should()
-            .ContainSingle(d => d.Id == _testDocument.Id, "Document not found in search results.");
+                      .ContainSingle(d => d.Id == _testDocument.Id, "Document not found in search results.");
     }
 
     [Test]

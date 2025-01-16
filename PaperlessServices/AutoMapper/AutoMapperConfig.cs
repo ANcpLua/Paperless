@@ -32,7 +32,7 @@ public class AutoMapperConfig : Profile
             .ForMember(dest => dest.OcrText, opt => opt.MapFrom(src => src.OcrText ?? string.Empty))
             .ForMember(dest => dest.Content, opt => opt.MapFrom(src => src.Content));
 
-        // Document <-> DocumentDto 
+        // Document <-> DocumentDto
         CreateMap<Document, DocumentDto>()
             .ForMember(dto => dto.File, opt => opt.Ignore());
     }

@@ -19,16 +19,16 @@ public class DocumentRepository : IDocumentRepository
     public async Task<Document?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Documents
-            .AsNoTracking()
-            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+                             .AsNoTracking()
+                             .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
     }
 
     [LogOperation("DocumentRepository", "GetAllAsync")]
     public async Task<IEnumerable<Document>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Documents
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
+                             .AsNoTracking()
+                             .ToListAsync(cancellationToken);
     }
 
     [LogOperation("DocumentRepository", "Upload")]

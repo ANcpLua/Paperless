@@ -1,19 +1,21 @@
 using Contract.Logger;
+using Microsoft.EntityFrameworkCore;
 using PaperlessREST;
 using PaperlessServices.AutoMapper;
 using PaperlessServices.BL;
 using PaperlessServices.Extensions;
 using PaperlessServices.MinIoStorage;
+using PostgreSQL.Data;
 using PostgreSQL.Module;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("rest-appsettings.json", false)
-    .AddJsonFile($"rest-appsettings.{builder.Environment.EnvironmentName}.json", true)
-    .AddEnvironmentVariables()
-    .Build();
+       .SetBasePath(Directory.GetCurrentDirectory())
+       .AddJsonFile("rest-appsettings.json", false)
+       .AddJsonFile($"rest-appsettings.{builder.Environment.EnvironmentName}.json", true)
+       .AddEnvironmentVariables()
+       .Build();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -39,9 +41,9 @@ builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", c => c
-        .AllowAnyOrigin()
-        .AllowAnyMethod()
-        .AllowAnyHeader());
+                                       .AllowAnyOrigin()
+                                       .AllowAnyMethod()
+                                       .AllowAnyHeader());
 });
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<AutoMapperConfig>());
 builder.WebHost.UseKestrel(options => { options.ListenAnyIP(8081); });
@@ -55,5 +57,10 @@ app.UseRouting();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.MapControllers();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<PaperlessDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 await app.RunAsync();

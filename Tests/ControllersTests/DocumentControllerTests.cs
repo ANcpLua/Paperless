@@ -76,7 +76,7 @@ public class DocumentControllerTests
     [Test]
     public async Task Get_ValidId_ReturnsOkWithDocumentDto()
     {
-        // Arrange 
+        // Arrange
         var document = CreateTestDocument();
         _documentService
             .Setup(x => x.GetDocument(document.Id, _cancellationToken))
@@ -129,10 +129,10 @@ public class DocumentControllerTests
         var fileStream = new MemoryStream();
 
         _documentService.Setup(x => x.GetDocument(document.Id, _cancellationToken))
-            .ReturnsAsync(document);
+                        .ReturnsAsync(document);
 
         _storageService.Setup(x => x.GetFileAsync(document.FilePath, _cancellationToken))
-            .ReturnsAsync(fileStream);
+                       .ReturnsAsync(fileStream);
 
         // Act
         var result = await _controller.Download(document.Id, _cancellationToken);

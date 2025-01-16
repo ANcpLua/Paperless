@@ -16,5 +16,4 @@ public class LogOperationAttribute : Attribute
     public string Category { get; }
     public LogLevel Level { get; }
     public bool LogParameters { get; set; } = true;
-    public bool LogResponse { get; set; } = true;
 }

@@ -69,7 +69,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -87,7 +87,7 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -106,7 +106,7 @@ services:
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://minio:9000/minio/health/live"]
+      test: [ "CMD", "curl", "-f", "http://minio:9000/minio/health/live" ]
       interval: 10s
       timeout: 10s
       retries: 10
@@ -124,7 +124,7 @@ services:
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://127.0.0.1:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+      test: [ "CMD-SHELL", "curl -s http://127.0.0.1:9200/_cluster/health | grep -vq '\"status\":\"red\"'" ]
       interval: 15s
       timeout: 15s
       retries: 20
@@ -144,7 +144,7 @@ services:
       elasticsearch:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://kibana:5601/api/status | grep -q '200'"]
+      test: [ "CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://kibana:5601/api/status | grep -q '200'" ]
       interval: 10s
       timeout: 10s
       retries: 5

@@ -76,7 +76,7 @@ public class ServicesBlEntityTests
 
         // Assert
         validationResult.ShouldHaveValidationErrorFor(x => x.Name)
-            .WithErrorMessage(expectedError);
+                        .WithErrorMessage(expectedError);
     }
 
     [Test]
@@ -116,7 +116,7 @@ public class ServicesBlEntityTests
 
         // Assert
         validationResult.ShouldHaveValidationErrorFor(x => x.FilePath)
-            .WithErrorMessage(expectedError);
+                        .WithErrorMessage(expectedError);
     }
 
     [Test]
@@ -155,7 +155,7 @@ public class ServicesBlEntityTests
 
         // Assert
         validationResult.ShouldHaveValidationErrorFor(x => x.DateUploaded)
-            .WithErrorMessage("Upload date cannot be in the future.");
+                        .WithErrorMessage("Upload date cannot be in the future.");
     }
 
     [Test]

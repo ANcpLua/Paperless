@@ -24,11 +24,11 @@ public class MinioStorageService : IMinioStorageService
         await EnsureBucketExistsAsync(cancellationToken);
 
         var putObjectArgs = new PutObjectArgs()
-            .WithBucket(_bucketName)
-            .WithObject(fileName)
-            .WithStreamData(stream)
-            .WithObjectSize(stream.Length)
-            .WithContentType("application/octet-stream");
+                            .WithBucket(_bucketName)
+                            .WithObject(fileName)
+                            .WithStreamData(stream)
+                            .WithObjectSize(stream.Length)
+                            .WithContentType("application/octet-stream");
 
         await _minioClient.PutObjectAsync(putObjectArgs, cancellationToken);
         return fileName;
@@ -59,8 +59,8 @@ public class MinioStorageService : IMinioStorageService
     public async Task DeleteFileAsync(string fileName, CancellationToken cancellationToken)
     {
         var removeObjectArgs = new RemoveObjectArgs()
-            .WithBucket(_bucketName)
-            .WithObject(fileName);
+                               .WithBucket(_bucketName)
+                               .WithObject(fileName);
 
         await _minioClient.RemoveObjectAsync(removeObjectArgs, cancellationToken);
     }

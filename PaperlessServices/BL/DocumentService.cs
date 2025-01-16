@@ -51,7 +51,6 @@ public class DocumentService : IDocumentService
         var operation = new LogOperationAttribute("Upload", "DocumentService");
         var transaction = await _repository.BeginTransactionAsync(cancellationToken);
 
-        // 1) Check if file exists
         if (documentDto.File == null)
         {
             await _logger.LogOperationError(
@@ -63,7 +62,6 @@ public class DocumentService : IDocumentService
             return null;
         }
 
-        // 2) Create a Document entity with a temp path
         var document = new Document
         {
             Name = documentDto.File.FileName,
@@ -71,7 +69,6 @@ public class DocumentService : IDocumentService
             DateUploaded = DateTime.UtcNow
         };
 
-        // 3) Map to BL object and validate
         var blDocument = _mapper.Map<BlDocument>(document);
         var validationResult = await _validator.ValidateAsync(blDocument, cancellationToken);
         if (!validationResult.IsValid)
@@ -81,15 +78,15 @@ public class DocumentService : IDocumentService
             return null;
         }
 
-        // 4) Save entity in DB
+        // 1) Save entity in DB
         var savedDocument = await _repository.Upload(document, cancellationToken);
         await _logger.LogOperation(
             operation,
             "Database",
-            new[] { $"Document saved with ID: {savedDocument.Id}" }
+            [$"Document saved with ID: {savedDocument.Id}"]
         );
 
-        // 5) Upload the file to MinIO
+        // 2) Upload the file to MinIO
         var fileName = GenerateDocumentName(documentDto.File.FileName, savedDocument.Id);
         await using var stream = documentDto.File.OpenReadStream();
         var uploadResult = await _minioStorageService.UploadFileAsync(fileName, stream, cancellationToken);
@@ -109,10 +106,10 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "MinIO",
-            new[] { $"File uploaded: {fileName}" }
+            [$"File uploaded: {fileName}"]
         );
 
-        // 6) Update DB record with the real file path
+        // 3) Update DB record with the real file path
         savedDocument.FilePath = fileName;
         savedDocument.DateUploaded = DateTime.UtcNow;
         blDocument = _mapper.Map<BlDocument>(savedDocument);
@@ -124,15 +121,15 @@ public class DocumentService : IDocumentService
             return null;
         }
 
-        // 7) Update DB entity with final data
+        // 4) Update DB entity with final data
         var updatedDoc = await _repository.UpdateAsync(savedDocument, cancellationToken);
         await _logger.LogOperation(
             operation,
             "Database",
-            new[] { $"Document metadata updated: {updatedDoc.Id}" }
+            [$"Document metadata updated: {updatedDoc.Id}"]
         );
 
-        // 8) Index the document in Elasticsearch
+        // 5) Index the document in Elasticsearch
         var dto = _mapper.Map<DocumentDto>(updatedDoc);
         var indexOk = await IndexDocument(dto, cancellationToken);
         if (!indexOk)
@@ -141,10 +138,10 @@ public class DocumentService : IDocumentService
             return null;
         }
 
-        // 9) Commit the database transaction
+        // 6) Commit the database transaction
         await transaction.CommitAsync(cancellationToken);
 
-        // 10) Publish an event to the message bus
+        // 7) Publish an event to the message bus
         var evt = new DocumentUploadedEvent
         {
             DocumentId = dto.Id,
@@ -156,7 +153,7 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "EventBus",
-            new[] { $"Published upload event for doc {dto.Id}" }
+            [$"Published upload event for doc {dto.Id}"]
         );
 
         return dto;
@@ -167,7 +164,6 @@ public class DocumentService : IDocumentService
     {
         var operation = new LogOperationAttribute("Update", "DocumentService");
 
-        // 1) Check if input is valid
         if (documentDto == null)
         {
             await _logger.LogOperationError(
@@ -178,14 +174,14 @@ public class DocumentService : IDocumentService
             return null;
         }
 
-        // 2) Log the start
+        // 1) Log the start
         await _logger.LogOperation(
             operation,
             "Start",
-            new[] { $"Updating doc {documentDto.Id}" }
+            [$"Updating doc {documentDto.Id}"]
         );
 
-        // 3) Retrieve existing record
+        // 2) Retrieve existing record
         var docEntity = await _repository.GetByIdAsync(documentDto.Id, cancellationToken);
         if (docEntity == null)
         {
@@ -197,7 +193,7 @@ public class DocumentService : IDocumentService
             return null;
         }
 
-        // 4) Update fields and validate
+        // 3) Update fields and validate
         docEntity.Name = documentDto.Name;
         docEntity.OcrText = documentDto.OcrText;
         var blDocument = _mapper.Map<BlDocument>(docEntity);
@@ -208,15 +204,15 @@ public class DocumentService : IDocumentService
             return null;
         }
 
-        // 5) Update record in DB
+        // 4) Update record in DB
         var updatedDoc = await _repository.UpdateAsync(docEntity, cancellationToken);
         await _logger.LogOperation(
             operation,
             "Database",
-            new[] { $"Doc {updatedDoc.Id} updated in DB" }
+            [$"Doc {updatedDoc.Id} updated in DB"]
         );
 
-        // 6) Re-index in Elasticsearch
+        // 5) Re-index in Elasticsearch
         var dto = _mapper.Map<DocumentDto>(updatedDoc);
         var successIndex = await IndexDocument(dto, cancellationToken);
         if (!successIndex)
@@ -229,11 +225,11 @@ public class DocumentService : IDocumentService
             return null;
         }
 
-        // 7) Finish
+        // 6) Finish
         await _logger.LogOperation(
             operation,
             "Finish",
-            new[] { $"Doc {dto.Id} successfully updated" }
+            [$"Doc {dto.Id} successfully updated"]
         );
 
         return dto;
@@ -251,7 +247,7 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "Database",
-            new[] { $"Using Host={csb.Host}, DB={csb.Database}" }
+            [$"Using Host={csb.Host}, DB={csb.Database}"]
         );
 
         // Retrieve doc
@@ -264,7 +260,7 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "Success",
-            new[] { $"Retrieved doc {mapped.Id}" }
+            [$"Retrieved doc {mapped.Id}"]
         );
 
         return mapped;
@@ -277,7 +273,7 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "Start",
-            new[] { "Retrieving all docs" }
+            ["Retrieving all docs"]
         );
 
         // Fetch from DB
@@ -297,13 +293,13 @@ public class DocumentService : IDocumentService
 
         // Map to DTO
         var finalDtos = mappedBlDocs
-            .Select(bl => _mapper.Map<DocumentDto>(bl))
-            .ToList();
+                        .Select(bl => _mapper.Map<DocumentDto>(bl))
+                        .ToList();
 
         await _logger.LogOperation(
             operation,
             "Success",
-            new[] { $"Retrieved {finalDtos.Count} docs" }
+            [$"Retrieved {finalDtos.Count} docs"]
         );
 
         return finalDtos;
@@ -316,7 +312,7 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "Start",
-            new[] { $"Deleting doc {id}" }
+            [$"Deleting doc {id}"]
         );
 
         // Check entity existence
@@ -336,7 +332,7 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "MinIO",
-            new[] { $"Deleting file {filePath}" }
+            [$"Deleting file {filePath}"]
         );
         await _minioStorageService.DeleteFileAsync(filePath, cancellationToken);
 
@@ -345,7 +341,7 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "Database",
-            new[] { $"Doc {id} removed from DB" }
+            [$"Doc {id} removed from DB"]
         );
 
         // Remove from Elasticsearch
@@ -368,7 +364,7 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "Finish",
-            new[] { $"Doc {id} successfully deleted" }
+            [$"Doc {id} successfully deleted"]
         );
     }
 
@@ -381,8 +377,8 @@ public class DocumentService : IDocumentService
         var indexResponse = await _elasticClient.IndexAsync(
             document,
             i => i.Index("paperless-documents")
-                .Id(document.Id.ToString())
-                .Refresh(Refresh.True),
+                  .Id(document.Id.ToString())
+                  .Refresh(Refresh.True),
             cancellationToken
         );
 
@@ -397,7 +393,7 @@ public class DocumentService : IDocumentService
         await _logger.LogOperation(
             operation,
             "Success",
-            new[] { $"Doc {document.Id} indexed" }
+            [$"Doc {document.Id} indexed"]
         );
         return true;
     }

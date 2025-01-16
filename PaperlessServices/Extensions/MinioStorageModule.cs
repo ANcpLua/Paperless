@@ -18,12 +18,12 @@ public static class MinioStorageServiceCollectionExtensions
             var env = environment.EnvironmentName;
             var endpoint = env == "Docker" ? "minio:9000" : "localhost:9000";
             return (MinioClient)new MinioClient()
-                .WithEndpoint(endpoint)
-                .WithCredentials(
-                    configuration["MinIO:AccessKey"],
-                    configuration["MinIO:SecretKey"])
-                .WithSSL(false)
-                .Build();
+                                .WithEndpoint(endpoint)
+                                .WithCredentials(
+                                    configuration["MinIO:AccessKey"],
+                                    configuration["MinIO:SecretKey"])
+                                .WithSSL(false)
+                                .Build();
         });
 
         services.AddScoped<IMinioStorageService, MinioStorageService>();

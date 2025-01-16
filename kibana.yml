@@ -1,36 +1,18 @@
-# Server configuration
 server.name: "paperless-kibana"
-server.host: "0.0.0.0"  # Changed from "0" to "0.0.0.0" for better Docker networking
+server.host: "0.0.0.0"
 server.publicBaseUrl: "http://localhost:5601"
 
-# Elasticsearch connection
 elasticsearch:
   hosts: ["http://elasticsearch:9200"]
   requestTimeout: 30000
   shardTimeout: 30000
 
-# Kibana configuration
 kibana:
   defaultAppId: "discover"
   index: ".kibana"
 
-# Monitoring settings
-monitoring:
-  ui:
-    container:
-      elasticsearch.enabled: true
-    enabled: true
-
-# Logging configuration
-logging:
-  root:
-    level: "info"
-  quiet: false
-  useUTC: true
-
-# Operations settings
-ops:
-  interval: 5000
+monitoring.ui.container.elasticsearch.enabled: true
+telemetry.enabled: false
 
 # Security settings
 xpack:
@@ -41,9 +23,12 @@ xpack:
   spaces:
     enabled: true
 
-# Performance settings
-elasticsearch.pingTimeout: 1500
-elasticsearch.startupTimeout: 5000
-
-# Development settings (set to false in production)
-telemetry.enabled: false
+# --------------------------------------------------
+# 	Kibana logging as of 16.01.2025
+# --------------------------------------------------
+logging:
+  root:
+    # Valid options: 'fatal', 'error', 'warn', 'info', 'debug', 'trace', 'all'
+    level: "warn"
+  quiet: true   # If 'true', Kibana won’t write all logs to stdout
+  useUTC: true

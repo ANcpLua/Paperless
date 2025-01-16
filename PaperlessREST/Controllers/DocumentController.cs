@@ -42,11 +42,7 @@ public class DocumentController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [LogOperation("Upload", "API")]
-    public async Task<ActionResult<DocumentDto>> Upload(
-        [FromForm] [Required] string name,
-        [Required] IFormFile file,
-        CancellationToken ct
-    )
+    public async Task<ActionResult<DocumentDto>> Upload([FromForm] [Required] string name, [Required] IFormFile file, CancellationToken ct)
     {
         var result = await _documentService.Upload(
             new DocumentDto { Name = name, File = file },
@@ -69,10 +65,7 @@ public class DocumentController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [LogOperation("Get", "API")]
-    public async Task<ActionResult<DocumentDto>> Get(
-        [FromRoute] [Required] int id,
-        CancellationToken ct
-    )
+    public async Task<ActionResult<DocumentDto>> Get([FromRoute] [Required] int id, CancellationToken ct)
     {
         var document = await _documentService.GetDocument(id, ct);
         return Ok(document);
@@ -81,9 +74,7 @@ public class DocumentController : ControllerBase
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [LogOperation("GetAll", "API")]
-    public async Task<ActionResult<IEnumerable<DocumentDto>>> GetAll(
-        CancellationToken ct
-    )
+    public async Task<ActionResult<IEnumerable<DocumentDto>>> GetAll(CancellationToken ct)
     {
         var documents = await _documentService.GetAllDocuments(ct);
         return Ok(documents);
@@ -93,10 +84,7 @@ public class DocumentController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [LogOperation("Download", "API")]
-    public async Task<IActionResult> Download(
-        [FromRoute] [Required] int id,
-        CancellationToken ct
-    )
+    public async Task<IActionResult> Download([FromRoute] [Required] int id, CancellationToken ct)
     {
         var document = await _documentService.GetDocument(id, ct);
         var fileStream = await _minioStorageService.GetFileAsync(document.FilePath, ct);
@@ -107,20 +95,17 @@ public class DocumentController : ControllerBase
     [HttpGet("search")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [LogOperation("Search", "API")]
-    public async Task<ActionResult<object>> SearchDocuments(
-        [FromQuery] [Required] string query,
-        CancellationToken ct
-    )
+    public async Task<ActionResult<object>> SearchDocuments([FromQuery] [Required] string query, CancellationToken ct)
     {
         var response = await _elasticClient.SearchAsync<DocumentDto>(
             s => s
-                .Index("paperless-documents")
-                .Query(q => q
-                    .MultiMatch(mm => mm
-                        .Query(query)
-                        .Fields(new[] { "name", "ocrText" })
-                        .Fuzziness(new Fuzziness("AUTO"))
-                        .MinimumShouldMatch("75%"))),
+                 .Index("paperless-documents")
+                 .Query(q => q
+                     .MultiMatch(mm => mm
+                                       .Query(query)
+                                       .Fields(new[] { "name", "ocrText" })
+                                       .Fuzziness(new Fuzziness("AUTO"))
+                                       .MinimumShouldMatch("75%"))),
             ct
         );
 
@@ -133,10 +118,7 @@ public class DocumentController : ControllerBase
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [LogOperation("Delete", "API")]
-    public async Task<IActionResult> Delete(
-        [FromRoute] [Required] int id,
-        CancellationToken ct
-    )
+    public async Task<IActionResult> Delete([FromRoute] [Required] int id, CancellationToken ct)
     {
         await _documentService.DeleteDocument(id, ct);
         return NoContent();
