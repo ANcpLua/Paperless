@@ -1,4 +1,4 @@
-﻿using Contract.Logger;
+using Contract.Logger;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -15,17 +15,17 @@ public class MinioTests
     public async Task Setup()
     {
         var configBuilder = new ConfigurationBuilder()
-                            .AddJsonFile("service-appsettings.json")
-                            .AddEnvironmentVariables();
+            .AddJsonFile("service-appsettings.json")
+            .AddEnvironmentVariables();
 
         _configuration = configBuilder.Build();
 
         _minioClient = new MinioClient()
-                       .WithEndpoint(_configuration["MinIO:Endpoint"] ?? "localhost:9000")
-                       .WithCredentials(
-                           _configuration["MinIO:AccessKey"],
-                           _configuration["MinIO:SecretKey"])
-                       .Build();
+            .WithEndpoint(_configuration["MinIO:Endpoint"] ?? "localhost:9000")
+            .WithCredentials(
+                _configuration["MinIO:AccessKey"],
+                _configuration["MinIO:SecretKey"])
+            .Build();
 
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         _logger = new OperationLogger(
@@ -66,11 +66,11 @@ public class MinioTests
         // Arrange
         await using var fileStream = File.OpenRead(_testFilePath);
         var putObjectArgs = new PutObjectArgs()
-                            .WithBucket(TestBucket)
-                            .WithObject(TestFileName)
-                            .WithStreamData(fileStream)
-                            .WithObjectSize(fileStream.Length)
-                            .WithContentType("application/pdf");
+            .WithBucket(TestBucket)
+            .WithObject(TestFileName)
+            .WithStreamData(fileStream)
+            .WithObjectSize(fileStream.Length)
+            .WithContentType("application/pdf");
 
         // Act
         await _minioClient.PutObjectAsync(putObjectArgs);
@@ -98,13 +98,13 @@ public class MinioTests
         using var memoryStream = new MemoryStream();
 
         var getObjectArgs = new GetObjectArgs()
-                            .WithBucket(TestBucket)
-                            .WithObject(TestFileName)
-                            .WithCallbackStream(stream =>
-                            {
-                                stream.CopyTo(memoryStream);
-                                memoryStream.Position = 0;
-                            });
+            .WithBucket(TestBucket)
+            .WithObject(TestFileName)
+            .WithCallbackStream(stream =>
+            {
+                stream.CopyTo(memoryStream);
+                memoryStream.Position = 0;
+            });
 
         // Act
         await _minioClient.GetObjectAsync(getObjectArgs);
@@ -127,8 +127,8 @@ public class MinioTests
     {
         // Arrange
         var removeObjectArgs = new RemoveObjectArgs()
-                               .WithBucket(TestBucket)
-                               .WithObject(TestFileName);
+            .WithBucket(TestBucket)
+            .WithObject(TestFileName);
 
         // Act
         await _minioClient.RemoveObjectAsync(removeObjectArgs);
