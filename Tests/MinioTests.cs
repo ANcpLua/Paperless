@@ -1,4 +1,4 @@
-﻿using Contract.Logger;
+using Contract.Logger;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
