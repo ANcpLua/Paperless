@@ -7,7 +7,7 @@ public class OcrTests
 {
     private IOcrClient _ocr = null!;
     private readonly string _testPdfPath = Path.Combine("IntegrationTests", "HelloWorld.pdf");
-    private readonly string _tessDataPath = "./tessdata";
+    private readonly string _tessDataPath = "tessdata";
 
     [SetUp]
     public void SetUp()
