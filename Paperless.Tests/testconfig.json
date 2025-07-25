@@ -1,0 +1,13 @@
+{
+  "ASPNETCORE_ENVIRONMENT": "Testing",
+  "POSTGRES_DB": "paperless_test",
+  "POSTGRES_USER": "postgres",
+  "POSTGRES_PASSWORD": "postgres",
+  "RABBITMQ_USER": "paperless-user",
+  "RABBITMQ_PASSWORD": "paperless-user",
+  "MINIO_ROOT_USER": "paperless-access",
+  "MINIO_ROOT_PASSWORD": "paperless-secret",
+  "MINIO_BUCKET": "paperless-test-bucket",
+  "ELASTICSEARCH_INDEXNAME": "paperless-test-index",
+  "ELASTICSEARCH_VERSION": "9.0.3"
+}

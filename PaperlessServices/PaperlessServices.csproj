@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>dotnet-PaperlessServices-7a18dac8-c1e7-48c7-bffa-bf1d791f6b41</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <LangVersion>preview</LangVersion>
+        <EnablePreviewFeatures>true</EnablePreviewFeatures>
+
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CreatePdf.NET" Version="2.0.1" />
+        <PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.0.7" />
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.5.25277.114"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.7" />
+        <PackageReference Include="Minio" Version="6.0.5" />
+        <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
+        <PackageReference Include="SWEN3.Paperless.RabbitMq" Version="1.0.3" />
+        <PackageReference Include="Testcontainers.Elasticsearch" Version="4.6.0" />
+        <PackageReference Include="Testcontainers.Minio" Version="4.6.0" />
+        <PackageReference Include="Testcontainers.RabbitMq" Version="4.6.0" />
+        <PackageReference Include="TUnit.Assertions" Version="0.25.21" />
+        <PackageReference Include="TUnit.Core" Version="0.25.21" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
+    </ItemGroup>
+</Project>

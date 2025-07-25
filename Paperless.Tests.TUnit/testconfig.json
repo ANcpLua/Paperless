@@ -1,0 +1,12 @@
+{
+  "TestEnvironment": "Integration",
+  "MinIO": {
+    "BucketName": "test-documents"
+  },
+  "Elasticsearch": {
+    "IndexName": "test-index"
+  },
+  "Logging": {
+    "MinimumLevel": "Information"
+  }
+}

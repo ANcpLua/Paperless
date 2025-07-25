@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CreatePdf.NET" Version="2.0.1" />
+        <PackageReference Include="TUnit" Version="0.25.21" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0" />
+        <PackageReference Include="Testcontainers.RabbitMq" Version="4.6.0" />
+        <PackageReference Include="Testcontainers.Elasticsearch" Version="4.6.0" />
+        <PackageReference Include="Testcontainers.Minio" Version="4.6.0" />
+        <PackageReference Include="TUnit.Assertions" Version="0.25.21" />
+        <PackageReference Include="TUnit.Core" Version="0.25.21" />
+        <PackageReference Include="TUnit.Engine" Version="0.25.21" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PaperlessREST\PaperlessREST.csproj" />
+        <!-- PaperlessServices is referenced indirectly through PaperlessREST to avoid conflicts -->
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="testconfig.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="TestFiles\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+</Project>

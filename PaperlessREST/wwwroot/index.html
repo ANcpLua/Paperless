@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paperless - Document OCR System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+<!-- Background with bubbles -->
+<div class="background">
+    <div class="bubble-container" id="bubbleContainer"></div>
+</div>
+
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="nav-content">
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <span>Paperless</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle">
+            <i class="bi bi-sun"></i>
+        </button>
+    </div>
+</nav>
+
+<!-- Main content -->
+<div class="container">
+    <!-- Upload section -->
+    <div class="upload-section">
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">
+                <i class="bi bi-cloud-upload"></i>
+            </div>
+            <h3>Drop PDFs Here</h3>
+            <p>Or click to browse files</p>
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                <i class="bi bi-folder-open"></i>
+                Choose Files
+            </button>
+            <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
+        </div>
+    </div>
+
+    <!-- Search section -->
+    <div class="search-section">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchInput" placeholder="Search documents...">
+            <button id="searchBtn"><i class="bi bi-arrow-right"></i></button>
+            <button id="clearBtn"><i class="bi bi-x"></i></button>
+        </div>
+    </div>
+
+    <!-- Documents section -->
+    <div class="documents-section">
+        <div class="section-header">
+            <h2><i class="bi bi-collection"></i> Documents</h2>
+            <button class="refresh-btn" id="refreshBtn">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+        <div class="documents-grid" id="documentsContainer">
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h3>No documents yet</h3>
+                <p>Upload your first PDF to get started</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications -->
+<div id="notifications" class="notifications"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

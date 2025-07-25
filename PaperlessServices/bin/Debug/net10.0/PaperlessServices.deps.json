@@ -1,0 +1,425 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "PaperlessServices/1.0.0": {
+        "dependencies": {
+          "CreatePdf.NET": "2.0.1",
+          "Elastic.Clients.Elasticsearch": "9.0.7",
+          "JetBrains.Annotations": "2025.2.0",
+          "Microsoft.Extensions.Hosting": "10.0.0-preview.5.25277.114",
+          "Minio": "6.0.5",
+          "RabbitMQ.Client": "7.1.2",
+          "SWEN3.Paperless.RabbitMq": "1.0.3",
+          "TUnit.Assertions": "0.25.21",
+          "TUnit.Core": "0.25.21",
+          "Testcontainers.Elasticsearch": "4.6.0",
+          "Testcontainers.Minio": "4.6.0",
+          "Testcontainers.RabbitMq": "4.6.0"
+        },
+        "runtime": {
+          "PaperlessServices.dll": {}
+        }
+      },
+      "BouncyCastle.Cryptography/2.4.0": {
+        "runtime": {
+          "lib/net6.0/BouncyCastle.Cryptography.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.4.0.33771"
+          }
+        }
+      },
+      "CommunityToolkit.HighPerformance/8.4.0": {
+        "runtime": {
+          "lib/net8.0/CommunityToolkit.HighPerformance.dll": {
+            "assemblyVersion": "8.4.0.0",
+            "fileVersion": "8.4.0.1"
+          }
+        }
+      },
+      "CreatePdf.NET/2.0.1": {
+        "runtime": {
+          "lib/net10.0/CreatePdf.NET.dll": {
+            "assemblyVersion": "2.0.1.0",
+            "fileVersion": "2.0.1.0"
+          }
+        }
+      },
+      "Docker.DotNet.Enhanced/3.128.3": {
+        "runtime": {
+          "lib/net9.0/Docker.DotNet.dll": {
+            "assemblyVersion": "3.128.0.0",
+            "fileVersion": "3.128.3.1"
+          }
+        }
+      },
+      "Docker.DotNet.Enhanced.X509/3.128.3": {
+        "dependencies": {
+          "Docker.DotNet.Enhanced": "3.128.3"
+        },
+        "runtime": {
+          "lib/net9.0/Docker.DotNet.X509.dll": {
+            "assemblyVersion": "3.128.0.0",
+            "fileVersion": "3.128.3.1"
+          }
+        }
+      },
+      "Elastic.Clients.Elasticsearch/9.0.7": {
+        "dependencies": {
+          "Elastic.Transport": "0.9.2"
+        },
+        "runtime": {
+          "lib/net8.0/Elastic.Clients.Elasticsearch.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.7.0"
+          }
+        }
+      },
+      "Elastic.Transport/0.9.2": {
+        "runtime": {
+          "lib/net8.0/Elastic.Transport.dll": {
+            "assemblyVersion": "0.0.0.0",
+            "fileVersion": "0.9.2.0"
+          }
+        }
+      },
+      "JetBrains.Annotations/2025.2.0": {
+        "runtime": {
+          "lib/netstandard2.0/JetBrains.Annotations.dll": {
+            "assemblyVersion": "4242.42.42.42",
+            "fileVersion": "2025.2.0.0"
+          }
+        }
+      },
+      "Microsoft.Extensions.Hosting/10.0.0-preview.5.25277.114": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.EventLog": "10.0.0-preview.5.25277.114"
+        }
+      },
+      "Microsoft.Extensions.Logging.EventLog/10.0.0-preview.5.25277.114": {
+        "dependencies": {
+          "System.Diagnostics.EventLog": "10.0.0-preview.5.25277.114"
+        }
+      },
+      "Minio/6.0.5": {
+        "dependencies": {
+          "CommunityToolkit.HighPerformance": "8.4.0",
+          "System.IO.Hashing": "9.0.4",
+          "System.Reactive": "6.0.1"
+        },
+        "runtime": {
+          "lib/net8.0/Minio.dll": {
+            "assemblyVersion": "6.0.5.0",
+            "fileVersion": "6.0.5.0"
+          }
+        }
+      },
+      "RabbitMQ.Client/7.1.2": {
+        "runtime": {
+          "lib/net8.0/RabbitMQ.Client.dll": {
+            "assemblyVersion": "7.0.0.0",
+            "fileVersion": "7.1.2.0"
+          }
+        }
+      },
+      "SharpZipLib/1.4.2": {
+        "runtime": {
+          "lib/net6.0/ICSharpCode.SharpZipLib.dll": {
+            "assemblyVersion": "1.4.2.13",
+            "fileVersion": "1.4.2.13"
+          }
+        }
+      },
+      "SSH.NET/2024.2.0": {
+        "dependencies": {
+          "BouncyCastle.Cryptography": "2.4.0"
+        },
+        "runtime": {
+          "lib/net8.0/Renci.SshNet.dll": {
+            "assemblyVersion": "2024.2.0.1",
+            "fileVersion": "2024.2.0.1"
+          }
+        }
+      },
+      "SWEN3.Paperless.RabbitMq/1.0.3": {
+        "dependencies": {
+          "RabbitMQ.Client": "7.1.2"
+        },
+        "runtime": {
+          "lib/net10.0/SWEN3.Paperless.RabbitMq.dll": {
+            "assemblyVersion": "1.0.3.0",
+            "fileVersion": "1.0.3.0"
+          }
+        }
+      },
+      "System.Diagnostics.EventLog/10.0.0-preview.5.25277.114": {
+        "runtimeTargets": {
+          "runtimes/win/lib/net10.0/System.Diagnostics.EventLog.Messages.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.27814"
+          }
+        }
+      },
+      "System.IO.Hashing/9.0.4": {
+        "runtime": {
+          "lib/net9.0/System.IO.Hashing.dll": {
+            "assemblyVersion": "9.0.0.4",
+            "fileVersion": "9.0.425.16305"
+          }
+        }
+      },
+      "System.Reactive/6.0.1": {
+        "runtime": {
+          "lib/net6.0/System.Reactive.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.1.7420"
+          }
+        }
+      },
+      "Testcontainers/4.6.0": {
+        "dependencies": {
+          "Docker.DotNet.Enhanced": "3.128.3",
+          "Docker.DotNet.Enhanced.X509": "3.128.3",
+          "SSH.NET": "2024.2.0",
+          "SharpZipLib": "1.4.2"
+        },
+        "runtime": {
+          "lib/net9.0/Testcontainers.dll": {
+            "assemblyVersion": "4.6.0.0",
+            "fileVersion": "4.6.0.0"
+          }
+        }
+      },
+      "Testcontainers.Elasticsearch/4.6.0": {
+        "dependencies": {
+          "Testcontainers": "4.6.0"
+        },
+        "runtime": {
+          "lib/net9.0/Testcontainers.Elasticsearch.dll": {
+            "assemblyVersion": "4.6.0.0",
+            "fileVersion": "4.6.0.0"
+          }
+        }
+      },
+      "Testcontainers.Minio/4.6.0": {
+        "dependencies": {
+          "Testcontainers": "4.6.0"
+        },
+        "runtime": {
+          "lib/net9.0/Testcontainers.Minio.dll": {
+            "assemblyVersion": "4.6.0.0",
+            "fileVersion": "4.6.0.0"
+          }
+        }
+      },
+      "Testcontainers.RabbitMq/4.6.0": {
+        "dependencies": {
+          "Testcontainers": "4.6.0"
+        },
+        "runtime": {
+          "lib/net9.0/Testcontainers.RabbitMq.dll": {
+            "assemblyVersion": "4.6.0.0",
+            "fileVersion": "4.6.0.0"
+          }
+        }
+      },
+      "TUnit.Assertions/0.25.21": {
+        "runtime": {
+          "lib/net9.0/TUnit.Assertions.dll": {
+            "assemblyVersion": "0.25.21.0",
+            "fileVersion": "0.25.21.0"
+          }
+        }
+      },
+      "TUnit.Core/0.25.21": {
+        "runtime": {
+          "lib/net9.0/TUnit.Core.dll": {
+            "assemblyVersion": "0.25.21.0",
+            "fileVersion": "0.25.21.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "PaperlessServices/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "BouncyCastle.Cryptography/2.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-SwXsAV3sMvAU/Nn31pbjhWurYSjJ+/giI/0n6tCrYoupEK34iIHCuk3STAd9fx8yudM85KkLSVdn951vTng/vQ==",
+      "path": "bouncycastle.cryptography/2.4.0",
+      "hashPath": "bouncycastle.cryptography.2.4.0.nupkg.sha512"
+    },
+    "CommunityToolkit.HighPerformance/8.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-flxspiBs0G/0GMp7IK2J2ijV9bTG6hEwFc/z6ekHqB6nwRJ4Ry2yLdx+TkbCUYFCl4XhABkAwomeKbT6zM2Zlg==",
+      "path": "communitytoolkit.highperformance/8.4.0",
+      "hashPath": "communitytoolkit.highperformance.8.4.0.nupkg.sha512"
+    },
+    "CreatePdf.NET/2.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jGsq+nsc4DFlUCXBn174uX1eR3vr+fAuPZCPDN2GQjm4pffv9dJRLZjK0uHwvhYwVGNm/C/OYrUdJXL/nKTaUQ==",
+      "path": "createpdf.net/2.0.1",
+      "hashPath": "createpdf.net.2.0.1.nupkg.sha512"
+    },
+    "Docker.DotNet.Enhanced/3.128.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-yOiBJfGltxjMTPBRVPt2Yeiqy2rLNQSf5x0U57FgipbsGnCXSm1a04UHi3h2QtABJSpTSHoBw+LPqA6yN9CGFg==",
+      "path": "docker.dotnet.enhanced/3.128.3",
+      "hashPath": "docker.dotnet.enhanced.3.128.3.nupkg.sha512"
+    },
+    "Docker.DotNet.Enhanced.X509/3.128.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-U6G7H+vX0Htk86Fd1xS5i7iRGd0C33vx61sLH8gI9uzxqQJRfeYCbuzQOOp3J7m4zVZ2mP6x9gB9onspgP0QCg==",
+      "path": "docker.dotnet.enhanced.x509/3.128.3",
+      "hashPath": "docker.dotnet.enhanced.x509.3.128.3.nupkg.sha512"
+    },
+    "Elastic.Clients.Elasticsearch/9.0.7": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-EdLRCO+/5Q5O2HUQ3fGOnH190/2hin8ykiM/O3gm40jmHs8pRqAbGER+MFZeWU4KoZQklJ1s3Ei/rpeiw4OK1A==",
+      "path": "elastic.clients.elasticsearch/9.0.7",
+      "hashPath": "elastic.clients.elasticsearch.9.0.7.nupkg.sha512"
+    },
+    "Elastic.Transport/0.9.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-evL2QL9tsjsWMuV/JAv4EyJmG0S//Np9z35qpWWn70+FiGiWYYsHgZEm7Vs4ad/CQh6YGMZcJ/G3len6+LzjUA==",
+      "path": "elastic.transport/0.9.2",
+      "hashPath": "elastic.transport.0.9.2.nupkg.sha512"
+    },
+    "JetBrains.Annotations/2025.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-2BvMkOSW+50EbQFhWFIPWTqmcDLiyyjwkMN7lN386bhP2vN/7ts5t59qu11HtenmHFxqDzaD8J1fFoh+QTOzVA==",
+      "path": "jetbrains.annotations/2025.2.0",
+      "hashPath": "jetbrains.annotations.2025.2.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Hosting/10.0.0-preview.5.25277.114": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-yyvRTegMQxEm5HgmBHpyKiGZEeWF7ZKG4wsfFmeVU9UdJDyIhhNc4sSCWqSZES3SNma6nbU1cW5PeWbwRpHM5Q==",
+      "path": "microsoft.extensions.hosting/10.0.0-preview.5.25277.114",
+      "hashPath": "microsoft.extensions.hosting.10.0.0-preview.5.25277.114.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.EventLog/10.0.0-preview.5.25277.114": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GG1/jAgjOOZ11ByUyHszAKeqLnRE3sSXb6p8lebVj9UIso3oqZSlSFWJT3rCLLShOoPnW5b3QJlSbXfbVjSzPw==",
+      "path": "microsoft.extensions.logging.eventlog/10.0.0-preview.5.25277.114",
+      "hashPath": "microsoft.extensions.logging.eventlog.10.0.0-preview.5.25277.114.nupkg.sha512"
+    },
+    "Minio/6.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-AK3JIDZnFZg2Hpkqo6vlzyiEC4OifG+jQbuqpAtXePnIo49G4pNn27THh3DI8s4o84b/MMBQF+n1DEwBNenxsg==",
+      "path": "minio/6.0.5",
+      "hashPath": "minio.6.0.5.nupkg.sha512"
+    },
+    "RabbitMQ.Client/7.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-y3c6ulgULScWthHw5PLM1ShHRLhxg0vCtzX/hh61gRgNecL3ZC3WoBW2HYHoXOVRqTl99Br9E7CZEytGZEsCyQ==",
+      "path": "rabbitmq.client/7.1.2",
+      "hashPath": "rabbitmq.client.7.1.2.nupkg.sha512"
+    },
+    "SharpZipLib/1.4.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A==",
+      "path": "sharpziplib/1.4.2",
+      "hashPath": "sharpziplib.1.4.2.nupkg.sha512"
+    },
+    "SSH.NET/2024.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9r+4UF2P51lTztpd+H7SJywk7WgmlWB//Cm2o96c6uGVZU5r58ys2/cD9pCgTk0zCdSkfflWL1WtqQ9I4IVO9Q==",
+      "path": "ssh.net/2024.2.0",
+      "hashPath": "ssh.net.2024.2.0.nupkg.sha512"
+    },
+    "SWEN3.Paperless.RabbitMq/1.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-d8rGPF1ha0DRbyZWDkSDdHUMFghZK8/2+PL2m0ggLc0D1k/ny5VEJfqoYFi1q/dmvyiiCUnWrYj3z2Qs/o3S1A==",
+      "path": "swen3.paperless.rabbitmq/1.0.3",
+      "hashPath": "swen3.paperless.rabbitmq.1.0.3.nupkg.sha512"
+    },
+    "System.Diagnostics.EventLog/10.0.0-preview.5.25277.114": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-8F+FJBhZAi1Xl+2quQt2lv3KRkKkmdaGIJ4/dICWs5ARFBNFf3ISKL2d/5Xdgx+fDChzgM5uYY9EUY6jeSPrRQ==",
+      "path": "system.diagnostics.eventlog/10.0.0-preview.5.25277.114",
+      "hashPath": "system.diagnostics.eventlog.10.0.0-preview.5.25277.114.nupkg.sha512"
+    },
+    "System.IO.Hashing/9.0.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-WogPvgAFqQORFD8Iyha6RZ+/1QB3dsWRWxbwi8/HHVgiGQ8z0oMWpwe8Kk3Ti+Roe+P6a3sBg+WwBfEsyziZKg==",
+      "path": "system.io.hashing/9.0.4",
+      "hashPath": "system.io.hashing.9.0.4.nupkg.sha512"
+    },
+    "System.Reactive/6.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-rHaWtKDwCi9qJ3ObKo8LHPMuuwv33YbmQi7TcUK1C264V3MFnOr5Im7QgCTdLniztP3GJyeiSg5x8NqYJFqRmg==",
+      "path": "system.reactive/6.0.1",
+      "hashPath": "system.reactive.6.0.1.nupkg.sha512"
+    },
+    "Testcontainers/4.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-JFGPwuEqVuY3qJiGuxR+2J+E+dGc+1TgbBooB1346zUFKJqH6zWeSCXju5Siwek3ExOVRES4AbECXoaYt9jkXA==",
+      "path": "testcontainers/4.6.0",
+      "hashPath": "testcontainers.4.6.0.nupkg.sha512"
+    },
+    "Testcontainers.Elasticsearch/4.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-yFBE2RpHf/jF1rSzaNn91QNFg72N7+h5IMFKpNYtysHKYzaKYSeX/zSdxIICgw6K8gJkMt0d8tN1/up988I8gw==",
+      "path": "testcontainers.elasticsearch/4.6.0",
+      "hashPath": "testcontainers.elasticsearch.4.6.0.nupkg.sha512"
+    },
+    "Testcontainers.Minio/4.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qk76NKS7XzCIz9KQ2hyrtlIZWpoUVaAEqCP9rN0P0K11qXFGF2u5keqGBthSS1+dsCMljFsH8WdWfaiH/MMHpg==",
+      "path": "testcontainers.minio/4.6.0",
+      "hashPath": "testcontainers.minio.4.6.0.nupkg.sha512"
+    },
+    "Testcontainers.RabbitMq/4.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-UFPMvZWqhGNIvMkmvNdIC19Fg5ZnhEESLKrTxY9BM2nCwxo3HGr1AU30tPL6Sa/RLhK3BuFpB/j14QH/jp8zvw==",
+      "path": "testcontainers.rabbitmq/4.6.0",
+      "hashPath": "testcontainers.rabbitmq.4.6.0.nupkg.sha512"
+    },
+    "TUnit.Assertions/0.25.21": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-eaccIw/l6jP/6es8HAiAoffXynL2xIe6riB1IK8WTmdbIGggvY7LeSsuwbLuKV/baEEl9pWnTyg9W4TjpNuk6w==",
+      "path": "tunit.assertions/0.25.21",
+      "hashPath": "tunit.assertions.0.25.21.nupkg.sha512"
+    },
+    "TUnit.Core/0.25.21": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vlYyHa2oxvrFtDPu7Jw0yibY5KU7fDcSMcGj3yuWumIkh3oh/o9AT11kfzuef/kUSdzRbyQzAsu+V/4GbB3UQA==",
+      "path": "tunit.core/0.25.21",
+      "hashPath": "tunit.core.0.25.21.nupkg.sha512"
+    }
+  }
+}
