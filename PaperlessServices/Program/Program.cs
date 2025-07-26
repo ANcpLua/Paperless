@@ -308,7 +308,6 @@ namespace PaperlessServices
 
 // ============== LEAN TEST INFRASTRUCTURE ==============
 #if DEBUG
-// ============== LEAN TEST INFRASTRUCTURE ==============
 
 /// <summary>
 /// Test containers - Resource Reaper handles cleanup automatically.
@@ -468,7 +467,7 @@ public class SearchIndexServiceTests
     {
         // Arrange
         var docId = Guid.NewGuid();
-        var content = "This is searchable content";
+        const string content = "This is searchable content";
 
         // Act & Assert (no exception means success)
         await ServicesHost.SearchIndexService.IndexDocumentAsync(

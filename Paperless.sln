@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 				EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaperlessREST", "PaperlessREST\PaperlessREST.csproj", "{25227D74-D9EC-4A28-9530-8F247EAA0E0F}"
+
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaperlessServices", "PaperlessServices\PaperlessServices.csproj", "{9EB8CBE9-3992-475C-BDCA-16C100A2828E}"
 EndProject

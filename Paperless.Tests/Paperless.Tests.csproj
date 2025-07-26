@@ -6,12 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>preview</LangVersion>
+        <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.Http.Validation.Generated</InterceptorsNamespaces>
         <EnablePreviewFeatures>true</EnablePreviewFeatures>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="CreatePdf.NET" Version="2.0.1" />
-        <PackageReference Include="TUnit" Version="0.25.21" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0-preview.6.25358.103" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-preview.6.25358.103" />
         <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0" />
@@ -21,6 +21,8 @@
         <PackageReference Include="TUnit.Assertions" Version="0.25.21" />
         <PackageReference Include="TUnit.Core" Version="0.25.21" />
         <PackageReference Include="TUnit.Engine" Version="0.25.21" />
+        <PackageReference Include="TUnit" Version="0.25.21" />
+        
     </ItemGroup>
 
     <ItemGroup>
@@ -35,6 +37,10 @@
         <None Update="TestFiles\**\*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="output\" />
     </ItemGroup>
 
 </Project>

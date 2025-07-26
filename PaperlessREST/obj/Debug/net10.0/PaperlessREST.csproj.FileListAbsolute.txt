@@ -136,6 +136,7 @@
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.csproj.CoreCompileInputs.cache
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.MvcApplicationPartsAssemblyInfo.cs
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.MvcApplicationPartsAssemblyInfo.cache
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.sourcelink.json
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/rjimswa.dswa.cache.json
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
@@ -150,6 +151,9 @@
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.pdb
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.genruntimeconfig.cache
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/ref/PaperlessREST.dll
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/dp1aqp1owv-{0}-xzh3c765q9-xzh3c765q9.gz
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/x2m3v9oewl-{0}-k72ip9e6s5-k72ip9e6s5.gz
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/mmi6plf1oo-{0}-4h3nlrl5ut-4h3nlrl5ut.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/Scalar.AspNetCore.dll
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/dp1aqp1owv-{0}-tspjlrx3xr-tspjlrx3xr.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/x2m3v9oewl-{0}-egfmoqonmc-egfmoqonmc.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/xxhhcbaorv-{0}-wwrqclryre-wwrqclryre.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/b4iykx7ebs-{0}-rbl4r1adz2-rbl4r1adz2.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/mmi6plf1oo-{0}-nglb59qhad-nglb59qhad.gz

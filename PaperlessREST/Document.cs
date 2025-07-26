@@ -15,7 +15,6 @@ public class Document
     // Public constructor for EF Core and Mapster
     public Document() { }
 
-
     // Factory method for creating new documents
     public static Document CreateFromUpload(string fileName)
     {

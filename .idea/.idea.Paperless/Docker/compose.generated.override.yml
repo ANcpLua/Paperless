@@ -5,67 +5,35 @@ services:
       context: "/Users/ancplua/RiderProjects/Paperless"
       dockerfile: "PaperlessREST/Dockerfile"
       target: "base"
-      args:
-        BUILD_CONFIGURATION: "Debug"
     command: []
     entrypoint:
-    - "/opt/JetBrains/RiderDebuggerTools/linux-arm64/JetBrains.Debugger.Worker"
-    - "--runtimeconfig"
-    - "/opt/JetBrains/RiderDebuggerTools/JetBrains.Debugger.Worker.runtimeconfig.json"
-    - "--mode=server"
-    - "--frontend-port=57000"
-    - "--backend-port=57200"
-    - "--roslyn-worker-port=57412"
-    - "--timeout=60"
+    - "dotnet"
+    - "/app/bin/Debug/net10.0/PaperlessREST.dll"
     environment:
       ASPNETCORE_STATICWEBASSETS: "/app/bin/Debug/net10.0/PaperlessREST.staticwebassets.runtime.CT.json"
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
-      RIDER_DEBUGGER_LOG_DIR: "/var/opt/JetBrains/RiderDebuggerTools"
-      RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "paperless-paperlessrest:dev"
-    ports:
-    - "127.0.0.1:57012:57000"
-    - "127.0.0.1:57212:57200"
-    - "127.0.0.1:57412:57412"
+    ports: []
     volumes:
     - "/Users/ancplua/RiderProjects/Paperless/PaperlessREST:/app:rw"
     - "/Users/ancplua/RiderProjects/Paperless:/src:rw"
     - "/Users/ancplua/.nuget/packages:/home/app/.nuget/packages"
-    - "/Users/ancplua/.local/share/JetBrains/RiderRemoteDebugger/2025.1.4/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Applications/Rider.app/Contents/bin/backend-log.xml:/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
-    - "/Users/ancplua/Library/Logs/JetBrains/Rider2025.1/DebuggerWorker/JetBrains.Debugger.Worker.2025_7_25_19_59_14:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"
   paperlessservices:
     build:
       context: "/Users/ancplua/RiderProjects/Paperless"
       dockerfile: "PaperlessServices/Dockerfile"
       target: "base"
-      args:
-        BUILD_CONFIGURATION: "Debug"
     command: []
     entrypoint:
-    - "/opt/JetBrains/RiderDebuggerTools/linux-arm64/JetBrains.Debugger.Worker"
-    - "--runtimeconfig"
-    - "/opt/JetBrains/RiderDebuggerTools/JetBrains.Debugger.Worker.runtimeconfig.json"
-    - "--mode=server"
-    - "--frontend-port=57000"
-    - "--backend-port=57200"
-    - "--roslyn-worker-port=57413"
-    - "--timeout=60"
+    - "dotnet"
+    - "/app/bin/Debug/net10.0/PaperlessServices.dll"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
-      RIDER_DEBUGGER_LOG_DIR: "/var/opt/JetBrains/RiderDebuggerTools"
-      RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "paperless-paperlessservices:dev"
-    ports:
-    - "127.0.0.1:57013:57000"
-    - "127.0.0.1:57213:57200"
-    - "127.0.0.1:57413:57413"
+    ports: []
     volumes:
     - "/Users/ancplua/RiderProjects/Paperless/PaperlessServices:/app:rw"
     - "/Users/ancplua/RiderProjects/Paperless:/src:rw"
     - "/Users/ancplua/.nuget/packages:/home/app/.nuget/packages"
-    - "/Users/ancplua/.local/share/JetBrains/RiderRemoteDebugger/2025.1.4/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Applications/Rider.app/Contents/bin/backend-log.xml:/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
-    - "/Users/ancplua/Library/Logs/JetBrains/Rider2025.1/DebuggerWorker/JetBrains.Debugger.Worker.2025_7_25_19_59_14:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"

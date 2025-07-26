@@ -1,63 +1,25 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
-using Minio;
-using Minio.DataModel.Args;
-using Testcontainers.Elasticsearch;
-using Testcontainers.Minio;
-using Testcontainers.PostgreSql;
-using Testcontainers.RabbitMq;
-using TUnit.Core.Interfaces;
-
 namespace Paperless.Tests;
 
-/// <summary>
-/// Manages the lifecycle of test containers for integration testing.
-/// </summary>
 public sealed class TestContainersManager : IAsyncInitializer
 {
-    private readonly PostgreSqlContainer _postgres;
-    private readonly RabbitMqContainer _rabbitMq;
-    private readonly MinioContainer _minio;
-    private readonly ElasticsearchContainer _elasticsearch;
-    private readonly string _minioBucket;
-    private readonly string _elasticsearchIndex;
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder().Build();
+    private readonly RabbitMqContainer _rabbitMq = new RabbitMqBuilder().Build();
+    private readonly MinioContainer _minio = new MinioBuilder().Build();
 
-    public TestContainersManager()
-    {
-        _postgres = new PostgreSqlBuilder()
-            .WithDatabase(GetRequiredConfig("POSTGRES_DB"))
-            .WithUsername(GetRequiredConfig("POSTGRES_USER"))
-            .WithPassword(GetRequiredConfig("POSTGRES_PASSWORD"))
-            .Build();
+    private readonly ElasticsearchContainer _elasticsearch = new ElasticsearchBuilder()
+        .WithImage("elasticsearch:9.0.3")
+        .WithEnvironment("xpack.security.enabled", "false")
+        .WithEnvironment("discovery.type", "single-node")
+        .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+        .Build();
 
-        _rabbitMq = new RabbitMqBuilder()
-            .WithUsername(GetRequiredConfig("RABBITMQ_USER"))
-            .WithPassword(GetRequiredConfig("RABBITMQ_PASSWORD"))
-            .Build();
+    private bool _initialized = false;
+    private IReadOnlyDictionary<string, string?>? _configuration;
 
-        _minio = new MinioBuilder()
-            .WithUsername(GetRequiredConfig("MINIO_ROOT_USER"))
-            .WithPassword(GetRequiredConfig("MINIO_ROOT_PASSWORD"))
-            .Build();
-
-        _minioBucket = GetRequiredConfig("MINIO_BUCKET");
-
-        _elasticsearch = new ElasticsearchBuilder()
-            .WithImage($"elasticsearch:{GetRequiredConfig("ELASTICSEARCH_VERSION")}")
-            .WithEnvironment("xpack.security.enabled", "false")
-            .WithEnvironment("discovery.type", "single-node")
-            .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-            .Build();
-
-        _elasticsearchIndex = GetRequiredConfig("ELASTICSEARCH_INDEXNAME");
-    }
-
-    /// <summary>
-    /// Initializes all containers and prepares them for testing.
-    /// </summary>
     public async Task InitializeAsync()
     {
+        if (_initialized) return;
+
         await Task.WhenAll(
             _postgres.StartAsync(),
             _rabbitMq.StartAsync(),
@@ -65,66 +27,49 @@ public sealed class TestContainersManager : IAsyncInitializer
             _elasticsearch.StartAsync()
         );
 
-        await CreateMinioBucketAsync();
-    }
-
-    /// <summary>
-    /// Gets the configuration values for the application under test.
-    /// </summary>
-    public IReadOnlyDictionary<string, string?> GetConfiguration()
-    {
-        return new Dictionary<string, string?>
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        _configuration = new Dictionary<string, string?>
         {
-            ["ASPNETCORE_ENVIRONMENT"] = GetRequiredConfig("ASPNETCORE_ENVIRONMENT"),
+            ["ASPNETCORE_ENVIRONMENT"] = "Development",
             ["ConnectionStrings:PaperlessDb"] = _postgres.GetConnectionString(),
-            ["PostgreSQL__ConnectionString"] = _postgres.GetConnectionString(),
-            ["RabbitMQ__Uri"] = BuildRabbitMqUri(),
-            ["Storage__Minio__Endpoint"] = $"{_minio.Hostname}:{_minio.GetMappedPublicPort(9000)}",
-            ["Storage__Minio__AccessKey"] = _minio.GetAccessKey(),
-            ["Storage__Minio__SecretKey"] = _minio.GetSecretKey(),
-            ["Storage__Minio__BucketName"] = _minioBucket,
-            ["Storage__Minio__UseSsl"] = "false",
-            ["Elasticsearch__Uri"] = $"http://{_elasticsearch.Hostname}:{_elasticsearch.GetMappedPublicPort(9200)}",
-            ["Elasticsearch__IndexName"] = _elasticsearchIndex
+            ["RabbitMQ:Uri"] = _rabbitMq.GetConnectionString(),
+            ["Storage:Minio:Endpoint"] = $"{_minio.Hostname}:{_minio.GetMappedPublicPort(9000)}",
+            ["Storage:Minio:AccessKey"] = _minio.GetAccessKey(),
+            ["Storage:Minio:SecretKey"] = _minio.GetSecretKey(),
+            ["Storage:Minio:BucketName"] = $"test{timestamp}",
+            ["Storage:Minio:UseSsl"] = "false",
+            ["Elasticsearch:Uri"] = $"http://{_elasticsearch.Hostname}:{_elasticsearch.GetMappedPublicPort(9200)}",
+            ["Elasticsearch:IndexName"] = "test-index"
         };
+
+        _initialized = true;
     }
 
-    private async Task CreateMinioBucketAsync()
-    {
-        var minioClient = new MinioClient()
-            .WithEndpoint(_minio.GetConnectionString().Replace("http://", ""))
-            .WithCredentials(_minio.GetAccessKey(), _minio.GetSecretKey())
-            .WithSSL(false)
-            .Build();
+    public IReadOnlyDictionary<string, string?> GetConfiguration() => _configuration!;
+}
 
-        var bucketExistsArgs = new BucketExistsArgs().WithBucket(_minioBucket);
-        if (!await minioClient.BucketExistsAsync(bucketExistsArgs))
+public sealed class PaperlessWebApplication : WebApplicationFactory<Program>, IAsyncInitializer
+{
+    [ClassDataSource<TestContainersManager>(Shared = SharedType.PerTestSession)]
+    public required TestContainersManager Containers { get; init; }
+
+    public async Task InitializeAsync()
+    {
+        await Containers.InitializeAsync();
+        _ = Server;
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+
+        foreach (var kvp in Containers.GetConfiguration())
         {
-            var makeBucketArgs = new MakeBucketArgs().WithBucket(_minioBucket);
-            await minioClient.MakeBucketAsync(makeBucketArgs);
+            builder.UseSetting(kvp.Key, kvp.Value);
         }
-    }
-
-    private string BuildRabbitMqUri()
-    {
-        var user = GetRequiredConfig("RABBITMQ_USER");
-        var password = GetRequiredConfig("RABBITMQ_PASSWORD");
-        var hostname = _rabbitMq.Hostname;
-        var port = _rabbitMq.GetMappedPublicPort(5672);
-
-        return $"amqp://{user}:{password}@{hostname}:{port}";
-    }
-
-    private static string GetRequiredConfig(string key)
-    {
-        return TestContext.Configuration.Get(key)
-               ?? throw new InvalidOperationException($"Configuration key '{key}' is missing from testconfig.json");
     }
 }
 
-/// <summary>
-/// Base class for integration tests providing common test infrastructure.
-/// </summary>
 public abstract class IntegrationTestBase
 {
     [ClassDataSource<PaperlessWebApplication>(Shared = SharedType.PerTestSession)]
@@ -136,23 +81,20 @@ public abstract class IntegrationTestBase
     protected HttpClient CreateClient() => Application.CreateClient();
 }
 
-/// <summary>
-/// Provides a configured test server for Paperless API integration tests.
-/// </summary>
-public sealed class PaperlessWebApplication : WebApplicationFactory<Program>, IAsyncInitializer
+public static class PdfTestHelper
 {
-    [ClassDataSource<TestContainersManager>(Shared = SharedType.PerTestSession)]
-    public required TestContainersManager Containers { get; init; }
-
-    public Task InitializeAsync() => Task.CompletedTask;
-
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    /// <summary>
+    /// Creates a simple PDF for testing.
+    ///  All we need no multiple pages or complex layouts, just a single page with text.
+    ///  use this as single source of truth for PDF generation in tests.
+    ///  This will be used to test PDF upload and processing, nothing more.
+    /// </summary>
+    public static async Task<byte[]> CreateTestPdf()
     {
-        builder.UseEnvironment("Testing");
+        var path = await Pdf.Create()
+            .AddText("Hello World!")
+            .SaveAsync("Test.Pdf");
 
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(Containers.GetConfiguration());
-        });
+        return await File.ReadAllBytesAsync(path);
     }
 }

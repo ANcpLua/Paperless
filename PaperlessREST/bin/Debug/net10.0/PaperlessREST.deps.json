@@ -24,7 +24,8 @@
           "Minio": "6.0.5",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.0-preview.5",
           "RabbitMQ.Client": "7.1.2",
-          "SWEN3.Paperless.RabbitMq": "1.0.3"
+          "SWEN3.Paperless.RabbitMq": "1.0.3",
+          "Scalar.AspNetCore": "2.6.4"
         },
         "runtime": {
           "PaperlessREST.dll": {}
@@ -665,6 +666,14 @@
           }
         }
       },
+      "Scalar.AspNetCore/2.6.4": {
+        "runtime": {
+          "lib/net9.0/Scalar.AspNetCore.dll": {
+            "assemblyVersion": "2.6.4.0",
+            "fileVersion": "2.6.4.0"
+          }
+        }
+      },
       "SWEN3.Paperless.RabbitMq/1.0.3": {
         "dependencies": {
           "RabbitMQ.Client": "7.1.2"
@@ -1113,6 +1122,13 @@
       "sha512": "sha512-y3c6ulgULScWthHw5PLM1ShHRLhxg0vCtzX/hh61gRgNecL3ZC3WoBW2HYHoXOVRqTl99Br9E7CZEytGZEsCyQ==",
       "path": "rabbitmq.client/7.1.2",
       "hashPath": "rabbitmq.client.7.1.2.nupkg.sha512"
+    },
+    "Scalar.AspNetCore/2.6.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-sZxJ8icJMNxaZrdzZ3pIFl9AHLy4H3nYG0dCTEPwhpqB+3De3Q8c7mWQyt83wrcs7tUhJubuevjteiig/h4i3g==",
+      "path": "scalar.aspnetcore/2.6.4",
+      "hashPath": "scalar.aspnetcore.2.6.4.nupkg.sha512"
     },
     "SWEN3.Paperless.RabbitMq/1.0.3": {
       "type": "package",

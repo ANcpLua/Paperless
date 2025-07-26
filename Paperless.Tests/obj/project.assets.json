@@ -1394,6 +1394,39 @@
           }
         }
       },
+      "Scalar.AspNetCore/2.6.4": {
+        "type": "package",
+        "compile": {
+          "lib/net9.0/Scalar.AspNetCore.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net9.0/Scalar.AspNetCore.dll": {
+            "related": ".xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
+      "Scalar.Kiota.Extension/1.0.0-preview.6": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNetCore.OpenApi": "10.0.0-preview.6.25358.103",
+          "Scalar.AspNetCore": "2.6.4"
+        },
+        "compile": {
+          "lib/net10.0/Scalar.Kiota.Extension.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Scalar.Kiota.Extension.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "SharpZipLib/1.4.2": {
         "type": "package",
         "compile": {
@@ -1679,7 +1712,9 @@
           "Minio": "6.0.5",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.0-preview.5",
           "RabbitMQ.Client": "7.1.2",
-          "SWEN3.Paperless.RabbitMq": "1.0.3"
+          "SWEN3.Paperless.RabbitMq": "1.0.3",
+          "Scalar.AspNetCore": "2.6.4",
+          "Scalar.Kiota.Extension": "1.0.0-preview.6"
         },
         "compile": {
           "bin/placeholder/PaperlessREST.dll": {}
@@ -4185,6 +4220,37 @@
         "lib/netstandard2.0/RabbitMQ.Client.xml",
         "rabbitmq.client.7.1.2.nupkg.sha512",
         "rabbitmq.client.nuspec"
+      ]
+    },
+    "Scalar.AspNetCore/2.6.4": {
+      "sha512": "sZxJ8icJMNxaZrdzZ3pIFl9AHLy4H3nYG0dCTEPwhpqB+3De3Q8c7mWQyt83wrcs7tUhJubuevjteiig/h4i3g==",
+      "type": "package",
+      "path": "scalar.aspnetcore/2.6.4",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "icon.png",
+        "lib/net8.0/Scalar.AspNetCore.dll",
+        "lib/net8.0/Scalar.AspNetCore.xml",
+        "lib/net9.0/Scalar.AspNetCore.dll",
+        "lib/net9.0/Scalar.AspNetCore.xml",
+        "scalar.aspnetcore.2.6.4.nupkg.sha512",
+        "scalar.aspnetcore.nuspec"
+      ]
+    },
+    "Scalar.Kiota.Extension/1.0.0-preview.6": {
+      "sha512": "9+ZjT5lrZjONobuBj9DMEdEPKba/LxnMCC902TaOfl5utOze1NtLA4wvS5TMGTrr8N1ihMdfchlHUd+8V0QgoQ==",
+      "type": "package",
+      "path": "scalar.kiota.extension/1.0.0-preview.6",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net10.0/Scalar.Kiota.Extension.dll",
+        "lib/net10.0/Scalar.Kiota.Extension.xml",
+        "scalar.kiota.extension.1.0.0-preview.6.nupkg.sha512",
+        "scalar.kiota.extension.nuspec"
       ]
     },
     "SharpZipLib/1.4.2": {

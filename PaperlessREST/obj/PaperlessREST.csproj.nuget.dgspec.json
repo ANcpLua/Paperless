@@ -122,6 +122,14 @@
             "SWEN3.Paperless.RabbitMq": {
               "target": "Package",
               "version": "[1.0.3, )"
+            },
+            "Scalar.AspNetCore": {
+              "target": "Package",
+              "version": "[2.6.4, )"
+            },
+            "Scalar.Kiota.Extension": {
+              "target": "Package",
+              "version": "[1.0.0-preview.6, )"
             }
           },
           "imports": [

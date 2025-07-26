@@ -3,80 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paperless - Document OCR System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Paperless - A Modern OCR App</title>
+
+    <!-- Google Fonts: Inter for UI, Fira Code for code/previews -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap"
+          rel="stylesheet">
+
+    <!-- Phosphor Icons for a clean, modern look -->
+    <script src="/libs/phosphor-icons/phosphor-icons.js"></script>
+
+    <!-- The New Stylesheet -->
     <link href="styles.css" rel="stylesheet">
+
+    <!-- Preload script to prevent flash of unstyled content on dark mode -->
+    <script>
+        (function () {
+            const theme = localStorage.getItem('paperless-theme') || 'system';
+            if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
 </head>
 <body>
-<!-- Background with bubbles -->
-<div class="background">
-    <div class="bubble-container" id="bubbleContainer"></div>
+
+<!-- Main application grid -->
+<div class="app-grid">
+
+    <!-- Sidebar for navigation and actions -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="ph-bold ph-leaf"></i>
+            <h1>Paperless</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <p class="nav-title">Documents</p>
+                <a href="#" class="nav-link active" id="nav-all-docs">
+                    <i class="ph ph-files"></i>
+                    <span>All Documents</span>
+                </a>
+                <a href="#" class="nav-link" id="nav-search-btn">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <span>Search</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <p class="nav-title">System</p>
+                <a href="#" class="nav-link" id="refresh-btn">
+                    <i class="ph ph-arrow-clockwise"></i>
+                    <span>Refresh</span>
+                </a>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="theme-switcher" id="theme-switcher">
+                <button data-theme="light" title="Light Mode"><i class="ph ph-sun"></i></button>
+                <button data-theme="dark" title="Dark Mode"><i class="ph ph-moon"></i></button>
+                <button data-theme="system" title="System Default"><i class="ph ph-desktop"></i></button>
+            </div>
+            <div class="connection-status" id="sse-status">
+                <div class="indicator"></div>
+                <span class="status-text"></span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main content area -->
+    <main class="main-content">
+        <header class="main-header">
+            <div class="search-bar" id="search-bar">
+                <i class="ph ph-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Search by name or content...">
+                <button id="clear-search-btn" class="clear-search-btn" title="Clear search"><i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+            <button class="upload-btn" id="upload-btn">
+                <i class="ph-bold ph-upload-simple"></i>
+                <span>Upload</span>
+            </button>
+        </header>
+
+        <!-- Container for documents or other views -->
+        <div class="content-area" id="content-area">
+            <!-- Documents will be rendered here by app.js -->
+        </div>
+    </main>
 </div>
 
-<!-- Navigation -->
-<nav class="navbar">
-    <div class="nav-content">
-        <div class="brand">
-            <div class="brand-icon">
-                <i class="bi bi-file-earmark-text"></i>
-            </div>
-            <span>Paperless</span>
-        </div>
-        <button class="theme-toggle" id="themeToggle">
-            <i class="bi bi-sun"></i>
-        </button>
+<!-- Dropzone overlay for file uploads -->
+<div class="dropzone-overlay" id="dropzone-overlay">
+    <div class="dropzone-content">
+        <i class="ph-bold ph-upload-simple"></i>
+        <h2>Drop your PDF files here</h2>
+        <p>Your documents will be uploaded and processed automatically.</p>
     </div>
-</nav>
+</div>
+<input type="file" id="file-input" accept=".pdf" multiple style="display: none;">
 
-<!-- Main content -->
-<div class="container">
-    <!-- Upload section -->
-    <div class="upload-section">
-        <div class="upload-zone" id="uploadZone">
-            <div class="upload-icon">
-                <i class="bi bi-cloud-upload"></i>
-            </div>
-            <h3>Drop PDFs Here</h3>
-            <p>Or click to browse files</p>
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                <i class="bi bi-folder-open"></i>
-                Choose Files
-            </button>
-            <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
-        </div>
-    </div>
+<!-- Notification container -->
+<div class="notification-container" id="notification-container"></div>
 
-    <!-- Search section -->
-    <div class="search-section">
-        <div class="search-box">
-            <i class="bi bi-search"></i>
-            <input type="text" id="searchInput" placeholder="Search documents...">
-            <button id="searchBtn"><i class="bi bi-arrow-right"></i></button>
-            <button id="clearBtn"><i class="bi bi-x"></i></button>
-        </div>
-    </div>
-
-    <!-- Documents section -->
-    <div class="documents-section">
-        <div class="section-header">
-            <h2><i class="bi bi-collection"></i> Documents</h2>
-            <button class="refresh-btn" id="refreshBtn">
-                <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
-        </div>
-        <div class="documents-grid" id="documentsContainer">
-            <div class="empty-state">
-                <i class="bi bi-inbox"></i>
-                <h3>No documents yet</h3>
-                <p>Upload your first PDF to get started</p>
-            </div>
+<!-- Custom confirmation modal -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box" id="modal-box">
+        <h3 id="modal-title">Are you sure?</h3>
+        <p id="modal-message">This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+            <button class="btn btn-danger" id="modal-confirm">Confirm</button>
         </div>
     </div>
 </div>
 
-<!-- Notifications -->
-<div id="notifications" class="notifications"></div>
-
+<!-- The New Application Logic -->
 <script src="app.js"></script>
 </body>
 </html>
