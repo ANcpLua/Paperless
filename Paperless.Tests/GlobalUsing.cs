@@ -1,0 +1,14 @@
+global using Microsoft.AspNetCore.Hosting;
+global using Microsoft.AspNetCore.Mvc.Testing;
+global using Testcontainers.Elasticsearch;
+global using Testcontainers.Minio;
+global using Testcontainers.PostgreSql;
+global using Testcontainers.RabbitMq;
+global using TUnit.Core.Interfaces;
+global using System.Text.Json;
+global using Microsoft.AspNetCore.Mvc;
+global using FluentValidation;
+global using CreatePdf.NET;
+global using Microsoft.AspNetCore.Builder;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.AspNetCore.Http;

@@ -1,13 +1,19 @@
 {
-  "ASPNETCORE_ENVIRONMENT": "Testing",
+  "ASPNETCORE_ENVIRONMENT": "Development",
   "POSTGRES_DB": "paperless_test",
   "POSTGRES_USER": "postgres",
   "POSTGRES_PASSWORD": "postgres",
   "RABBITMQ_USER": "paperless-user",
   "RABBITMQ_PASSWORD": "paperless-user",
+  "RABBITMQ_PORT": "5672",
+  "MINIO_ENDPOINT": "minio:9000",
+  "MINIO_USE_SSL": "false",
   "MINIO_ROOT_USER": "paperless-access",
   "MINIO_ROOT_PASSWORD": "paperless-secret",
   "MINIO_BUCKET": "paperless-test-bucket",
+  "MINIO_PORT": "9000",
+  "ELASTICSEARCH_VERSION": "9.0.3",
   "ELASTICSEARCH_INDEXNAME": "paperless-test-index",
-  "ELASTICSEARCH_VERSION": "9.0.3"
+  "ELASTICSEARCH_PORT": "9200",
+  "POSTGRES_PORT": "5432"
 }
