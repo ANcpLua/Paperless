@@ -26,9 +26,19 @@ public static class ServiceCollectionExtensions
             .BindConfiguration("Storage:Minio")
             .ValidateDataAnnotations();
 
-        services.AddSingleton<IMinioClient>(sp =>
+        services.AddScoped<IMinioClient>(sp =>
         {
             var opt = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
+            var logger = sp.GetService<ILogger<IMinioClient>>();
+            
+            logger?.LogDebug("Creating MinIO client - Endpoint: {Endpoint}, AccessKey: {AccessKey}, Bucket: {Bucket}, SSL: {SSL}", 
+                opt.Endpoint, opt.AccessKey, opt.BucketName, opt.UseSsl);
+            
+            if (string.IsNullOrWhiteSpace(opt.Endpoint))
+            {
+                throw new InvalidOperationException("MinIO endpoint is not configured");
+            }
+            
             return new MinioClient()
                 .WithEndpoint(opt.Endpoint)
                 .WithCredentials(opt.AccessKey, opt.SecretKey)
@@ -51,9 +61,9 @@ public static class ServiceCollectionExtensions
 
         // ----------------------------- Domain services
         services.AddSingleton<IDocumentRepository, DocumentRepository>()
-            .AddSingleton<IDocumentStorageService, DocumentStorageService>()
+            .AddScoped<IDocumentStorageService, DocumentStorageService>()
             .AddSingleton<IDocumentSearchService, DocumentSearchService>()
-            .AddSingleton<IDocumentService, DocumentService>();
+            .AddScoped<IDocumentService, DocumentService>();
 
         // ----------------------------- Validation
         services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Singleton);

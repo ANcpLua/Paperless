@@ -35,15 +35,26 @@ public class DocumentStorageService : IDocumentStorageService
     public async Task<string> UploadAsync(Stream stream, string storagePath, long fileSize,
         CancellationToken cancellationToken = default)
     {
-        await _minio.PutObjectAsync(new PutObjectArgs()
-            .WithBucket(_options.Value.BucketName)
-            .WithObject(storagePath)
-            .WithStreamData(stream)
-            .WithObjectSize(fileSize)
-            .WithContentType("application/pdf"), cancellationToken);
+        try
+        {
+            _logger.LogDebug("Uploading to MinIO - Bucket: {Bucket}, Path: {Path}, Size: {Size}", 
+                _options.Value.BucketName, storagePath, fileSize);
+            
+            await _minio.PutObjectAsync(new PutObjectArgs()
+                .WithBucket(_options.Value.BucketName)
+                .WithObject(storagePath)
+                .WithStreamData(stream)
+                .WithObjectSize(fileSize)
+                .WithContentType("application/pdf"), cancellationToken);
 
-        _logger.LogInformation("Document uploaded to storage at {StoragePath}", storagePath);
-        return storagePath;
+            _logger.LogInformation("Document uploaded to storage at {StoragePath}", storagePath);
+            return storagePath;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upload document to MinIO");
+            throw;
+        }
     }
 
     public async Task<bool> DeleteAsync(string storagePath, CancellationToken cancellationToken = default)
@@ -106,12 +117,6 @@ public class DocumentSearchService : IDocumentSearchService
                 .TrackScores()
             , cancellationToken);
 
-        if (!response.IsValidResponse)
-        {
-            _logger.LogError("Search failed: {Error}", response.ElasticsearchServerError?.Error.Reason);
-            yield break;
-        }
-
         _logger.LogInformation("Found {Count} results", response.Documents.Count);
 
         foreach (var doc in response.Documents)
@@ -124,15 +129,9 @@ public class DocumentSearchService : IDocumentSearchService
     {
         var deleteRequest = new DeleteRequest(_elastic.ElasticsearchClientSettings.DefaultIndex, id.ToString());
         var response = await _elastic.DeleteAsync(deleteRequest, cancellationToken);
-
-        if (!response.IsValidResponse)
-        {
-            _logger.LogError("Delete failed: {Error}", response.ElasticsearchServerError?.Error.Reason);
-            return false;
-        }
-
+        
         _logger.LogInformation("Document {DocumentId} removed from search index", id);
-        return true;
+        return response.IsValidResponse;
     }
 }
 
@@ -222,11 +221,22 @@ public class DocumentService : IDocumentService
             throw new KeyNotFoundException($"Document {id} not found");
         }
 
+        // Delete from PostgreSQL and MinIO (required)
         await Task.WhenAll(
             _repository.DeleteAsync(id, cancellationToken),
-            _storage.DeleteAsync(document.StoragePath, cancellationToken),
-            _search.DeleteAsync(id, cancellationToken)
+            _storage.DeleteAsync(document.StoragePath, cancellationToken)
         );
+
+        // Try to delete from Elasticsearch, but don't fail if it doesn't work
+        // The OCR service is responsible for managing Elasticsearch state
+        try
+        {
+            await _search.DeleteAsync(id, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to delete document {DocumentId} from search index. This is expected if the document was not indexed.", id);
+        }
 
         _logger.LogInformation("Document {DocumentId} deleted successfully", id);
     }

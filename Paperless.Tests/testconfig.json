@@ -10,10 +10,10 @@
   "MINIO_USE_SSL": "false",
   "MINIO_ROOT_USER": "paperless-access",
   "MINIO_ROOT_PASSWORD": "paperless-secret",
-  "MINIO_BUCKET": "paperless-test-bucket",
+  "MINIO_BUCKET": "paperless-bucket",
   "MINIO_PORT": "9000",
   "ELASTICSEARCH_VERSION": "9.0.3",
-  "ELASTICSEARCH_INDEXNAME": "paperless-test-index",
+  "ELASTICSEARCH_INDEXNAME": "paperless-index",
   "ELASTICSEARCH_PORT": "9200",
   "POSTGRES_PORT": "5432"
 }

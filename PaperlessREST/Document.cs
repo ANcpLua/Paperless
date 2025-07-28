@@ -13,7 +13,6 @@ public class Document
     [UsedImplicitly] public DateTimeOffset? ProcessedAt { get; private set; }
     
     // Public constructor for EF Core and Mapster
-    public Document() { }
 
     // Factory method for creating new documents
     public static Document CreateFromUpload(string fileName)
@@ -50,8 +49,6 @@ public class Document
         Status = DocumentStatus.Failed;
         ProcessedAt = DateTimeOffset.UtcNow;
     }
-
-    public bool CanBeDeleted() => Status is not DocumentStatus.Pending;
 }
 
 public enum DocumentStatus

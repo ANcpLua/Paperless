@@ -4,12 +4,16 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.Testing.Platform.Builder;
+using Microsoft.Testing.Platform.MSBuild;
+
+[ExcludeFromCodeCoverage]
 internal static class SelfRegisteredExtensions
 {
-    public static void AddSelfRegisteredExtensions(this global::Microsoft.Testing.Platform.Builder.ITestApplicationBuilder builder, string[] args)
+    public static void AddSelfRegisteredExtensions(this ITestApplicationBuilder builder, string[] args)
     {
-        Microsoft.Testing.Platform.MSBuild.TestingPlatformBuilderHook.AddExtensions(builder, args);
+        TestingPlatformBuilderHook.AddExtensions(builder, args);
         TUnit.Engine.Framework.TestingPlatformBuilderHook.AddExtensions(builder, args);
     }
 }

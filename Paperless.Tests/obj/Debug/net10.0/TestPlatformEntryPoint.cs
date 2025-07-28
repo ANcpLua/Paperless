@@ -4,14 +4,17 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.Testing.Platform.Builder;
+
+[ExcludeFromCodeCoverage]
 internal sealed class TestingPlatformEntryPoint
 {
-    public static async global::System.Threading.Tasks.Task<int> Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
-        global::Microsoft.Testing.Platform.Builder.ITestApplicationBuilder builder = await global::Microsoft.Testing.Platform.Builder.TestApplication.CreateBuilderAsync(args);
+        ITestApplicationBuilder builder = await TestApplication.CreateBuilderAsync(args);
         SelfRegisteredExtensions.AddSelfRegisteredExtensions(builder, args);
-        using (global::Microsoft.Testing.Platform.Builder.ITestApplication app = await builder.BuildAsync())
+        using (ITestApplication app = await builder.BuildAsync())
         {
             return await app.RunAsync();
         }

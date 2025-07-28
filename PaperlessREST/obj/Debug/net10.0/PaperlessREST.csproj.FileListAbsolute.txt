@@ -46,6 +46,8 @@
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/Npgsql.dll
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/RabbitMQ.Client.dll
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/Scalar.AspNetCore.dll
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/Scalar.Kiota.Extension.dll
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/SWEN3.Paperless.RabbitMq.dll
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/System.CodeDom.dll
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/System.Composition.AttributedModel.dll
@@ -141,6 +143,11 @@
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/scopedcss/bundle/PaperlessREST.styles.css
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/dp1aqp1owv-{0}-tspjlrx3xr-tspjlrx3xr.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/x2m3v9oewl-{0}-3e6qeun0zk-3e6qeun0zk.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/xxhhcbaorv-{0}-wwrqclryre-wwrqclryre.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/b4iykx7ebs-{0}-unsjrzpknb-unsjrzpknb.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/mmi6plf1oo-{0}-nglb59qhad-nglb59qhad.gz
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/staticwebassets.build.json
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/staticwebassets.build.json.cache
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/staticwebassets.development.json
@@ -151,9 +158,3 @@
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.pdb
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.genruntimeconfig.cache
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/ref/PaperlessREST.dll
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/bin/Debug/net10.0/Scalar.AspNetCore.dll
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/dp1aqp1owv-{0}-tspjlrx3xr-tspjlrx3xr.gz
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/x2m3v9oewl-{0}-egfmoqonmc-egfmoqonmc.gz
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/xxhhcbaorv-{0}-wwrqclryre-wwrqclryre.gz
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/b4iykx7ebs-{0}-rbl4r1adz2-rbl4r1adz2.gz
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/mmi6plf1oo-{0}-nglb59qhad-nglb59qhad.gz

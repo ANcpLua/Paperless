@@ -650,10 +650,10 @@
           }
         }
       },
-      "Microsoft.EntityFrameworkCore/10.0.0-preview.6.25358.103": {
+      "Microsoft.EntityFrameworkCore/10.0.0-preview.5.25277.114": {
         "type": "package",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.0-preview.6.25358.103"
+          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.0-preview.5.25277.114"
         },
         "compile": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.dll": {
@@ -669,7 +669,7 @@
           "buildTransitive/net10.0/Microsoft.EntityFrameworkCore.props": {}
         }
       },
-      "Microsoft.EntityFrameworkCore.Abstractions/10.0.0-preview.6.25358.103": {
+      "Microsoft.EntityFrameworkCore.Abstractions/10.0.0-preview.5.25277.114": {
         "type": "package",
         "compile": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll": {
@@ -682,10 +682,10 @@
           }
         }
       },
-      "Microsoft.EntityFrameworkCore.Analyzers/10.0.0-preview.6.25358.103": {
+      "Microsoft.EntityFrameworkCore.Analyzers/10.0.0-preview.5.25277.114": {
         "type": "package"
       },
-      "Microsoft.EntityFrameworkCore.Design/10.0.0-preview.6.25358.103": {
+      "Microsoft.EntityFrameworkCore.Design/10.0.0-preview.5.25277.114": {
         "type": "package",
         "dependencies": {
           "Humanizer.Core": "2.14.1",
@@ -696,8 +696,8 @@
           "Microsoft.CodeAnalysis.CSharp": "4.14.0",
           "Microsoft.CodeAnalysis.CSharp.Workspaces": "4.14.0",
           "Microsoft.CodeAnalysis.Workspaces.MSBuild": "4.14.0",
-          "Microsoft.EntityFrameworkCore.Relational": "10.0.0-preview.6.25358.103",
-          "Microsoft.Extensions.DependencyModel": "10.0.0-preview.6.25358.103",
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.0-preview.5.25277.114",
+          "Microsoft.Extensions.DependencyModel": "10.0.0-preview.5.25277.114",
           "Mono.TextTemplating": "3.0.0",
           "Newtonsoft.Json": "13.0.3"
         },
@@ -715,10 +715,10 @@
           "build/net10.0/Microsoft.EntityFrameworkCore.Design.props": {}
         }
       },
-      "Microsoft.EntityFrameworkCore.Relational/10.0.0-preview.6.25358.103": {
+      "Microsoft.EntityFrameworkCore.Relational/10.0.0-preview.5.25277.114": {
         "type": "package",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "10.0.0-preview.6.25358.103"
+          "Microsoft.EntityFrameworkCore": "10.0.0-preview.5.25277.114"
         },
         "compile": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.dll": {
@@ -731,7 +731,7 @@
           }
         }
       },
-      "Microsoft.Extensions.DependencyModel/10.0.0-preview.6.25358.103": {
+      "Microsoft.Extensions.DependencyModel/10.0.0-preview.5.25277.114": {
         "type": "package",
         "compile": {
           "lib/net10.0/_._": {
@@ -2705,10 +2705,10 @@
         "microsoft.codeanalysis.workspaces.msbuild.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore/10.0.0-preview.6.25358.103": {
-      "sha512": "KvQW4eD4q7IzH3yZ8ugDc7l9ZvdCUczKWSE5PYd87UAH1Yxmz2HNcSCoHOFgYS090UgnZphq6C3t5mUGEseMvg==",
+    "Microsoft.EntityFrameworkCore/10.0.0-preview.5.25277.114": {
+      "sha512": "8kNxO/21U+SnASuSA7s7vJViSCifRSGW7hDz33weki9DwnVax/e6RSGY9hu0vGZw6hFUHIv6pC3r/d6EWlVLdA==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore/10.0.0-preview.6.25358.103",
+      "path": "microsoft.entityframeworkcore/10.0.0-preview.5.25277.114",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2717,14 +2717,14 @@
         "buildTransitive/net10.0/Microsoft.EntityFrameworkCore.props",
         "lib/net10.0/Microsoft.EntityFrameworkCore.dll",
         "lib/net10.0/Microsoft.EntityFrameworkCore.xml",
-        "microsoft.entityframeworkcore.10.0.0-preview.6.25358.103.nupkg.sha512",
+        "microsoft.entityframeworkcore.10.0.0-preview.5.25277.114.nupkg.sha512",
         "microsoft.entityframeworkcore.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Abstractions/10.0.0-preview.6.25358.103": {
-      "sha512": "Z1a/oCaq5IVIRZb7keesidJdjE+2KOUK74q5sDmVgcgZywvQPeQQ1gtq305OReH4Uj79JGt5pW5BnXeapc5ZSw==",
+    "Microsoft.EntityFrameworkCore.Abstractions/10.0.0-preview.5.25277.114": {
+      "sha512": "i9GQBn64X94hO3EVmOM0QhVqVPpfuh9Bb4+Ft7M5QJF9/9aUKORTu8SzGs00C+AXwQsxz9nDPLL0CTcgIovRWw==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.abstractions/10.0.0-preview.6.25358.103",
+      "path": "microsoft.entityframeworkcore.abstractions/10.0.0-preview.5.25277.114",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2732,28 +2732,28 @@
         "PACKAGE.md",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.xml",
-        "microsoft.entityframeworkcore.abstractions.10.0.0-preview.6.25358.103.nupkg.sha512",
+        "microsoft.entityframeworkcore.abstractions.10.0.0-preview.5.25277.114.nupkg.sha512",
         "microsoft.entityframeworkcore.abstractions.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Analyzers/10.0.0-preview.6.25358.103": {
-      "sha512": "NHAKq0GP08+FshDbYFJsn5cYbR1ryWonYyUfE4Thx2PMTxW+z8BkoJmdHCeQTqgscI4w/S5DYU1JEon7YKUCEw==",
+    "Microsoft.EntityFrameworkCore.Analyzers/10.0.0-preview.5.25277.114": {
+      "sha512": "2ExgycHyZoUBa8a6XubsXgL3N34aUYzLA3BXRaz+pC5NYBE5mvabkrAVxVUa9x3SBa3aALbC8NjWNwLSMqHUgA==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.analyzers/10.0.0-preview.6.25358.103",
+      "path": "microsoft.entityframeworkcore.analyzers/10.0.0-preview.5.25277.114",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
         "analyzers/dotnet/cs/Microsoft.EntityFrameworkCore.Analyzers.dll",
         "docs/PACKAGE.md",
-        "microsoft.entityframeworkcore.analyzers.10.0.0-preview.6.25358.103.nupkg.sha512",
+        "microsoft.entityframeworkcore.analyzers.10.0.0-preview.5.25277.114.nupkg.sha512",
         "microsoft.entityframeworkcore.analyzers.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Design/10.0.0-preview.6.25358.103": {
-      "sha512": "Ef06J1TPJGnBdin8TAnrWSs2ViHQmU6m39NVfPP1wpxYikaMvmO3iu5hoANwyWW3Ahz7hqhGt/fe16/+9kpC9g==",
+    "Microsoft.EntityFrameworkCore.Design/10.0.0-preview.5.25277.114": {
+      "sha512": "wvdVEVWuDRpHKBlPeCJg9jyadkpLd6J8H5SwwvOWwS6g+x+GH4ErYV2QYaDOfWlt3WhjAha2GdCcQCmjw2XFZg==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.design/10.0.0-preview.6.25358.103",
+      "path": "microsoft.entityframeworkcore.design/10.0.0-preview.5.25277.114",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2762,14 +2762,14 @@
         "build/net10.0/Microsoft.EntityFrameworkCore.Design.props",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Design.dll",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Design.xml",
-        "microsoft.entityframeworkcore.design.10.0.0-preview.6.25358.103.nupkg.sha512",
+        "microsoft.entityframeworkcore.design.10.0.0-preview.5.25277.114.nupkg.sha512",
         "microsoft.entityframeworkcore.design.nuspec"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Relational/10.0.0-preview.6.25358.103": {
-      "sha512": "1N+8QvBrRJA6rnbDI1TMUg4E175oCBRg/vurqlMcTuXy0CS1hqOvTSU050o4TglKs1jRtEWD12IH342uHgEGTA==",
+    "Microsoft.EntityFrameworkCore.Relational/10.0.0-preview.5.25277.114": {
+      "sha512": "36LItiFetCyU6IEpIIorqs0hU4q7LTSXgbxra2IpiFU2LOPV4tlLLVviN+KB/aYf7L8bj7n1s4pOjTV0okTbDA==",
       "type": "package",
-      "path": "microsoft.entityframeworkcore.relational/10.0.0-preview.6.25358.103",
+      "path": "microsoft.entityframeworkcore.relational/10.0.0-preview.5.25277.114",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2777,18 +2777,19 @@
         "PACKAGE.md",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.dll",
         "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.xml",
-        "microsoft.entityframeworkcore.relational.10.0.0-preview.6.25358.103.nupkg.sha512",
+        "microsoft.entityframeworkcore.relational.10.0.0-preview.5.25277.114.nupkg.sha512",
         "microsoft.entityframeworkcore.relational.nuspec"
       ]
     },
-    "Microsoft.Extensions.DependencyModel/10.0.0-preview.6.25358.103": {
-      "sha512": "pVf3Ci9+Z4Gyt6hokzPABXgrlbsrMSCQ5HppmGUwR8h5ZW8bJHBuAbN9SZYLwL036o2NJdXRZme3RFnI+M597Q==",
+    "Microsoft.Extensions.DependencyModel/10.0.0-preview.5.25277.114": {
+      "sha512": "Vxw2Kl6Xd2gQnMX9Tm8cMcnAW/JxXb5pLsrxF25BS06QYYqdqw+4TuSER8Ga3Et8ZsXY8FepzllyvLdq86UWxw==",
       "type": "package",
-      "path": "microsoft.extensions.dependencymodel/10.0.0-preview.6.25358.103",
+      "path": "microsoft.extensions.dependencymodel/10.0.0-preview.5.25277.114",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
+        "LICENSE.TXT",
         "PACKAGE.md",
         "THIRD-PARTY-NOTICES.TXT",
         "buildTransitive/net461/Microsoft.Extensions.DependencyModel.targets",
@@ -2805,7 +2806,7 @@
         "lib/net9.0/Microsoft.Extensions.DependencyModel.xml",
         "lib/netstandard2.0/Microsoft.Extensions.DependencyModel.dll",
         "lib/netstandard2.0/Microsoft.Extensions.DependencyModel.xml",
-        "microsoft.extensions.dependencymodel.10.0.0-preview.6.25358.103.nupkg.sha512",
+        "microsoft.extensions.dependencymodel.10.0.0-preview.5.25277.114.nupkg.sha512",
         "microsoft.extensions.dependencymodel.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -3509,9 +3510,9 @@
       "Mapster.DependencyInjection >= 1.0.1",
       "Mapster.ExtensionMethods >= 1.0.0",
       "Microsoft.AspNetCore.OpenApi >= 10.0.0-preview.6.25358.103",
-      "Microsoft.EntityFrameworkCore >= 10.0.0-preview.6.25358.103",
-      "Microsoft.EntityFrameworkCore.Analyzers >= 10.0.0-preview.6.25358.103",
-      "Microsoft.EntityFrameworkCore.Design >= 10.0.0-preview.6.25358.103",
+      "Microsoft.EntityFrameworkCore >= 10.0.0-preview.5.25277.114",
+      "Microsoft.EntityFrameworkCore.Analyzers >= 10.0.0-preview.5.25277.114",
+      "Microsoft.EntityFrameworkCore.Design >= 10.0.0-preview.5.25277.114",
       "Minio >= 6.0.5",
       "Npgsql.EntityFrameworkCore.PostgreSQL >= 10.0.0-preview.5",
       "RabbitMQ.Client >= 7.1.2",
@@ -3614,17 +3615,17 @@
           },
           "Microsoft.EntityFrameworkCore": {
             "target": "Package",
-            "version": "[10.0.0-preview.6.25358.103, )"
+            "version": "[10.0.0-preview.5.25277.114, )"
           },
           "Microsoft.EntityFrameworkCore.Analyzers": {
             "target": "Package",
-            "version": "[10.0.0-preview.6.25358.103, )"
+            "version": "[10.0.0-preview.5.25277.114, )"
           },
           "Microsoft.EntityFrameworkCore.Design": {
             "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
             "suppressParent": "All",
             "target": "Package",
-            "version": "[10.0.0-preview.6.25358.103, )"
+            "version": "[10.0.0-preview.5.25277.114, )"
           },
           "Minio": {
             "target": "Package",

@@ -9,10 +9,10 @@ using SWEN3.Paperless.RabbitMq;
 using SWEN3.Paperless.RabbitMq.Consuming;
 using SWEN3.Paperless.RabbitMq.Models;
 using SWEN3.Paperless.RabbitMq.Publishing;
-using TUnit.Core.Interfaces;
 using Testcontainers.Elasticsearch;
 using Testcontainers.Minio;
 using Testcontainers.RabbitMq;
+using TUnit.Core.Interfaces;
 
 // Check if we're running tests
 var isTestRun = args.Contains("--test") || Environment.GetEnvironmentVariable("DOTNET_RUNNING_TESTS") == "true";

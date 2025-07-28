@@ -95,17 +95,17 @@
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[10.0.0-preview.6.25358.103, )"
+              "version": "[10.0.0-preview.5.25277.114, )"
             },
             "Microsoft.EntityFrameworkCore.Analyzers": {
               "target": "Package",
-              "version": "[10.0.0-preview.6.25358.103, )"
+              "version": "[10.0.0-preview.5.25277.114, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.0-preview.6.25358.103, )"
+              "version": "[10.0.0-preview.5.25277.114, )"
             },
             "Minio": {
               "target": "Package",

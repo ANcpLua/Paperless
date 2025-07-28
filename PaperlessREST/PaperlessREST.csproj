@@ -25,9 +25,9 @@
         <PackageReference Include="Mapster.DependencyInjection" Version="1.0.1"/>
         <PackageReference Include="Mapster.ExtensionMethods" Version="1.0.0"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.6.25358.103"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0-preview.6.25358.103"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="10.0.0-preview.6.25358.103"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-preview.6.25358.103">
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0-preview.5.25277.114"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="10.0.0-preview.5.25277.114"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-preview.5.25277.114">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

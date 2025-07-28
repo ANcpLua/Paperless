@@ -19,13 +19,14 @@
           "Mapster.Core": "1.2.1",
           "Mapster.DependencyInjection": "1.0.1",
           "Microsoft.AspNetCore.OpenApi": "10.0.0-preview.6.25358.103",
-          "Microsoft.EntityFrameworkCore": "10.0.0-preview.6.25358.103",
-          "Microsoft.EntityFrameworkCore.Design": "10.0.0-preview.6.25358.103",
+          "Microsoft.EntityFrameworkCore": "10.0.0-preview.5.25277.114",
+          "Microsoft.EntityFrameworkCore.Design": "10.0.0-preview.5.25277.114",
           "Minio": "6.0.5",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.0-preview.5",
           "RabbitMQ.Client": "7.1.2",
           "SWEN3.Paperless.RabbitMq": "1.0.3",
-          "Scalar.AspNetCore": "2.6.4"
+          "Scalar.AspNetCore": "2.6.4",
+          "Scalar.Kiota.Extension": "1.0.0-preview.6"
         },
         "runtime": {
           "PaperlessREST.dll": {}
@@ -529,26 +530,26 @@
           }
         }
       },
-      "Microsoft.EntityFrameworkCore/10.0.0-preview.6.25358.103": {
+      "Microsoft.EntityFrameworkCore/10.0.0-preview.5.25277.114": {
         "dependencies": {
-          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.0-preview.6.25358.103"
+          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.0-preview.5.25277.114"
         },
         "runtime": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.dll": {
             "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.25.35903"
+            "fileVersion": "10.0.25.27814"
           }
         }
       },
-      "Microsoft.EntityFrameworkCore.Abstractions/10.0.0-preview.6.25358.103": {
+      "Microsoft.EntityFrameworkCore.Abstractions/10.0.0-preview.5.25277.114": {
         "runtime": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll": {
             "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.25.35903"
+            "fileVersion": "10.0.25.27814"
           }
         }
       },
-      "Microsoft.EntityFrameworkCore.Design/10.0.0-preview.6.25358.103": {
+      "Microsoft.EntityFrameworkCore.Design/10.0.0-preview.5.25277.114": {
         "dependencies": {
           "Humanizer.Core": "2.14.1",
           "Microsoft.Build.Framework": "17.14.8",
@@ -558,34 +559,34 @@
           "Microsoft.CodeAnalysis.CSharp": "4.14.0",
           "Microsoft.CodeAnalysis.CSharp.Workspaces": "4.14.0",
           "Microsoft.CodeAnalysis.Workspaces.MSBuild": "4.14.0",
-          "Microsoft.EntityFrameworkCore.Relational": "10.0.0-preview.6.25358.103",
-          "Microsoft.Extensions.DependencyModel": "10.0.0-preview.6.25358.103",
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.0-preview.5.25277.114",
+          "Microsoft.Extensions.DependencyModel": "10.0.0-preview.5.25277.114",
           "Mono.TextTemplating": "3.0.0",
           "Newtonsoft.Json": "13.0.3"
         },
         "runtime": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Design.dll": {
             "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.25.35903"
+            "fileVersion": "10.0.25.27814"
           }
         }
       },
-      "Microsoft.EntityFrameworkCore.Relational/10.0.0-preview.6.25358.103": {
+      "Microsoft.EntityFrameworkCore.Relational/10.0.0-preview.5.25277.114": {
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "10.0.0-preview.6.25358.103"
+          "Microsoft.EntityFrameworkCore": "10.0.0-preview.5.25277.114"
         },
         "runtime": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.dll": {
             "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.25.35903"
+            "fileVersion": "10.0.25.27814"
           }
         }
       },
-      "Microsoft.Extensions.DependencyModel/10.0.0-preview.6.25358.103": {
+      "Microsoft.Extensions.DependencyModel/10.0.0-preview.5.25277.114": {
         "runtime": {
           "lib/net10.0/Microsoft.Extensions.DependencyModel.dll": {
             "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.25.35903"
+            "fileVersion": "10.0.25.27814"
           }
         }
       },
@@ -647,8 +648,8 @@
       },
       "Npgsql.EntityFrameworkCore.PostgreSQL/10.0.0-preview.5": {
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "10.0.0-preview.6.25358.103",
-          "Microsoft.EntityFrameworkCore.Relational": "10.0.0-preview.6.25358.103",
+          "Microsoft.EntityFrameworkCore": "10.0.0-preview.5.25277.114",
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.0-preview.5.25277.114",
           "Npgsql": "9.0.3"
         },
         "runtime": {
@@ -671,6 +672,18 @@
           "lib/net9.0/Scalar.AspNetCore.dll": {
             "assemblyVersion": "2.6.4.0",
             "fileVersion": "2.6.4.0"
+          }
+        }
+      },
+      "Scalar.Kiota.Extension/1.0.0-preview.6": {
+        "dependencies": {
+          "Microsoft.AspNetCore.OpenApi": "10.0.0-preview.6.25358.103",
+          "Scalar.AspNetCore": "2.6.4"
+        },
+        "runtime": {
+          "lib/net10.0/Scalar.Kiota.Extension.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
           }
         }
       },
@@ -1032,40 +1045,40 @@
       "path": "microsoft.codeanalysis.workspaces.msbuild/4.14.0",
       "hashPath": "microsoft.codeanalysis.workspaces.msbuild.4.14.0.nupkg.sha512"
     },
-    "Microsoft.EntityFrameworkCore/10.0.0-preview.6.25358.103": {
+    "Microsoft.EntityFrameworkCore/10.0.0-preview.5.25277.114": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-KvQW4eD4q7IzH3yZ8ugDc7l9ZvdCUczKWSE5PYd87UAH1Yxmz2HNcSCoHOFgYS090UgnZphq6C3t5mUGEseMvg==",
-      "path": "microsoft.entityframeworkcore/10.0.0-preview.6.25358.103",
-      "hashPath": "microsoft.entityframeworkcore.10.0.0-preview.6.25358.103.nupkg.sha512"
+      "sha512": "sha512-8kNxO/21U+SnASuSA7s7vJViSCifRSGW7hDz33weki9DwnVax/e6RSGY9hu0vGZw6hFUHIv6pC3r/d6EWlVLdA==",
+      "path": "microsoft.entityframeworkcore/10.0.0-preview.5.25277.114",
+      "hashPath": "microsoft.entityframeworkcore.10.0.0-preview.5.25277.114.nupkg.sha512"
     },
-    "Microsoft.EntityFrameworkCore.Abstractions/10.0.0-preview.6.25358.103": {
+    "Microsoft.EntityFrameworkCore.Abstractions/10.0.0-preview.5.25277.114": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-Z1a/oCaq5IVIRZb7keesidJdjE+2KOUK74q5sDmVgcgZywvQPeQQ1gtq305OReH4Uj79JGt5pW5BnXeapc5ZSw==",
-      "path": "microsoft.entityframeworkcore.abstractions/10.0.0-preview.6.25358.103",
-      "hashPath": "microsoft.entityframeworkcore.abstractions.10.0.0-preview.6.25358.103.nupkg.sha512"
+      "sha512": "sha512-i9GQBn64X94hO3EVmOM0QhVqVPpfuh9Bb4+Ft7M5QJF9/9aUKORTu8SzGs00C+AXwQsxz9nDPLL0CTcgIovRWw==",
+      "path": "microsoft.entityframeworkcore.abstractions/10.0.0-preview.5.25277.114",
+      "hashPath": "microsoft.entityframeworkcore.abstractions.10.0.0-preview.5.25277.114.nupkg.sha512"
     },
-    "Microsoft.EntityFrameworkCore.Design/10.0.0-preview.6.25358.103": {
+    "Microsoft.EntityFrameworkCore.Design/10.0.0-preview.5.25277.114": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-Ef06J1TPJGnBdin8TAnrWSs2ViHQmU6m39NVfPP1wpxYikaMvmO3iu5hoANwyWW3Ahz7hqhGt/fe16/+9kpC9g==",
-      "path": "microsoft.entityframeworkcore.design/10.0.0-preview.6.25358.103",
-      "hashPath": "microsoft.entityframeworkcore.design.10.0.0-preview.6.25358.103.nupkg.sha512"
+      "sha512": "sha512-wvdVEVWuDRpHKBlPeCJg9jyadkpLd6J8H5SwwvOWwS6g+x+GH4ErYV2QYaDOfWlt3WhjAha2GdCcQCmjw2XFZg==",
+      "path": "microsoft.entityframeworkcore.design/10.0.0-preview.5.25277.114",
+      "hashPath": "microsoft.entityframeworkcore.design.10.0.0-preview.5.25277.114.nupkg.sha512"
     },
-    "Microsoft.EntityFrameworkCore.Relational/10.0.0-preview.6.25358.103": {
+    "Microsoft.EntityFrameworkCore.Relational/10.0.0-preview.5.25277.114": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-1N+8QvBrRJA6rnbDI1TMUg4E175oCBRg/vurqlMcTuXy0CS1hqOvTSU050o4TglKs1jRtEWD12IH342uHgEGTA==",
-      "path": "microsoft.entityframeworkcore.relational/10.0.0-preview.6.25358.103",
-      "hashPath": "microsoft.entityframeworkcore.relational.10.0.0-preview.6.25358.103.nupkg.sha512"
+      "sha512": "sha512-36LItiFetCyU6IEpIIorqs0hU4q7LTSXgbxra2IpiFU2LOPV4tlLLVviN+KB/aYf7L8bj7n1s4pOjTV0okTbDA==",
+      "path": "microsoft.entityframeworkcore.relational/10.0.0-preview.5.25277.114",
+      "hashPath": "microsoft.entityframeworkcore.relational.10.0.0-preview.5.25277.114.nupkg.sha512"
     },
-    "Microsoft.Extensions.DependencyModel/10.0.0-preview.6.25358.103": {
+    "Microsoft.Extensions.DependencyModel/10.0.0-preview.5.25277.114": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-pVf3Ci9+Z4Gyt6hokzPABXgrlbsrMSCQ5HppmGUwR8h5ZW8bJHBuAbN9SZYLwL036o2NJdXRZme3RFnI+M597Q==",
-      "path": "microsoft.extensions.dependencymodel/10.0.0-preview.6.25358.103",
-      "hashPath": "microsoft.extensions.dependencymodel.10.0.0-preview.6.25358.103.nupkg.sha512"
+      "sha512": "sha512-Vxw2Kl6Xd2gQnMX9Tm8cMcnAW/JxXb5pLsrxF25BS06QYYqdqw+4TuSER8Ga3Et8ZsXY8FepzllyvLdq86UWxw==",
+      "path": "microsoft.extensions.dependencymodel/10.0.0-preview.5.25277.114",
+      "hashPath": "microsoft.extensions.dependencymodel.10.0.0-preview.5.25277.114.nupkg.sha512"
     },
     "Microsoft.NET.StringTools/17.14.8": {
       "type": "package",
@@ -1129,6 +1142,13 @@
       "sha512": "sha512-sZxJ8icJMNxaZrdzZ3pIFl9AHLy4H3nYG0dCTEPwhpqB+3De3Q8c7mWQyt83wrcs7tUhJubuevjteiig/h4i3g==",
       "path": "scalar.aspnetcore/2.6.4",
       "hashPath": "scalar.aspnetcore.2.6.4.nupkg.sha512"
+    },
+    "Scalar.Kiota.Extension/1.0.0-preview.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9+ZjT5lrZjONobuBj9DMEdEPKba/LxnMCC902TaOfl5utOze1NtLA4wvS5TMGTrr8N1ihMdfchlHUd+8V0QgoQ==",
+      "path": "scalar.kiota.extension/1.0.0-preview.6",
+      "hashPath": "scalar.kiota.extension.1.0.0-preview.6.nupkg.sha512"
     },
     "SWEN3.Paperless.RabbitMq/1.0.3": {
       "type": "package",

@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Asp.Versioning;
 using FluentValidation;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Diagnostics;
@@ -15,6 +14,7 @@ using PaperlessREST.Services;
 using SWEN3.Paperless.RabbitMq.Consuming;
 using SWEN3.Paperless.RabbitMq.Models;
 using SWEN3.Paperless.RabbitMq.Sse;
+using ValidationException = FluentValidation.ValidationException;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -249,109 +249,6 @@ namespace PaperlessREST
     }
 }
 
-public class GlobalExceptionHandler : IExceptionHandler
-{
-    private readonly ILogger<GlobalExceptionHandler> _logger;
-    private readonly IHostEnvironment _environment;
-    private readonly IProblemDetailsService _problemDetailsService;
-
-    public GlobalExceptionHandler(
-        ILogger<GlobalExceptionHandler> logger,
-        IHostEnvironment environment,
-        IProblemDetailsService problemDetailsService)
-    {
-        _logger = logger;
-        _environment = environment;
-        _problemDetailsService = problemDetailsService;
-    }
-
-    public async ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext,
-        Exception exception,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogError(exception, "Exception occurred: {Message}", exception.Message);
-
-        var problemDetails = CreateProblemDetails(httpContext, exception);
-
-        httpContext.Response.StatusCode = problemDetails.Status!.Value;
-
-        await _problemDetailsService.WriteAsync(new ProblemDetailsContext
-        {
-            HttpContext = httpContext,
-            ProblemDetails = problemDetails,
-            Exception = exception
-        });
-
-        return true;
-    }
-
-    private ProblemDetails CreateProblemDetails(HttpContext httpContext, Exception exception)
-    {
-        // Map known exceptions to appropriate HTTP status codes. With minimal API validation
-        // enabled, System.ComponentModel.DataAnnotations.ValidationException is no longer
-        // thrown by the pipeline. However, business‑level validation failures thrown by
-        // FluentValidation should still result in a 400 Bad Request response.
-        var statusCode = exception switch
-        {
-            KeyNotFoundException => StatusCodes.Status404NotFound,
-            FluentValidation.ValidationException => StatusCodes.Status400BadRequest,
-            OperationCanceledException => StatusCodes.Status499ClientClosedRequest,
-            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
-            TimeoutException => StatusCodes.Status408RequestTimeout,
-            NotImplementedException => StatusCodes.Status501NotImplemented,
-            _ => StatusCodes.Status500InternalServerError
-        };
-
-        var problemDetails = new ProblemDetails
-        {
-            Status = statusCode,
-            Type = $"https://httpstatuses.io/{statusCode}",
-            Title = ReasonPhrases.GetReasonPhrase(statusCode),
-            Detail = _environment.IsDevelopment() ? exception.Message : GetProductionErrorMessage(exception),
-            Instance = httpContext.Request.Path
-        };
-
-        // Populate error details for FluentValidation exceptions. DataAnnotations
-        // validation errors are handled by the built‑in validation pipeline and won't reach
-        // this handler.
-        if (exception is FluentValidation.ValidationException validationException && validationException.Errors.Any())
-        {
-            problemDetails.Extensions["errors"] = validationException.Errors
-                .GroupBy(e => e.PropertyName)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(e => e.ErrorMessage).ToArray()
-                );
-        }
-
-        // In development, include additional debugging information to aid troubleshooting.
-        if (_environment.IsDevelopment())
-        {
-            problemDetails.Extensions["debugInfo"] = new
-            {
-                exception = exception.GetType().Name,
-                message = exception.Message,
-                stackTrace = exception.StackTrace,
-                innerException = exception.InnerException?.Message
-            };
-        }
-
-        return problemDetails;
-    }
-
-    private static string GetProductionErrorMessage(Exception exception) => exception switch
-    {
-        KeyNotFoundException => "The requested resource was not found.",
-        // When FluentValidation throws, expose a generic message to avoid leaking implementation details.
-        FluentValidation.ValidationException => "The request contains invalid data.",
-        OperationCanceledException => "The request was cancelled.",
-        UnauthorizedAccessException => "You are not authorized to access this resource.",
-        TimeoutException => "The request timed out.",
-        NotImplementedException => "This feature is not implemented.",
-        _ => "An error occurred while processing your request."
-    };
-}
 
 public record SearchQuery
 {
@@ -413,4 +310,4 @@ public class UploadDocumentBusinessValidator : AbstractValidator<UploadDocumentR
 [JsonSerializable(typeof(List<object>))]
 [JsonSerializable(typeof(HttpValidationProblemDetails))]
 [JsonSerializable(typeof(ProblemDetails))]
-internal partial class AppJsonSerializerContext : JsonSerializerContext;
+public partial class AppJsonSerializerContext : JsonSerializerContext;
