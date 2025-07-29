@@ -355,15 +355,9 @@
 	<s:Boolean x:Key="/Default/Environment/Filtering/ExcludeAttributeFilters/=System_002ECodeDom_002ECompiler_002EGeneratedCodeAttribute/@EntryIndexedValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/Environment/Filtering/ExcludeAttributeFilters/=System_002EDiagnostics_002ECodeAnalysis_002EExcludeFromCodeCoverageAttribute/@EntryIndexedValue">False</s:Boolean>
 	
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=7d1e02fc_002De09b_002D4ca5_002D963b_002Ddcb5ee022e16/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from Solution #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Solution /&gt;
-&lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9e5d3fc1_002D49fb_002D40da_002Da0e0_002Df2c8f0a42583/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from Solution #3" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Solution /&gt;
-&lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d9091e38_002Daade_002D4f96_002D8480_002D5e44bd406ff5/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Solution /&gt;
-&lt;/SessionState&gt;</s:String>
+	
+	
+	
 	
 	
 	
