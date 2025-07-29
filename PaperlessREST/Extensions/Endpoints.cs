@@ -22,24 +22,21 @@ public static class DocumentEndpoints
         var v1documents = api.MapGroup("/api/v{version:apiVersion}/documents")
             .HasApiVersion(1, 0)
             .WithTags("Documents")
-            // A global 500 error can still be defined here
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // Endpoint mappings are now much cleaner
         v1documents.MapGet("/", GetDocuments)
             .WithName(nameof(GetDocuments));
 
         v1documents.MapGet("/search", SearchDocuments)
             .WithName(nameof(SearchDocuments));
-            // .ProducesValidationProblem(); // REMOVED: Redundant due to <response code="400"> in XML comments
-
+        // .ProducesValidationProblem() // REMOVED: Redundant thanks to https://github.com/captainsafia/aspnet-openapi-xml
         v1documents.MapGet("/{id:guid}", GetDocumentById)
             .WithName(nameof(GetDocumentById));
 
         v1documents.MapPost("/", UploadDocument)
             .WithName(nameof(UploadDocument))
             .Accepts<IFormFile>("multipart/form-data")
-            // .ProducesValidationProblem() // REMOVED: Redundant due to <response code="400"> in XML comments
+            // .ProducesValidationProblem() // REMOVED: Redundant thanks to https://github.com/captainsafia/aspnet-openapi-xml
             .DisableAntiforgery();
 
         v1documents.MapDelete("/{id:guid}", DeleteDocument)
@@ -102,7 +99,7 @@ public static class DocumentEndpoints
 
         return TypedResults.Ok(results);
     }
-    
+
     /// <summary>
     /// Upload a PDF document.
     /// </summary>
