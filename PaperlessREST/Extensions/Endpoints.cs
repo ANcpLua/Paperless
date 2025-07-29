@@ -8,8 +8,6 @@ public static class Endpoints
 {
     public static void MapEndpoints(this WebApplication app)
     {
-        // Assumes AddOpenApi() is called in Program.cs and configured
-        // to read XML documentation files.
         app.MapOcrEventStream();
         app.MapDocumentEndpoints();
     }
@@ -17,6 +15,7 @@ public static class Endpoints
 
 public static class DocumentEndpoints
 {
+    // ReSharper disable once UnusedMethodReturnValue.Global
     public static IEndpointRouteBuilder MapDocumentEndpoints(this IEndpointRouteBuilder app)
     {
         var api = app.NewVersionedApi("Documents");
@@ -170,7 +169,7 @@ public static class DocumentEndpoints
     /// Deletes a document from all storage systems. 
     /// Removes from: 1) PostgreSQL database, 2) MinIO object storage, 3) Elasticsearch index (if indexed). 
     /// Elasticsearch deletion is best-effort - if it fails, the operation continues and returns success. 
-    /// Note: Cannot verify if document was indexed by OCR service, so Elasticsearch errors are logged but ignored.
+    /// Note: Cannot verify if document was indexed by OCR service.
     /// </remarks>
     /// <response code="204">The document was successfully deleted.</response>
     /// <response code="404">If a document with the specified ID does not exist.</response>

@@ -1,6 +1,6 @@
+using System.Globalization;
 using System.Text.Json.Serialization;
 using Mapster;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.Extensions.Options;
 
@@ -23,24 +23,31 @@ public static class DependenciesConfig
         });
 
         // ------------------------------------------------- ProblemDetails
-        builder.Services.AddProblemDetails(opts =>
+        builder.Services.AddProblemDetails(options =>
         {
-            opts.CustomizeProblemDetails = ctx =>
+            options.CustomizeProblemDetails = ctx =>
             {
-                ctx.ProblemDetails.Extensions["timestamp"] = DateTimeOffset.UtcNow;
+                // Apply JSON naming policy to validation errors
+                if (ctx.ProblemDetails is HttpValidationProblemDetails validation)
+                {
+                    var jsonOptions = ctx.HttpContext.RequestServices
+                        .GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.JsonOptions>>()
+                        .Value.JsonSerializerOptions;
+                    if (jsonOptions.PropertyNamingPolicy is { } policy)
+                    {
+                        validation.Errors = validation.Errors
+                            .ToDictionary(
+                                kvp => policy.ConvertName(kvp.Key),
+                                kvp => kvp.Value);
+                    }
+                    // Summarise the number of errors
+                    ctx.ProblemDetails.Detail = $"Error(s) occurred: {validation.Errors.Values.Sum(v => v.Length)}";
+                }
 
-                if (ctx.ProblemDetails is not HttpValidationProblemDetails { Errors.Count: > 0 } validation)
-                    return;
-
-                var policy = ctx.HttpContext.RequestServices
-                    .GetRequiredService<IOptions<JsonOptions>>()
-                    .Value.SerializerOptions.PropertyNamingPolicy;
-
-                if (policy is null) return;
-
-                validation.Errors = validation.Errors.ToDictionary(
-                    kvp => string.Join('.', kvp.Key.Split('.').Select(policy.ConvertName)),
-                    kvp => kvp.Value);
+                // Add common extensions
+                ctx.ProblemDetails.Extensions.TryAdd("timestamp", DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+                ctx.ProblemDetails.Extensions.TryAdd("traceId", ctx.HttpContext.TraceIdentifier);
+                ctx.ProblemDetails.Instance = $"{ctx.HttpContext.Request.Method} {ctx.HttpContext.Request.Path}";
             };
         });
 

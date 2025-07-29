@@ -37,9 +37,9 @@ public class DocumentStorageService : IDocumentStorageService
     {
         try
         {
-            _logger.LogDebug("Uploading to MinIO - Bucket: {Bucket}, Path: {Path}, Size: {Size}", 
+            _logger.LogDebug("Uploading to MinIO - Bucket: {Bucket}, Path: {Path}, Size: {Size}",
                 _options.Value.BucketName, storagePath, fileSize);
-            
+
             await _minio.PutObjectAsync(new PutObjectArgs()
                 .WithBucket(_options.Value.BucketName)
                 .WithObject(storagePath)
@@ -129,7 +129,7 @@ public class DocumentSearchService : IDocumentSearchService
     {
         var deleteRequest = new DeleteRequest(_elastic.ElasticsearchClientSettings.DefaultIndex, id.ToString());
         var response = await _elastic.DeleteAsync(deleteRequest, cancellationToken);
-        
+
         _logger.LogInformation("Document {DocumentId} removed from search index", id);
         return response.IsValidResponse;
     }
@@ -235,7 +235,9 @@ public class DocumentService : IDocumentService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to delete document {DocumentId} from search index. This is expected if the document was not indexed.", id);
+            _logger.LogWarning(ex,
+                "Failed to delete document {DocumentId} from search index. This is expected if the document was not indexed.",
+                id);
         }
 
         _logger.LogInformation("Document {DocumentId} deleted successfully", id);

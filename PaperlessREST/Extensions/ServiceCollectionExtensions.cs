@@ -26,7 +26,8 @@ public static class ServiceCollectionExtensions
             .BindConfiguration("Storage:Minio")
             .ValidateDataAnnotations();
 
-        services.AddScoped<IMinioClient>(sp =>
+        // MinioClient is thread-safe and can be registered as a singleton.
+        services.AddSingleton<IMinioClient>(sp =>
         {
             var opt = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
             var logger = sp.GetService<ILogger<IMinioClient>>();
@@ -60,10 +61,11 @@ public static class ServiceCollectionExtensions
         });
 
         // ----------------------------- Domain services
+        // Changed to Singleton as their dependencies are now singletons or handled by factories.
         services.AddSingleton<IDocumentRepository, DocumentRepository>()
-            .AddScoped<IDocumentStorageService, DocumentStorageService>()
+            .AddSingleton<IDocumentStorageService, DocumentStorageService>()
             .AddSingleton<IDocumentSearchService, DocumentSearchService>()
-            .AddScoped<IDocumentService, DocumentService>();
+            .AddSingleton<IDocumentService, DocumentService>();
 
         // ----------------------------- Validation
         services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Singleton);

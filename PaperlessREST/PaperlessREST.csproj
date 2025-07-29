@@ -4,9 +4,8 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <LangVersion>preview</LangVersion>
         <EnablePreviewFeatures>true</EnablePreviewFeatures>
-        <NoWarn>$(NoWarn);ASP0029;</NoWarn>
+        <LangVersion>preview</LangVersion>
         <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.Http.Validation.Generated</InterceptorsNamespaces>
 
         <!--        <GenerateDocumentationFile>true</GenerateDocumentationFile>-->
@@ -43,6 +42,10 @@
         <Content Include="..\.dockerignore">
             <Link>.dockerignore</Link>
         </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\scalar\dev-config.js" />
     </ItemGroup>
 
 </Project>

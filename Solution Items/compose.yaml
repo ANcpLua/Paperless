@@ -109,7 +109,7 @@ services:
 
   elasticsearch:
     container_name: paperless-elasticsearch
-    image: elasticsearch:8.13.4
+    image: elasticsearch:9.0.4
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false

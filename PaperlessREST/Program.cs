@@ -1,20 +1,22 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using PaperlessREST;
 using PaperlessREST.Extensions;
 using PaperlessREST.Services;
 using SWEN3.Paperless.RabbitMq.Consuming;
 using SWEN3.Paperless.RabbitMq.Models;
 using SWEN3.Paperless.RabbitMq.Sse;
-using ValidationException = FluentValidation.ValidationException;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +25,7 @@ builder.AddDependencies();
 var app = builder.Build();
 
 await app.InitializeApplicationAsync();
+
 
 app.ConfigureMiddleware();
 app.MapEndpoints();
@@ -35,7 +38,6 @@ namespace PaperlessREST
     {
         IAsyncEnumerable<Document> GetRecentDocumentsAsync(int limit,
             CancellationToken cancellationToken = default);
-
         ValueTask<Document?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<Document> AddAsync(Document document, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);

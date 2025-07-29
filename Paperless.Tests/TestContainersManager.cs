@@ -1,5 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using TUnit.Core;
 
 namespace Paperless.Tests;
 
@@ -173,9 +178,6 @@ public sealed class PaperlessWebApplication : WebApplicationFactory<Program>, IA
         {
             builder.UseSetting(kvp.Key, kvp.Value);
         }
-        
-        // Let the application handle database initialization
-        // This avoids conflicts with migrations or existing database schema
     }
 }
 
