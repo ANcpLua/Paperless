@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
 namespace PaperlessREST;
@@ -11,7 +12,7 @@ public class Document
     public string StoragePath { get; private set; } = null!;
     [UsedImplicitly] public string? Content { get; private set; }
     [UsedImplicitly] public DateTimeOffset? ProcessedAt { get; private set; }
-    
+
     // Public constructor for EF Core and Mapster
 
     // Factory method for creating new documents
@@ -28,6 +29,24 @@ public class Document
             CreatedAt = createdAt,
             StoragePath = $"documents/{createdAt:yyyy-MM}/{id}.pdf"
         };
+    }
+
+    private Document()
+    {
+    }
+
+// In Document.cs
+    internal Document(Guid id, string fileName, DocumentStatus status,
+        DateTimeOffset createdAt, string storagePath, string? content = null,
+        DateTimeOffset? processedAt = null)
+    {
+        Id = id;
+        FileName = fileName;
+        Status = status;
+        CreatedAt = createdAt;
+        StoragePath = storagePath;
+        Content = content;
+        ProcessedAt = processedAt;
     }
 
     // Domain methods

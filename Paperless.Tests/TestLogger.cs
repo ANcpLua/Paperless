@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Extensions.Logging;
 
 namespace Paperless.Tests;
@@ -22,7 +21,7 @@ public class TestLogger : ILogger
 
         Console.WriteLine($"[{timestamp}] [{_name}] [{logLevel}] {message}");
 
-        if (exception != null)
+        if (exception is not null)
         {
             Console.WriteLine($"[{timestamp}] [{_name}] [ERROR] {exception}");
         }

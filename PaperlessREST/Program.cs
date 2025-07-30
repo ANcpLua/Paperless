@@ -1,16 +1,13 @@
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http.Json;
+using Mapster;
+using Mapster.ExtensionMethods;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using PaperlessREST;
 using PaperlessREST.Extensions;
 using PaperlessREST.Services;
@@ -26,9 +23,8 @@ var app = builder.Build();
 
 await app.InitializeApplicationAsync();
 
-
 app.ConfigureMiddleware();
-app.MapEndpoints();
+// app.MapEndpoints();
 
 await app.RunAsync();
 
@@ -38,6 +34,7 @@ namespace PaperlessREST
     {
         IAsyncEnumerable<Document> GetRecentDocumentsAsync(int limit,
             CancellationToken cancellationToken = default);
+
         ValueTask<Document?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<Document> AddAsync(Document document, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
@@ -229,7 +226,6 @@ namespace PaperlessREST
                     result.JobId,
                     result.Status,
                     content,
-                    result.ProcessedAt,
                     cancellationToken);
 
                 if (!processed)
@@ -250,7 +246,6 @@ namespace PaperlessREST
         }
     }
 }
-
 
 public record SearchQuery
 {
@@ -282,6 +277,27 @@ public class UploadDocumentRequest : IValidatableObject
                 "File size must not exceed 50MB",
                 [nameof(File)]);
         }
+    }
+}
+
+[UsedImplicitly]
+public class MapsterSourceGenExtension : IRegister
+{
+    [MapsterExtensionMethod]
+    public void Register(TypeAdapterConfig config)
+    {
+        // Domain ↔︎ persistence
+        config.NewConfig<DocumentEntity, Document>()
+            .MapToConstructor(true);
+
+        config.NewConfig<Document, DocumentEntity>();
+
+        // Domain → DTOs
+        config.NewConfig<Document, DocumentDto>()
+            .Map(dest => dest.Status, src => src.Status.ToString());
+
+        config.NewConfig<Document, CreateDocumentResponse>()
+            .Map(dest => dest.Status, src => src.Status.ToString());
     }
 }
 

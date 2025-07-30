@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaperlessServices", "Paperl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paperless.Tests", "Paperless.Tests\Paperless.Tests.csproj", "{A23147D8-F1D7-4CE0-B968-84C83A3CAC00}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paperless.UnitTests", "Paperless.UnitTests\Paperless.UnitTests.csproj", "{B293CFF3-5907-4FE3-83EB-94F2C78D19F3}"
+EndProject
 Global
 				GlobalSection(SolutionConfigurationPlatforms) = preSolution
 								Debug|Any CPU = Debug|Any CPU
@@ -37,5 +39,12 @@ Global
 					{A23147D8-F1D7-4CE0-B968-84C83A3CAC00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 					{A23147D8-F1D7-4CE0-B968-84C83A3CAC00}.Release|Any CPU.ActiveCfg = Release|Any CPU
 					{A23147D8-F1D7-4CE0-B968-84C83A3CAC00}.Release|Any CPU.Build.0 = Release|Any CPU
+					{B293CFF3-5907-4FE3-83EB-94F2C78D19F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+					{B293CFF3-5907-4FE3-83EB-94F2C78D19F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+					{B293CFF3-5907-4FE3-83EB-94F2C78D19F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+					{B293CFF3-5907-4FE3-83EB-94F2C78D19F3}.Release|Any CPU.Build.0 = Release|Any CPU
 				EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B293CFF3-5907-4FE3-83EB-94F2C78D19F3} = {DD737D32-0265-495A-BB61-48B9D41A35A9}
+	EndGlobalSection
 EndGlobal

@@ -149,7 +149,7 @@ public interface IDocumentService
 
     Task DeleteDocumentAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<bool> ProcessOcrResultAsync(Guid id, string status, string? content, DateTimeOffset processedAt,
+    Task<bool> ProcessOcrResultAsync(Guid id, string status, string? content, CancellationToken processedAt,
         CancellationToken cancellationToken = default);
 }
 
@@ -244,7 +244,7 @@ public class DocumentService : IDocumentService
     }
 
     public async Task<bool> ProcessOcrResultAsync(Guid id, string status, string? content,
-        DateTimeOffset processedAt, CancellationToken cancellationToken = default)
+        CancellationToken processedAt, CancellationToken cancellationToken = default)
     {
         var document = await _repository.GetByIdAsync(id, cancellationToken);
         if (document is null)

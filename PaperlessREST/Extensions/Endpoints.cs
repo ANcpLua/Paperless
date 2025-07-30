@@ -29,21 +29,18 @@ public static class DocumentEndpoints
 
         v1documents.MapGet("/search", SearchDocuments)
             .WithName(nameof(SearchDocuments));
-        // .ProducesValidationProblem() // REMOVED: Redundant thanks to https://github.com/captainsafia/aspnet-openapi-xml
+
         v1documents.MapGet("/{id:guid}", GetDocumentById)
             .WithName(nameof(GetDocumentById));
 
         v1documents.MapPost("/", UploadDocument)
             .WithName(nameof(UploadDocument))
             .Accepts<IFormFile>("multipart/form-data")
-            // .ProducesValidationProblem() // REMOVED: Redundant thanks to https://github.com/captainsafia/aspnet-openapi-xml
+            // .ProducesValidationProblem()  Redundant thanks to https://github.com/captainsafia/aspnet-openapi-xml
             .DisableAntiforgery();
 
         v1documents.MapDelete("/{id:guid}", DeleteDocument)
-            .WithName(nameof(DeleteDocument))
-            // Kept because the handler itself doesn't return NotFound,
-            // but a global handler might. This makes it explicit.
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .WithName(nameof(DeleteDocument));
 
         return app;
     }
@@ -61,7 +58,7 @@ public static class DocumentEndpoints
     /// Errors are handled by GlobalExceptionHandler which returns RFC 7807 problem details.
     /// </remarks>
     /// <response code="200">Returns the list of recent documents.</response>
-    private static async Task<Ok<List<DocumentDto>>> GetDocuments(
+    public static async Task<Ok<List<DocumentDto>>> GetDocuments(
         IDocumentService documentService,
         CancellationToken cancellationToken)
     {
@@ -88,7 +85,7 @@ public static class DocumentEndpoints
     /// </remarks>
     /// <response code="200">Returns a list of matching documents.</response>
     /// <response code="400">If the search query is invalid.</response>
-    private static async Task<Ok<List<object>>> SearchDocuments(
+    public static async Task<Ok<List<object>>> SearchDocuments(
         [AsParameters] SearchQuery search,
         IDocumentService documentService,
         CancellationToken cancellationToken)
@@ -116,7 +113,7 @@ public static class DocumentEndpoints
     /// </remarks>
     /// <response code="202">Indicates the file has been accepted for processing. The `Location` header contains the URL to check the document's status.</response>
     /// <response code="400">If the uploaded file is not a valid PDF, is a duplicate, or fails other validation checks.</response>
-    private static async Task<AcceptedAtRoute<CreateDocumentResponse>> UploadDocument(
+    public static async Task<AcceptedAtRoute<CreateDocumentResponse>> UploadDocument(
         [AsParameters] UploadDocumentRequest request,
         IDocumentService documentService,
         CancellationToken cancellationToken)
@@ -143,7 +140,7 @@ public static class DocumentEndpoints
     /// </remarks>
     /// <response code="200">Returns the requested document.</response>
     /// <response code="404">If a document with the specified ID does not exist.</response>
-    private static async Task<Results<Ok<DocumentDto>, NotFound>> GetDocumentById(
+    public static async Task<Results<Ok<DocumentDto>, NotFound>> GetDocumentById(
         Guid id,
         IDocumentService documentService,
         CancellationToken cancellationToken)
@@ -170,7 +167,7 @@ public static class DocumentEndpoints
     /// </remarks>
     /// <response code="204">The document was successfully deleted.</response>
     /// <response code="404">If a document with the specified ID does not exist.</response>
-    private static async Task<NoContent> DeleteDocument(
+    public static async Task<NoContent> DeleteDocument(
         Guid id,
         IDocumentService documentService,
         CancellationToken cancellationToken)
