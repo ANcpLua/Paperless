@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.WebUtilities;
@@ -62,6 +63,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         return true;
     }
 
+    [SuppressMessage("ReSharper", "TodoComment")]
     private static bool TryMapStatusCode(Exception ex, out int status)
     {
         status = ex switch
@@ -77,6 +79,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         return status is not 0;
     }
 
+    [SuppressMessage("ReSharper", "TodoComment")]
     private static string GetPublicMessage(Exception ex) => ex switch
     {
         ValidationException => "The request contains invalid data.",

@@ -378,7 +378,7 @@ namespace PaperlessServices
 //         await _host.StartAsync();
 //     }
 //
-//     // Service accessors
+//     // Services accessors
 //     public IOcrService OcrService => _host!.Services.GetRequiredService<IOcrService>();
 //     public IOcrProcessor OcrProcessor => _host!.Services.GetRequiredService<IOcrProcessor>();
 //     public IStorageService StorageService => _host!.Services.GetRequiredService<IStorageService>();

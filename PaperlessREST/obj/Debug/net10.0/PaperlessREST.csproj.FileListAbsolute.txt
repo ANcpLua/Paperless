@@ -143,6 +143,9 @@
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/scopedcss/bundle/PaperlessREST.styles.css
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/dp1aqp1owv-{0}-rlhtcnnsz5-rlhtcnnsz5.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/x2m3v9oewl-{0}-2vrkh37sbr-2vrkh37sbr.gz
+/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/mmi6plf1oo-{0}-0wjeov6s7k-0wjeov6s7k.gz
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/staticwebassets.build.json
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/staticwebassets.build.json.cache
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/staticwebassets.development.json
@@ -153,6 +156,3 @@
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.pdb
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/PaperlessREST.genruntimeconfig.cache
 /Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/ref/PaperlessREST.dll
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/dp1aqp1owv-{0}-rzeyiqvgpx-rzeyiqvgpx.gz
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/x2m3v9oewl-{0}-f2kldssstb-f2kldssstb.gz
-/Users/ancplua/RiderProjects/Paperless/PaperlessREST/obj/Debug/net10.0/compressed/mmi6plf1oo-{0}-h2y6o88xbp-h2y6o88xbp.gz
