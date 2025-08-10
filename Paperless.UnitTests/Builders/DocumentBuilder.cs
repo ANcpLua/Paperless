@@ -66,8 +66,17 @@ public sealed class DocumentBuilder
 
     public Document Build()
     {
-        var storagePath = _storagePath ?? $"documents/{_createdAt:yyyy-MM}/{_id}.pdf";
-        return new Document(_id, _fileName, _status, _createdAt, storagePath, _content, _processedAt);
+        return new Document
+        {
+            Id = _id,
+            FileName = _fileName,
+            Status = _status,
+            CreatedAt = _createdAt,
+            StoragePath = _storagePath ?? $"documents/{_createdAt:yyyy-MM}/{_id}.pdf",
+            Content = _content,
+            ProcessedAt = _processedAt
+        };
+           
     }
 }
 

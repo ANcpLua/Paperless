@@ -30,9 +30,10 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Minio" Version="6.0.5"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-preview.5"/>
         <PackageReference Include="RabbitMQ.Client" Version="7.1.2"/>
+        <PackageReference Include="Minio" Version="6.0.5"/>
+        
         <PackageReference Include="Scalar.AspNetCore" Version="2.6.4" />
         <PackageReference Include="Scalar.Kiota.Extension" Version="1.0.0-preview.6" />
         <PackageReference Include="SWEN3.Paperless.RabbitMq" Version="1.0.3"/>

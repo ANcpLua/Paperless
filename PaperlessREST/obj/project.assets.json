@@ -3541,6 +3541,7 @@
       ],
       "sources": {
         "/Users/ancplua/LocalNuGet": {},
+        "/Users/ancplua/LocalNuGetFeed": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

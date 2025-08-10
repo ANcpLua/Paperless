@@ -16,7 +16,7 @@ public class DocumentStorageServiceTests
 {
     private Mock<IMinioClient> _minio;
     private Mock<IOptions<MinioOptions>> _options;
-    private FakeLogger<DocumentStorageService> _logger;
+    private FakeLoggerFluent<DocumentStorageService> _logger;
     private DocumentStorageService _sut;
     private readonly CancellationToken _ct = CancellationToken.None;
 
@@ -26,7 +26,7 @@ public class DocumentStorageServiceTests
         _minio = new Mock<IMinioClient>();
         _options = new Mock<IOptions<MinioOptions>>();
         _options.Setup(o => o.Value).Returns(new MinioOptions { BucketName = "test-bucket" });
-        _logger = FakeLogger.CreateStrict<DocumentStorageService>();
+        _logger = FakeLoggerFluent.CreateStrict<DocumentStorageService>();
         _sut = new DocumentStorageService(_minio.Object, _options.Object, _logger);
     }
 
@@ -34,7 +34,8 @@ public class DocumentStorageServiceTests
     public void TearDown()
     {
         // Verify all logs were expected in strict mode
-        _logger.VerifyAllLogsProcessed();
+        _logger.VerifyNoOtherCalls();
+          
     }
 
     [Test]

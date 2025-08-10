@@ -31,23 +31,23 @@ public class Document
         };
     }
 
-    private Document()
-    {
-    }
-
-// In Document.cs
-    internal Document(Guid id, string fileName, DocumentStatus status,
-        DateTimeOffset createdAt, string storagePath, string? content = null,
-        DateTimeOffset? processedAt = null)
-    {
-        Id = id;
-        FileName = fileName;
-        Status = status;
-        CreatedAt = createdAt;
-        StoragePath = storagePath;
-        Content = content;
-        ProcessedAt = processedAt;
-    }
+//     private Document()
+//     {
+//     }
+//
+// // In Document.cs
+//     internal Document(Guid id, string fileName, DocumentStatus status,
+//         DateTimeOffset createdAt, string storagePath, string? content = null,
+//         DateTimeOffset? processedAt = null)
+//     {
+//         Id = id;
+//         FileName = fileName;
+//         Status = status;
+//         CreatedAt = createdAt;
+//         StoragePath = storagePath;
+//         Content = content;
+//         ProcessedAt = processedAt;
+//     }
 
     // Domain methods
     public void MarkAsCompleted(string content)

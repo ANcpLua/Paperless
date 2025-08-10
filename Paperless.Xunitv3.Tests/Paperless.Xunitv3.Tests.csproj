@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
+        <PackageReference Include="coverlet.collector" Version="6.0.4"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0-preview.5.25277.114" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Minio" Version="6.0.5" />
+        <PackageReference Include="Testcontainers.Minio" Version="4.6.0" />
+        <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.KeyPerFile" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.0-preview.6.25358.103" />
+        <PackageReference Include="xunit.v3" Version="3.0.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-preview.5"/>
+        <PackageReference Include="YamlDotNet" Version="16.3.0" />
+
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="appsettings.json">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Paperless.UnitTests\Paperless.UnitTests.csproj" />
+    </ItemGroup>
+
+
+</Project>
