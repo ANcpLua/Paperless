@@ -24,7 +24,7 @@ var app = builder.Build();
 await app.InitializeApplicationAsync();
 
 app.ConfigureMiddleware();
-// app.MapEndpoints();
+app.MapEndpoints();
 
 await app.RunAsync();
 

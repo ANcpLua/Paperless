@@ -15,7 +15,6 @@ public static class Endpoints
 
 public static class DocumentEndpoints
 {
-    // ReSharper disable once UnusedMethodReturnValue.Global
     public static IEndpointRouteBuilder MapDocumentEndpoints(this IEndpointRouteBuilder app)
     {
         var api = app.NewVersionedApi("Documents");

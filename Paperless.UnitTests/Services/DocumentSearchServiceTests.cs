@@ -53,8 +53,11 @@ public sealed class DocumentSearchServiceTests
 
         // Assert
         Assert.That(results, Has.Count.EqualTo(2));
-        Assert.That(results[0], Is.SameAs(doc1));
-        Assert.That(results[1], Is.SameAs(doc2));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(results[0], Is.SameAs(doc1));
+            Assert.That(results[1], Is.SameAs(doc2));
+        }
     }
 
     [Test]
