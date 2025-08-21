@@ -17,15 +17,13 @@
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.5.25277.114"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-preview.6.25358.103" />
-        <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.7" />
+        <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.8" />
         <PackageReference Include="Minio" Version="6.0.5" />
         <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
         <PackageReference Include="SWEN3.Paperless.RabbitMq" Version="1.0.3" />
-        <PackageReference Include="Testcontainers.Elasticsearch" Version="4.6.0" />
         <PackageReference Include="Testcontainers.Minio" Version="4.6.0" />
-        <PackageReference Include="Testcontainers.RabbitMq" Version="4.6.0" />
-        <PackageReference Include="TUnit.Assertions" Version="0.25.21" />
-        <PackageReference Include="TUnit.Core" Version="0.25.21" />
+        <PackageReference Include="TUnit.Assertions" Version="0.56.50" />
+        <PackageReference Include="TUnit.Core" Version="0.56.50" />
     </ItemGroup>
 
     <ItemGroup>

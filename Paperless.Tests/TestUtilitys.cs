@@ -66,7 +66,7 @@ public static class PdfTestHelper
 public sealed class InvalidFileUploadGenerator
     : DataSourceGeneratorAttribute<string, string, string>
 {
-    public override IEnumerable<Func<(string, string, string)>> GenerateDataSources(
+    protected override IEnumerable<Func<(string, string, string)>> GenerateDataSources(
         DataGeneratorMetadata _)
     {
         yield return () => ("document.txt",  "text content",  "File must have .pdf extension");
@@ -82,7 +82,7 @@ public sealed class InvalidFileUploadGenerator
 public sealed class SearchQueryValidationGenerator
     : DataSourceGeneratorAttribute<string, int?, string>
 {
-    public override IEnumerable<Func<(string, int?, string)>> GenerateDataSources(
+    protected override IEnumerable<Func<(string, int?, string)>> GenerateDataSources(
         DataGeneratorMetadata _)
     {
         yield return () => ("",    10,  "query must be at least 1 character");

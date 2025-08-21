@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PaperlessServices")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8cd50952cb1e98b15bc0c87432708ee0cec8453")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+40af881cd91eebac8773210e3b1bccf0634b2fc0")]
 [assembly: System.Reflection.AssemblyProductAttribute("PaperlessServices")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PaperlessServices")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using TUnit.Core;
 
 namespace Paperless.Tests;
 
@@ -62,7 +57,7 @@ public sealed class TestContainersManager : IAsyncInitializer
         if (_initialized) return;
 
         Console.WriteLine("Starting test containers...");
-        
+
         try
         {
             await Task.WhenAll(
@@ -75,12 +70,13 @@ public sealed class TestContainersManager : IAsyncInitializer
             Console.WriteLine("All containers started. Waiting for them to be ready...");
             // Wait longer for containers to be fully ready, especially RabbitMQ and Elasticsearch
             await Task.Delay(15000);
-            
+
             Console.WriteLine("Building configuration...");
             Console.WriteLine($"PostgreSQL - State: {_postgres.State}, ID: {_postgres.Id}, Name: {_postgres.Name}");
             Console.WriteLine($"RabbitMQ - State: {_rabbitMq.State}, ID: {_rabbitMq.Id}, Name: {_rabbitMq.Name}");
             Console.WriteLine($"MinIO - State: {_minio.State}, ID: {_minio.Id}, Name: {_minio.Name}");
-            Console.WriteLine($"Elasticsearch - State: {_elasticsearch.State}, ID: {_elasticsearch.Id}, Name: {_elasticsearch.Name}");
+            Console.WriteLine(
+                $"Elasticsearch - State: {_elasticsearch.State}, ID: {_elasticsearch.Id}, Name: {_elasticsearch.Name}");
         }
         catch (Exception ex)
         {
@@ -90,9 +86,9 @@ public sealed class TestContainersManager : IAsyncInitializer
 
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var testId = Guid.NewGuid().ToString("N").Substring(0, 8);
-        
+
         var config = new Dictionary<string, string?>();
-        
+
         try
         {
             Console.WriteLine("Getting PostgreSQL port mapping...");
@@ -100,14 +96,15 @@ public sealed class TestContainersManager : IAsyncInitializer
             Console.WriteLine($"PostgreSQL mapped port: {pgPort}");
             config["ASPNETCORE_ENVIRONMENT"] = "Testing";
             // Use a unique database name per test session to avoid conflicts
-            config["ConnectionStrings:PaperlessDb"] = $"Host={_postgres.Hostname};Port={pgPort};Database=testdb_{testId};Username=postgres;Password=postgres";
+            config["ConnectionStrings:PaperlessDb"] =
+                $"Host={_postgres.Hostname};Port={pgPort};Database=testdb_{testId};Username=postgres;Password=postgres";
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting PostgreSQL port: {ex}");
             throw;
         }
-        
+
         try
         {
             Console.WriteLine("Getting RabbitMQ port mapping...");
@@ -120,7 +117,7 @@ public sealed class TestContainersManager : IAsyncInitializer
             Console.WriteLine($"Error getting RabbitMQ port: {ex}");
             throw;
         }
-        
+
         try
         {
             Console.WriteLine("Getting MinIO port mapping...");
@@ -137,7 +134,7 @@ public sealed class TestContainersManager : IAsyncInitializer
             Console.WriteLine($"Error getting MinIO port: {ex}");
             throw;
         }
-        
+
         try
         {
             Console.WriteLine("Getting Elasticsearch port mapping...");
@@ -151,7 +148,7 @@ public sealed class TestContainersManager : IAsyncInitializer
             Console.WriteLine($"Error getting Elasticsearch port: {ex}");
             throw;
         }
-        
+
         _configuration = config;
         _initialized = true;
     }
@@ -159,7 +156,7 @@ public sealed class TestContainersManager : IAsyncInitializer
     public IReadOnlyDictionary<string, string?> GetConfiguration() => _configuration!;
 }
 
-public sealed class PaperlessWebApplication : WebApplicationFactory<Program>, IAsyncInitializer
+public sealed class PaperlessWebApplication : WebApplicationFactory<PaperlessREST.DocumentRepository>, IAsyncInitializer
 {
     [ClassDataSource<TestContainersManager>(Shared = SharedType.PerTestSession)]
     public required TestContainersManager Containers { get; init; }
@@ -173,7 +170,7 @@ public sealed class PaperlessWebApplication : WebApplicationFactory<Program>, IA
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        
+
         foreach (var kvp in Containers.GetConfiguration())
         {
             builder.UseSetting(kvp.Key, kvp.Value);
