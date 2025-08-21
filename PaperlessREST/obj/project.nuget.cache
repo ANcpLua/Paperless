@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "hqcVPOJghIo=",
+  "dgSpecHash": "LSsGeRbIJqs=",
   "success": true,
-  "projectFilePath": "/Users/ancplua/RiderProjects/Paperless/PaperlessREST/PaperlessREST.csproj",
+  "projectFilePath": "/Users/ancplua/Paperless/PaperlessREST/PaperlessREST.csproj",
   "expectedPackageFiles": [
     "/Users/ancplua/.nuget/packages/asp.versioning.abstractions/8.1.0/asp.versioning.abstractions.8.1.0.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/asp.versioning.http/8.1.0/asp.versioning.http.8.1.0.nupkg.sha512",
@@ -19,7 +19,7 @@
     "/Users/ancplua/.nuget/packages/mapster/7.4.0/mapster.7.4.0.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/mapster.core/1.2.1/mapster.core.1.2.1.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/mapster.dependencyinjection/1.0.1/mapster.dependencyinjection.1.0.1.nupkg.sha512",
-    "/Users/ancplua/.nuget/packages/mapster.extensionmethods/1.0.0/mapster.extensionmethods.1.0.0.nupkg.sha512",
+    "/Users/ancplua/.nuget/packages/mapsterextensions.generator/3.1.0/mapsterextensions.generator.3.1.0.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/microsoft.aspnetcore.openapi/10.0.0-preview.6.25358.103/microsoft.aspnetcore.openapi.10.0.0-preview.6.25358.103.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/microsoft.build/17.7.2/microsoft.build.17.7.2.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/microsoft.build.framework/17.14.8/microsoft.build.framework.17.14.8.nupkg.sha512",

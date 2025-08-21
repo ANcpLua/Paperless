@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paperless.Tests", "Paperles
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paperless.UnitTests", "Paperless.UnitTests\Paperless.UnitTests.csproj", "{B293CFF3-5907-4FE3-83EB-94F2C78D19F3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paperless.Xunitv3.Tests", "Paperless.Xunitv3.Tests\Paperless.Xunitv3.Tests.csproj", "{C3708AD8-9A58-4C78-91DD-AC9835492C75}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaperlessServices.Tests", "PaperlessServices.Tests\PaperlessServices.Tests.csproj", "{C3708AD8-9A58-4C78-91DD-AC9835492C75}"
 EndProject
 Global
 				GlobalSection(SolutionConfigurationPlatforms) = preSolution

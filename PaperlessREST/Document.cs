@@ -5,13 +5,13 @@ namespace PaperlessREST;
 
 public class Document
 {
-    public Guid Id { get; private set; }
-    public string FileName { get; private set; } = null!;
-    public DocumentStatus Status { get; private set; }
-    [UsedImplicitly] public DateTimeOffset CreatedAt { get; private set; }
-    public string StoragePath { get; private set; } = null!;
-    [UsedImplicitly] public string? Content { get; private set; }
-    [UsedImplicitly] public DateTimeOffset? ProcessedAt { get; private set; }
+    public Guid Id { get; internal set; }
+    public string FileName { get; internal set; } = null!;
+    public DocumentStatus Status { get; internal set; }
+    [UsedImplicitly] public DateTimeOffset CreatedAt { get; internal set; }
+    public string StoragePath { get; internal set; } = null!;
+    [UsedImplicitly] public string? Content { get; internal set; }
+    [UsedImplicitly] public DateTimeOffset? ProcessedAt { get; internal set; }
 
     // Public constructor for EF Core and Mapster
 

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "+LU5TNEMhJo=",
+  "dgSpecHash": "Vgut7jWv/BM=",
   "success": true,
-  "projectFilePath": "/Users/ancplua/RiderProjects/Paperless/PaperlessServices/PaperlessServices.csproj",
+  "projectFilePath": "/Users/ancplua/Paperless/PaperlessServices/PaperlessServices.csproj",
   "expectedPackageFiles": [
     "/Users/ancplua/.nuget/packages/bouncycastle.cryptography/2.4.0/bouncycastle.cryptography.2.4.0.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/communitytoolkit.highperformance/8.4.0/communitytoolkit.highperformance.8.4.0.nupkg.sha512",
@@ -38,7 +38,7 @@
     "/Users/ancplua/.nuget/packages/microsoft.extensions.logging.eventsource/10.0.0-preview.5.25277.114/microsoft.extensions.logging.eventsource.10.0.0-preview.5.25277.114.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/microsoft.extensions.options/10.0.0-preview.5.25277.114/microsoft.extensions.options.10.0.0-preview.5.25277.114.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/microsoft.extensions.options.configurationextensions/10.0.0-preview.5.25277.114/microsoft.extensions.options.configurationextensions.10.0.0-preview.5.25277.114.nupkg.sha512",
-    "/Users/ancplua/.nuget/packages/microsoft.extensions.options.dataannotations/9.0.7/microsoft.extensions.options.dataannotations.9.0.7.nupkg.sha512",
+    "/Users/ancplua/.nuget/packages/microsoft.extensions.options.dataannotations/9.0.8/microsoft.extensions.options.dataannotations.9.0.8.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/microsoft.extensions.primitives/10.0.0-preview.5.25277.114/microsoft.extensions.primitives.10.0.0-preview.5.25277.114.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/minio/6.0.5/minio.6.0.5.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/rabbitmq.client/7.1.2/rabbitmq.client.7.1.2.nupkg.sha512",
@@ -50,11 +50,9 @@
     "/Users/ancplua/.nuget/packages/system.reactive/6.0.1/system.reactive.6.0.1.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/system.threading.ratelimiting/8.0.0/system.threading.ratelimiting.8.0.0.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/testcontainers/4.6.0/testcontainers.4.6.0.nupkg.sha512",
-    "/Users/ancplua/.nuget/packages/testcontainers.elasticsearch/4.6.0/testcontainers.elasticsearch.4.6.0.nupkg.sha512",
     "/Users/ancplua/.nuget/packages/testcontainers.minio/4.6.0/testcontainers.minio.4.6.0.nupkg.sha512",
-    "/Users/ancplua/.nuget/packages/testcontainers.rabbitmq/4.6.0/testcontainers.rabbitmq.4.6.0.nupkg.sha512",
-    "/Users/ancplua/.nuget/packages/tunit.assertions/0.25.21/tunit.assertions.0.25.21.nupkg.sha512",
-    "/Users/ancplua/.nuget/packages/tunit.core/0.25.21/tunit.core.0.25.21.nupkg.sha512"
+    "/Users/ancplua/.nuget/packages/tunit.assertions/0.56.50/tunit.assertions.0.56.50.nupkg.sha512",
+    "/Users/ancplua/.nuget/packages/tunit.core/0.56.50/tunit.core.0.56.50.nupkg.sha512"
   ],
   "logs": []
 }

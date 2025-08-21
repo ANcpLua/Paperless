@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using JetBrains.Annotations;
 using Mapster;
-using Mapster.ExtensionMethods;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PaperlessREST;
@@ -20,6 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddDependencies();
 
 var app = builder.Build();
+TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
 
 await app.InitializeApplicationAsync();
 
@@ -277,27 +278,6 @@ public class UploadDocumentRequest : IValidatableObject
                 "File size must not exceed 50MB",
                 [nameof(File)]);
         }
-    }
-}
-
-[UsedImplicitly]
-public class MapsterSourceGenExtension : IRegister
-{
-    [MapsterExtensionMethod]
-    public void Register(TypeAdapterConfig config)
-    {
-        // Domain ↔︎ persistence
-        config.NewConfig<DocumentEntity, Document>()
-            .MapToConstructor(true);
-
-        config.NewConfig<Document, DocumentEntity>();
-
-        // Domain → DTOs
-        config.NewConfig<Document, DocumentDto>()
-            .Map(dest => dest.Status, src => src.Status.ToString());
-
-        config.NewConfig<Document, CreateDocumentResponse>()
-            .Map(dest => dest.Status, src => src.Status.ToString());
     }
 }
 

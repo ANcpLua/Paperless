@@ -667,11 +667,11 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
-      "Microsoft.Extensions.Options.DataAnnotations/9.0.7": {
+      "Microsoft.Extensions.Options.DataAnnotations/9.0.8": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.7",
-          "Microsoft.Extensions.Options": "9.0.7"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.8",
+          "Microsoft.Extensions.Options": "9.0.8"
         },
         "compile": {
           "lib/net9.0/Microsoft.Extensions.Options.DataAnnotations.dll": {
@@ -881,22 +881,6 @@
           }
         }
       },
-      "Testcontainers.Elasticsearch/4.6.0": {
-        "type": "package",
-        "dependencies": {
-          "Testcontainers": "4.6.0"
-        },
-        "compile": {
-          "lib/net9.0/Testcontainers.Elasticsearch.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net9.0/Testcontainers.Elasticsearch.dll": {
-            "related": ".xml"
-          }
-        }
-      },
       "Testcontainers.Minio/4.6.0": {
         "type": "package",
         "dependencies": {
@@ -913,23 +897,7 @@
           }
         }
       },
-      "Testcontainers.RabbitMq/4.6.0": {
-        "type": "package",
-        "dependencies": {
-          "Testcontainers": "4.6.0"
-        },
-        "compile": {
-          "lib/net9.0/Testcontainers.RabbitMq.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net9.0/Testcontainers.RabbitMq.dll": {
-            "related": ".xml"
-          }
-        }
-      },
-      "TUnit.Assertions/0.25.21": {
+      "TUnit.Assertions/0.56.50": {
         "type": "package",
         "compile": {
           "lib/net9.0/TUnit.Assertions.dll": {}
@@ -942,7 +910,7 @@
           "buildTransitive/net9.0/TUnit.Assertions.targets": {}
         }
       },
-      "TUnit.Core/0.25.21": {
+      "TUnit.Core/0.56.50": {
         "type": "package",
         "compile": {
           "lib/net9.0/TUnit.Core.dll": {}
@@ -1986,10 +1954,10 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "Microsoft.Extensions.Options.DataAnnotations/9.0.7": {
-      "sha512": "jZ/3qiCQYtKmeRRaSVj25EBiLeWvFHvyyoZmBBGvIn0v3eyzyfEyAtL3D6Dbimu5lClqKW/JVOUuA+fYLX/WFA==",
+    "Microsoft.Extensions.Options.DataAnnotations/9.0.8": {
+      "sha512": "WSKyfcZV4+yTk4ZhpnxSqi5JdEItgB5whhPIi+3+tZgb3IvPtCwpoIbLsyoAucodAFnkzEIPsGrBkcx3AjQc/A==",
       "type": "package",
-      "path": "microsoft.extensions.options.dataannotations/9.0.7",
+      "path": "microsoft.extensions.options.dataannotations/9.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2011,7 +1979,7 @@
         "lib/netstandard2.0/Microsoft.Extensions.Options.DataAnnotations.xml",
         "lib/netstandard2.1/Microsoft.Extensions.Options.DataAnnotations.dll",
         "lib/netstandard2.1/Microsoft.Extensions.Options.DataAnnotations.xml",
-        "microsoft.extensions.options.dataannotations.9.0.7.nupkg.sha512",
+        "microsoft.extensions.options.dataannotations.9.0.8.nupkg.sha512",
         "microsoft.extensions.options.dataannotations.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -2290,29 +2258,6 @@
         "testcontainers.nuspec"
       ]
     },
-    "Testcontainers.Elasticsearch/4.6.0": {
-      "sha512": "yFBE2RpHf/jF1rSzaNn91QNFg72N7+h5IMFKpNYtysHKYzaKYSeX/zSdxIICgw6K8gJkMt0d8tN1/up988I8gw==",
-      "type": "package",
-      "path": "testcontainers.elasticsearch/4.6.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "LICENSE",
-        "README.md",
-        "docs/banner.png",
-        "docs/logo.png",
-        "lib/net8.0/Testcontainers.Elasticsearch.dll",
-        "lib/net8.0/Testcontainers.Elasticsearch.xml",
-        "lib/net9.0/Testcontainers.Elasticsearch.dll",
-        "lib/net9.0/Testcontainers.Elasticsearch.xml",
-        "lib/netstandard2.0/Testcontainers.Elasticsearch.dll",
-        "lib/netstandard2.0/Testcontainers.Elasticsearch.xml",
-        "lib/netstandard2.1/Testcontainers.Elasticsearch.dll",
-        "lib/netstandard2.1/Testcontainers.Elasticsearch.xml",
-        "testcontainers.elasticsearch.4.6.0.nupkg.sha512",
-        "testcontainers.elasticsearch.nuspec"
-      ]
-    },
     "Testcontainers.Minio/4.6.0": {
       "sha512": "qk76NKS7XzCIz9KQ2hyrtlIZWpoUVaAEqCP9rN0P0K11qXFGF2u5keqGBthSS1+dsCMljFsH8WdWfaiH/MMHpg==",
       "type": "package",
@@ -2336,33 +2281,10 @@
         "testcontainers.minio.nuspec"
       ]
     },
-    "Testcontainers.RabbitMq/4.6.0": {
-      "sha512": "UFPMvZWqhGNIvMkmvNdIC19Fg5ZnhEESLKrTxY9BM2nCwxo3HGr1AU30tPL6Sa/RLhK3BuFpB/j14QH/jp8zvw==",
+    "TUnit.Assertions/0.56.50": {
+      "sha512": "JDLt/NdWi8NRcfu74bZ/WXsPVrRylNcWks03dUHMQfugmjtI+6iDT8mh0+gveOJhAaDZQPI9OVVLugQYMALyqw==",
       "type": "package",
-      "path": "testcontainers.rabbitmq/4.6.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "LICENSE",
-        "README.md",
-        "docs/banner.png",
-        "docs/logo.png",
-        "lib/net8.0/Testcontainers.RabbitMq.dll",
-        "lib/net8.0/Testcontainers.RabbitMq.xml",
-        "lib/net9.0/Testcontainers.RabbitMq.dll",
-        "lib/net9.0/Testcontainers.RabbitMq.xml",
-        "lib/netstandard2.0/Testcontainers.RabbitMq.dll",
-        "lib/netstandard2.0/Testcontainers.RabbitMq.xml",
-        "lib/netstandard2.1/Testcontainers.RabbitMq.dll",
-        "lib/netstandard2.1/Testcontainers.RabbitMq.xml",
-        "testcontainers.rabbitmq.4.6.0.nupkg.sha512",
-        "testcontainers.rabbitmq.nuspec"
-      ]
-    },
-    "TUnit.Assertions/0.25.21": {
-      "sha512": "eaccIw/l6jP/6es8HAiAoffXynL2xIe6riB1IK8WTmdbIGggvY7LeSsuwbLuKV/baEEl9pWnTyg9W4TjpNuk6w==",
-      "type": "package",
-      "path": "tunit.assertions/0.25.21",
+      "path": "tunit.assertions/0.56.50",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2381,14 +2303,14 @@
         "lib/net9.0/TUnit.Assertions.dll",
         "lib/netstandard2.0/TUnit.Assertions.dll",
         "logo.jpg",
-        "tunit.assertions.0.25.21.nupkg.sha512",
+        "tunit.assertions.0.56.50.nupkg.sha512",
         "tunit.assertions.nuspec"
       ]
     },
-    "TUnit.Core/0.25.21": {
-      "sha512": "vlYyHa2oxvrFtDPu7Jw0yibY5KU7fDcSMcGj3yuWumIkh3oh/o9AT11kfzuef/kUSdzRbyQzAsu+V/4GbB3UQA==",
+    "TUnit.Core/0.56.50": {
+      "sha512": "FdCg6tq3n99rA6cdSB6ny12fGqa1NN9lpUsCSJve73vHjz0yd/jt4y5DsZaEsL/LdFaD9nLEh5L9t7sLqFEA3w==",
       "type": "package",
-      "path": "tunit.core/0.25.21",
+      "path": "tunit.core/0.56.50",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2412,7 +2334,7 @@
         "lib/net9.0/TUnit.Core.dll",
         "lib/netstandard2.0/TUnit.Core.dll",
         "logo.jpg",
-        "tunit.core.0.25.21.nupkg.sha512",
+        "tunit.core.0.56.50.nupkg.sha512",
         "tunit.core.nuspec"
       ]
     }
@@ -2424,15 +2346,13 @@
       "JetBrains.Annotations >= 2025.2.0",
       "Microsoft.Extensions.Hosting >= 10.0.0-preview.5.25277.114",
       "Microsoft.Extensions.Logging.Abstractions >= 10.0.0-preview.6.25358.103",
-      "Microsoft.Extensions.Options.DataAnnotations >= 9.0.7",
+      "Microsoft.Extensions.Options.DataAnnotations >= 9.0.8",
       "Minio >= 6.0.5",
       "RabbitMQ.Client >= 7.1.2",
       "SWEN3.Paperless.RabbitMq >= 1.0.3",
-      "TUnit.Assertions >= 0.25.21",
-      "TUnit.Core >= 0.25.21",
-      "Testcontainers.Elasticsearch >= 4.6.0",
-      "Testcontainers.Minio >= 4.6.0",
-      "Testcontainers.RabbitMq >= 4.6.0"
+      "TUnit.Assertions >= 0.56.50",
+      "TUnit.Core >= 0.56.50",
+      "Testcontainers.Minio >= 4.6.0"
     ]
   },
   "packageFolders": {
@@ -2441,11 +2361,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/ancplua/RiderProjects/Paperless/PaperlessServices/PaperlessServices.csproj",
+      "projectUniqueName": "/Users/ancplua/Paperless/PaperlessServices/PaperlessServices.csproj",
       "projectName": "PaperlessServices",
-      "projectPath": "/Users/ancplua/RiderProjects/Paperless/PaperlessServices/PaperlessServices.csproj",
+      "projectPath": "/Users/ancplua/Paperless/PaperlessServices/PaperlessServices.csproj",
       "packagesPath": "/Users/ancplua/.nuget/packages/",
-      "outputPath": "/Users/ancplua/RiderProjects/Paperless/PaperlessServices/obj/",
+      "outputPath": "/Users/ancplua/Paperless/PaperlessServices/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/ancplua/.nuget/NuGet/NuGet.Config"
@@ -2454,9 +2374,9 @@
         "net10.0"
       ],
       "sources": {
-        "/Users/ancplua/LocalNuGet": {},
-        "/Users/ancplua/LocalNuGetFeed": {},
-        "https://api.nuget.org/v3/index.json": {}
+        "/usr/local/share/dotnet/library-packs": {},
+        "https://api.nuget.org/v3/index.json": {},
+        "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10/nuget/v3/index.json": {}
       },
       "frameworks": {
         "net10.0": {
@@ -2502,7 +2422,7 @@
           },
           "Microsoft.Extensions.Options.DataAnnotations": {
             "target": "Package",
-            "version": "[9.0.7, )"
+            "version": "[9.0.8, )"
           },
           "Minio": {
             "target": "Package",
@@ -2518,21 +2438,13 @@
           },
           "TUnit.Assertions": {
             "target": "Package",
-            "version": "[0.25.21, )"
+            "version": "[0.56.50, )"
           },
           "TUnit.Core": {
             "target": "Package",
-            "version": "[0.25.21, )"
-          },
-          "Testcontainers.Elasticsearch": {
-            "target": "Package",
-            "version": "[4.6.0, )"
+            "version": "[0.56.50, )"
           },
           "Testcontainers.Minio": {
-            "target": "Package",
-            "version": "[4.6.0, )"
-          },
-          "Testcontainers.RabbitMq": {
             "target": "Package",
             "version": "[4.6.0, )"
           }
@@ -2553,7 +2465,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.100-preview.6.25358.103/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.100-preview.7.25380.108/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -2701,7 +2613,7 @@
           "System.Buffers": "(,5.0.32767]",
           "System.Collections": "(,4.3.32767]",
           "System.Collections.Concurrent": "(,4.3.32767]",
-          "System.Collections.Immutable": "(,10.0.0-preview.6.25358.103]",
+          "System.Collections.Immutable": "(,10.0.0-preview.7.25380.108]",
           "System.Collections.NonGeneric": "(,4.3.32767]",
           "System.Collections.Specialized": "(,4.3.32767]",
           "System.ComponentModel": "(,4.3.32767]",
@@ -2714,7 +2626,7 @@
           "System.Data.DataSetExtensions": "(,4.4.32767]",
           "System.Diagnostics.Contracts": "(,4.3.32767]",
           "System.Diagnostics.Debug": "(,4.3.32767]",
-          "System.Diagnostics.DiagnosticSource": "(,10.0.0-preview.6.25358.103]",
+          "System.Diagnostics.DiagnosticSource": "(,10.0.0-preview.7.25380.108]",
           "System.Diagnostics.FileVersionInfo": "(,4.3.32767]",
           "System.Diagnostics.Process": "(,4.3.32767]",
           "System.Diagnostics.StackTrace": "(,4.3.32767]",
@@ -2724,8 +2636,8 @@
           "System.Diagnostics.Tracing": "(,4.3.32767]",
           "System.Drawing.Primitives": "(,4.3.32767]",
           "System.Dynamic.Runtime": "(,4.3.32767]",
-          "System.Formats.Asn1": "(,10.0.0-preview.6.25358.103]",
-          "System.Formats.Tar": "(,10.0.0-preview.6.25358.103]",
+          "System.Formats.Asn1": "(,10.0.0-preview.7.25380.108]",
+          "System.Formats.Tar": "(,10.0.0-preview.7.25380.108]",
           "System.Globalization": "(,4.3.32767]",
           "System.Globalization.Calendars": "(,4.3.32767]",
           "System.Globalization.Extensions": "(,4.3.32767]",
@@ -2739,25 +2651,25 @@
           "System.IO.FileSystem.Watcher": "(,4.3.32767]",
           "System.IO.IsolatedStorage": "(,4.3.32767]",
           "System.IO.MemoryMappedFiles": "(,4.3.32767]",
-          "System.IO.Pipelines": "(,10.0.0-preview.6.25358.103]",
+          "System.IO.Pipelines": "(,10.0.0-preview.7.25380.108]",
           "System.IO.Pipes": "(,4.3.32767]",
           "System.IO.Pipes.AccessControl": "(,5.0.32767]",
           "System.IO.UnmanagedMemoryStream": "(,4.3.32767]",
           "System.Linq": "(,4.3.32767]",
-          "System.Linq.AsyncEnumerable": "(,10.0.0-preview.6.25358.103]",
+          "System.Linq.AsyncEnumerable": "(,10.0.0-preview.7.25380.108]",
           "System.Linq.Expressions": "(,4.3.32767]",
           "System.Linq.Parallel": "(,4.3.32767]",
           "System.Linq.Queryable": "(,4.3.32767]",
           "System.Memory": "(,5.0.32767]",
           "System.Net.Http": "(,4.3.32767]",
-          "System.Net.Http.Json": "(,10.0.0-preview.6.25358.103]",
+          "System.Net.Http.Json": "(,10.0.0-preview.7.25380.108]",
           "System.Net.NameResolution": "(,4.3.32767]",
           "System.Net.NetworkInformation": "(,4.3.32767]",
           "System.Net.Ping": "(,4.3.32767]",
           "System.Net.Primitives": "(,4.3.32767]",
           "System.Net.Requests": "(,4.3.32767]",
           "System.Net.Security": "(,4.3.32767]",
-          "System.Net.ServerSentEvents": "(,10.0.0-preview.6.25358.103]",
+          "System.Net.ServerSentEvents": "(,10.0.0-preview.7.25380.108]",
           "System.Net.Sockets": "(,4.3.32767]",
           "System.Net.WebHeaderCollection": "(,4.3.32767]",
           "System.Net.WebSockets": "(,4.3.32767]",
@@ -2772,7 +2684,7 @@
           "System.Reflection.Emit.ILGeneration": "(,4.7.32767]",
           "System.Reflection.Emit.Lightweight": "(,4.7.32767]",
           "System.Reflection.Extensions": "(,4.3.32767]",
-          "System.Reflection.Metadata": "(,10.0.0-preview.6.25358.103]",
+          "System.Reflection.Metadata": "(,10.0.0-preview.7.25380.108]",
           "System.Reflection.Primitives": "(,4.3.32767]",
           "System.Reflection.TypeExtensions": "(,4.3.32767]",
           "System.Resources.Reader": "(,4.3.32767]",
@@ -2804,16 +2716,16 @@
           "System.Security.Principal.Windows": "(,5.0.32767]",
           "System.Security.SecureString": "(,4.3.32767]",
           "System.Text.Encoding": "(,4.3.32767]",
-          "System.Text.Encoding.CodePages": "(,10.0.0-preview.6.25358.103]",
+          "System.Text.Encoding.CodePages": "(,10.0.0-preview.7.25380.108]",
           "System.Text.Encoding.Extensions": "(,4.3.32767]",
-          "System.Text.Encodings.Web": "(,10.0.0-preview.6.25358.103]",
-          "System.Text.Json": "(,10.0.0-preview.6.25358.103]",
+          "System.Text.Encodings.Web": "(,10.0.0-preview.7.25380.108]",
+          "System.Text.Json": "(,10.0.0-preview.7.25380.108]",
           "System.Text.RegularExpressions": "(,4.3.32767]",
           "System.Threading": "(,4.3.32767]",
-          "System.Threading.Channels": "(,10.0.0-preview.6.25358.103]",
+          "System.Threading.Channels": "(,10.0.0-preview.7.25380.108]",
           "System.Threading.Overlapped": "(,4.3.32767]",
           "System.Threading.Tasks": "(,4.3.32767]",
-          "System.Threading.Tasks.Dataflow": "(,10.0.0-preview.6.25358.103]",
+          "System.Threading.Tasks.Dataflow": "(,10.0.0-preview.7.25380.108]",
           "System.Threading.Tasks.Extensions": "(,5.0.32767]",
           "System.Threading.Tasks.Parallel": "(,4.3.32767]",
           "System.Threading.Thread": "(,4.3.32767]",
