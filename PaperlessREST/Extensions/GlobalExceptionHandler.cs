@@ -1,93 +1,92 @@
-using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
+using System.Text.Json;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
+using ValidationException = FluentValidation.ValidationException;
 
 namespace PaperlessREST.Extensions;
 
-public sealed class GlobalExceptionHandler : IExceptionHandler
+public sealed class GlobalExceptionHandler(
+    ILogger<GlobalExceptionHandler> logger,
+    IHostEnvironment env,
+    IProblemDetailsService problemDetails)
+    : IExceptionHandler
 {
-    private readonly ILogger<GlobalExceptionHandler> _logger;
-    private readonly IHostEnvironment _env;
-    private readonly IProblemDetailsService _problemDetails;
-
-    public GlobalExceptionHandler(
-        ILogger<GlobalExceptionHandler> logger,
-        IHostEnvironment env,
-        IProblemDetailsService problemDetails)
-    {
-        _logger = logger;
-        _env = env;
-        _problemDetails = problemDetails;
-    }
-
     public async ValueTask<bool> TryHandleAsync(
         HttpContext context,
         Exception exception,
         CancellationToken token)
     {
-        if (!TryMapStatusCode(exception, out var status))
-        {
-            return false;
-        }
+        if (!TryMapStatusCode(exception, out var status)) return false;
 
         context.Response.StatusCode = status;
 
-        var pdContext = new ProblemDetailsContext
+        var title = ReasonPhrases.GetReasonPhrase(status);
+        var detail = env.IsDevelopment() ? exception.ToString() : GetPublicMessage(exception);
+
+        var pd = new ProblemDetails
+        {
+            Status = status,
+            Title = title,
+            Type = $"https://httpstatuses.io/{status}",
+            Detail = detail
+        };
+
+        if (exception is ValidationException fv && fv.Errors.Any())
+        {
+            pd.Extensions["errors"] = fv.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+        }
+
+        var activity = context.Features.Get<IHttpActivityFeature>()?.Activity ?? Activity.Current;
+        pd.Extensions.TryAdd("traceId", activity?.Id ?? context.TraceIdentifier);
+        pd.Extensions.TryAdd("requestId", context.TraceIdentifier);
+        pd.Extensions.TryAdd("endpoint", context.GetEndpoint()?.DisplayName ?? "unknown");
+        pd.Extensions.TryAdd("exceptionType", exception.GetType().FullName);
+
+        var wrote = await problemDetails.TryWriteAsync(new ProblemDetailsContext
         {
             HttpContext = context,
             Exception = exception,
-            ProblemDetails =
-            {
-                Title = ReasonPhrases.GetReasonPhrase(status),
-                Detail = _env.IsDevelopment() ? exception.Message : GetPublicMessage(exception),
-                Type = $"https://httpstatuses.io/{status}"
-            }
-        };
+            ProblemDetails = pd
+        });
 
-        // Include FluentValidation errors
-        if (exception is ValidationException validationEx && validationEx.Errors.Any())
-        {
-            pdContext.ProblemDetails.Extensions["errors"] =
-                validationEx.Errors
-                    .GroupBy(e => e.PropertyName)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.Select(e => e.ErrorMessage).ToArray());
-        }
-
-        // Log once
-        _logger.LogError(exception, "Handled exception mapped to {StatusCode}", status);
-
-        await _problemDetails.TryWriteAsync(pdContext);
-        return true;
+        logger.LogError(exception, "Exception mapped to {Status} {Title}", status, title);
+        return wrote;
     }
 
-    [SuppressMessage("ReSharper", "TodoComment")]
     private static bool TryMapStatusCode(Exception ex, out int status)
     {
         status = ex switch
         {
             ValidationException => StatusCodes.Status400BadRequest,
+            ArgumentException => StatusCodes.Status400BadRequest,
             KeyNotFoundException => StatusCodes.Status404NotFound,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             TimeoutException => StatusCodes.Status408RequestTimeout,
             NotImplementedException => StatusCodes.Status501NotImplemented,
             OperationCanceledException => StatusCodes.Status499ClientClosedRequest,
-            _ => 0
+            JsonException => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status500InternalServerError
         };
-        return status is not 0;
+        return true;
     }
 
-    [SuppressMessage("ReSharper", "TodoComment")]
     private static string GetPublicMessage(Exception ex) => ex switch
     {
-        ValidationException => "The request contains invalid data.",
+        ValidationException => "One or more validation errors occurred.",
+        ArgumentException => "The request contained invalid arguments.",
         KeyNotFoundException => "The requested resource was not found.",
-        UnauthorizedAccessException => "You are not authorized to access this resource.",
+        UnauthorizedAccessException => "Unauthorized.",
         TimeoutException => "The request timed out.",
-        NotImplementedException => "This feature is not implemented.",
-        OperationCanceledException => "The request was cancelled.",
+        NotImplementedException => "Not implemented.",
+        OperationCanceledException => "The request was cancelled by the client.",
+        JsonException => "Malformed or unsupported JSON payload.",
         _ => "An unexpected error occurred."
     };
 }

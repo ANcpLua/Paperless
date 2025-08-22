@@ -1,56 +1,47 @@
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using PaperlessREST;
 
 namespace Paperless.Tests;
 
 public sealed class TestContainersManager : IAsyncInitializer
 {
-    private readonly IContainer _postgres;
-    private readonly IContainer _rabbitMq;
-    private readonly IContainer _minio;
-    private readonly IContainer _elasticsearch;
+    private readonly IContainer _postgres = new ContainerBuilder()
+        .WithImage("postgres:15.1")
+        .WithEnvironment("POSTGRES_USER", "postgres")
+        .WithEnvironment("POSTGRES_PASSWORD", "postgres")
+        .WithEnvironment("POSTGRES_DB", "postgres")
+        .WithLogger(new TestLogger("PostgreSQL"))
+        .WithPortBinding(5432, true)
+        .Build();
+    private readonly IContainer _rabbitMq = new ContainerBuilder()
+        .WithImage("rabbitmq:4-management-alpine")
+        .WithLogger(new TestLogger("RabbitMQ"))
+        .WithPortBinding(5672, true)
+        .WithPortBinding(15672, true)
+        .Build();
+    private readonly IContainer _minio = new ContainerBuilder()
+        .WithImage("minio/minio:latest")
+        .WithCommand("server", "/data")
+        .WithEnvironment("MINIO_ROOT_USER", "minioadmin")
+        .WithEnvironment("MINIO_ROOT_PASSWORD", "minioadmin")
+        .WithLogger(new TestLogger("MinIO"))
+        .WithPortBinding(9000, true)
+        .Build();
+    private readonly IContainer _elasticsearch = new ContainerBuilder()
+        .WithImage("elasticsearch:8.13.4")
+        .WithEnvironment("xpack.security.enabled", "false")
+        .WithEnvironment("discovery.type", "single-node")
+        .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+        .WithLogger(new TestLogger("Elasticsearch"))
+        .WithPortBinding(9200, true)
+        .WithPortBinding(9300, true)
+        .Build();
 
     private bool _initialized;
     private IReadOnlyDictionary<string, string?>? _configuration;
 
-    public TestContainersManager()
-    {
-        // Use generic containers to avoid built-in health checks
-        _postgres = new ContainerBuilder()
-            .WithImage("postgres:15.1")
-            .WithEnvironment("POSTGRES_USER", "postgres")
-            .WithEnvironment("POSTGRES_PASSWORD", "postgres")
-            .WithEnvironment("POSTGRES_DB", "postgres")
-            .WithLogger(new TestLogger("PostgreSQL"))
-            .WithPortBinding(5432, true)
-            .Build();
-
-        _rabbitMq = new ContainerBuilder()
-            .WithImage("rabbitmq:4-management-alpine")
-            .WithLogger(new TestLogger("RabbitMQ"))
-            .WithPortBinding(5672, true)
-            .WithPortBinding(15672, true)
-            .Build();
-
-        _minio = new ContainerBuilder()
-            .WithImage("minio/minio:latest")
-            .WithCommand("server", "/data")
-            .WithEnvironment("MINIO_ROOT_USER", "minioadmin")
-            .WithEnvironment("MINIO_ROOT_PASSWORD", "minioadmin")
-            .WithLogger(new TestLogger("MinIO"))
-            .WithPortBinding(9000, true)
-            .Build();
-
-        _elasticsearch = new ContainerBuilder()
-            .WithImage("elasticsearch:8.13.4")
-            .WithEnvironment("xpack.security.enabled", "false")
-            .WithEnvironment("discovery.type", "single-node")
-            .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-            .WithLogger(new TestLogger("Elasticsearch"))
-            .WithPortBinding(9200, true)
-            .WithPortBinding(9300, true)
-            .Build();
-    }
+    // Use generic containers to avoid built-in health checks
 
     public async Task InitializeAsync()
     {
@@ -156,7 +147,7 @@ public sealed class TestContainersManager : IAsyncInitializer
     public IReadOnlyDictionary<string, string?> GetConfiguration() => _configuration!;
 }
 
-public sealed class PaperlessWebApplication : WebApplicationFactory<PaperlessREST.DocumentRepository>, IAsyncInitializer
+public sealed class PaperlessWebApplication : WebApplicationFactory<DocumentRepository>, IAsyncInitializer
 {
     [ClassDataSource<TestContainersManager>(Shared = SharedType.PerTestSession)]
     public required TestContainersManager Containers { get; init; }
@@ -177,6 +168,8 @@ public sealed class PaperlessWebApplication : WebApplicationFactory<PaperlessRES
         }
     }
 }
+
+
 
 public abstract class IntegrationTestBase
 {

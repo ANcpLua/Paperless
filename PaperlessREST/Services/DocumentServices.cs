@@ -12,65 +12,41 @@ namespace PaperlessREST.Services;
 
 public interface IDocumentStorageService
 {
-    Task<string> UploadAsync(Stream stream, string storagePath, long fileSize,
-        CancellationToken cancellationToken = default);
-
+    Task UploadAsync(Stream stream, string storagePath, long length, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(string storagePath, CancellationToken cancellationToken = default);
 }
 
-public class DocumentStorageService : IDocumentStorageService
+public sealed class DocumentStorageService(
+    IMinioClient minio,
+    IOptions<MinioOptions> options,
+    ILogger<DocumentStorageService> logger) : IDocumentStorageService
 {
-    private readonly IMinioClient _minio;
-    private readonly IOptions<MinioOptions> _options;
-    private readonly ILogger<DocumentStorageService> _logger;
-
-    public DocumentStorageService(IMinioClient minio, IOptions<MinioOptions> options,
-        ILogger<DocumentStorageService> logger)
-    {
-        _minio = minio;
-        _options = options;
-        _logger = logger;
-    }
-
-    public async Task<string> UploadAsync(Stream stream, string storagePath, long fileSize,
+    public async Task UploadAsync(Stream stream, string storagePath, long length,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogDebug("Uploading to MinIO - Bucket: {Bucket}, Path: {Path}, Size: {Size}",
-                _options.Value.BucketName, storagePath, fileSize);
+        await minio.PutObjectAsync(new PutObjectArgs()
+            .WithBucket(options.Value.BucketName)
+            .WithObject(storagePath)
+            .WithStreamData(stream)
+            .WithObjectSize(length), cancellationToken);
 
-            await _minio.PutObjectAsync(new PutObjectArgs()
-                .WithBucket(_options.Value.BucketName)
-                .WithObject(storagePath)
-                .WithStreamData(stream)
-                .WithObjectSize(fileSize)
-                .WithContentType("application/pdf"), cancellationToken);
-
-            _logger.LogInformation("Document uploaded to storage at {StoragePath}", storagePath);
-            return storagePath;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to upload document to MinIO");
-            throw;
-        }
+        logger.LogInformation("Document uploaded to storage at {StoragePath}", storagePath);
     }
 
     public async Task<bool> DeleteAsync(string storagePath, CancellationToken cancellationToken = default)
     {
         try
         {
-            await _minio.RemoveObjectAsync(new RemoveObjectArgs()
-                .WithBucket(_options.Value.BucketName)
+            await minio.RemoveObjectAsync(new RemoveObjectArgs()
+                .WithBucket(options.Value.BucketName)
                 .WithObject(storagePath), cancellationToken);
 
-            _logger.LogInformation("Document removed from storage at {StoragePath}", storagePath);
+            logger.LogInformation("Document removed from storage at {StoragePath}", storagePath);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to remove document from storage at {StoragePath}", storagePath);
+            logger.LogError(ex, "Failed to remove document from storage at {StoragePath}", storagePath);
             return false;
         }
     }
@@ -84,26 +60,18 @@ public interface IDocumentSearchService
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
-public class DocumentSearchService : IDocumentSearchService
+public class DocumentSearchService(ElasticsearchClient elastic, ILogger<DocumentSearchService> logger)
+    : IDocumentSearchService
 {
-    private readonly ElasticsearchClient _elastic;
-    private readonly ILogger<DocumentSearchService> _logger;
-
-    public DocumentSearchService(ElasticsearchClient elastic, ILogger<DocumentSearchService> logger)
-    {
-        _elastic = elastic;
-        _logger = logger;
-    }
-
     public async IAsyncEnumerable<T> SearchAsync<T>(
         string query,
         int limit = 10,
         [EnumeratorCancellation] CancellationToken cancellationToken = default) where T : class
     {
-        _logger.LogInformation("Searching for query: {Query} (limit: {Limit})", query, limit);
+        logger.LogInformation("Searching for query: {Query} (limit: {Limit})", query, limit);
 
-        var response = await _elastic.SearchAsync<T>(s => s
-                .Indices(_elastic.ElasticsearchClientSettings.DefaultIndex)
+        var response = await elastic.SearchAsync<T>(s => s
+                .Indices(elastic.ElasticsearchClientSettings.DefaultIndex)
                 .Query(q => q
                     .QueryString(qs => qs
                         .Query(query)
@@ -117,7 +85,7 @@ public class DocumentSearchService : IDocumentSearchService
                 .TrackScores()
             , cancellationToken);
 
-        _logger.LogInformation("Found {Count} results", response.Documents.Count);
+        logger.LogInformation("Found {Count} results", response.Documents.Count);
 
         foreach (var doc in response.Documents)
         {
@@ -127,10 +95,10 @@ public class DocumentSearchService : IDocumentSearchService
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var deleteRequest = new DeleteRequest(_elastic.ElasticsearchClientSettings.DefaultIndex, id.ToString());
-        var response = await _elastic.DeleteAsync(deleteRequest, cancellationToken);
+        var deleteRequest = new DeleteRequest(elastic.ElasticsearchClientSettings.DefaultIndex, id.ToString());
+        var response = await elastic.DeleteAsync(deleteRequest, cancellationToken);
 
-        _logger.LogInformation("Document {DocumentId} removed from search index", id);
+        logger.LogInformation("Document {DocumentId} removed from search index", id);
         return response.IsValidResponse;
     }
 }
@@ -153,69 +121,53 @@ public interface IDocumentService
         CancellationToken cancellationToken = default);
 }
 
-public class DocumentService : IDocumentService
+public class DocumentService(
+    IDocumentRepository repository,
+    IDocumentStorageService storage,
+    IDocumentSearchService search,
+    IRabbitMqPublisher publisher,
+    ILogger<DocumentService> logger,
+    IValidator<UploadDocumentRequest> uploadValidator)
+    : IDocumentService
 {
-    private readonly IDocumentRepository _repository;
-    private readonly IDocumentStorageService _storage;
-    private readonly IDocumentSearchService _search;
-    private readonly IRabbitMqPublisher _publisher;
-    private readonly ILogger<DocumentService> _logger;
-    private readonly IValidator<UploadDocumentRequest> _uploadValidator;
-
-    public DocumentService(
-        IDocumentRepository repository,
-        IDocumentStorageService storage,
-        IDocumentSearchService search,
-        IRabbitMqPublisher publisher,
-        ILogger<DocumentService> logger,
-        IValidator<UploadDocumentRequest> uploadValidator)
-    {
-        _repository = repository;
-        _storage = storage;
-        _search = search;
-        _publisher = publisher;
-        _logger = logger;
-        _uploadValidator = uploadValidator;
-    }
-
     public async Task<Document> UploadDocumentAsync(UploadDocumentRequest request,
         CancellationToken cancellationToken = default)
     {
-        await _uploadValidator.ValidateAndThrowAsync(request, cancellationToken);
+        await uploadValidator.ValidateAndThrowAsync(request, cancellationToken);
 
         var document = Document.CreateFromUpload(request.File.FileName);
 
         await using var stream = request.File.OpenReadStream();
-        await _storage.UploadAsync(stream, document.StoragePath, request.File.Length, cancellationToken);
+        await storage.UploadAsync(stream, document.StoragePath, request.File.Length, cancellationToken);
 
-        var savedDocument = await _repository.AddAsync(document, cancellationToken);
+        var savedDocument = await repository.AddAsync(document, cancellationToken);
 
         var ocrRequest = new OcrCommand(savedDocument.Id, savedDocument.FileName, savedDocument.StoragePath);
-        await _publisher.PublishOcrCommandAsync(ocrRequest);
+        await publisher.PublishOcrCommandAsync(ocrRequest);
 
-        _logger.LogInformation("Document {DocumentId} uploaded successfully", savedDocument.Id);
+        logger.LogInformation("Document {DocumentId} uploaded successfully", savedDocument.Id);
         return savedDocument;
     }
 
     public IAsyncEnumerable<Document> GetRecentDocumentsAsync(CancellationToken cancellationToken = default)
     {
-        return _repository.GetRecentDocumentsAsync(50, cancellationToken);
+        return repository.GetRecentDocumentsAsync(50, cancellationToken);
     }
 
     public IAsyncEnumerable<object> SearchDocumentsAsync(
         string query, int limit = 10, CancellationToken cancellationToken = default)
     {
-        return _search.SearchAsync<object>(query, limit, cancellationToken);
+        return search.SearchAsync<object>(query, limit, cancellationToken);
     }
 
     public ValueTask<Document?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return _repository.GetByIdAsync(id, cancellationToken);
+        return repository.GetByIdAsync(id, cancellationToken);
     }
 
     public async Task DeleteDocumentAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var document = await _repository.GetByIdAsync(id, cancellationToken);
+        var document = await repository.GetByIdAsync(id, cancellationToken);
         if (document is null)
         {
             throw new KeyNotFoundException($"Document {id} not found");
@@ -223,33 +175,33 @@ public class DocumentService : IDocumentService
 
         // Delete from PostgreSQL and MinIO (required)
         await Task.WhenAll(
-            _repository.DeleteAsync(id, cancellationToken),
-            _storage.DeleteAsync(document.StoragePath, cancellationToken)
+            repository.DeleteAsync(id, cancellationToken),
+            storage.DeleteAsync(document.StoragePath, cancellationToken)
         );
 
         // Try to delete from Elasticsearch, but don't fail if it doesn't work
         // The OCR service is responsible for managing Elasticsearch state
         try
         {
-            await _search.DeleteAsync(id, cancellationToken);
+            await search.DeleteAsync(id, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex,
+            logger.LogWarning(ex,
                 "Failed to delete document {DocumentId} from search index. This is expected if the document was not indexed.",
                 id);
         }
 
-        _logger.LogInformation("Document {DocumentId} deleted successfully", id);
+        logger.LogInformation("Document {DocumentId} deleted successfully", id);
     }
 
     public async Task<bool> ProcessOcrResultAsync(Guid id, string status, string? content,
         CancellationToken processedAt, CancellationToken cancellationToken = default)
     {
-        var document = await _repository.GetByIdAsync(id, cancellationToken);
+        var document = await repository.GetByIdAsync(id, cancellationToken);
         if (document is null)
         {
-            _logger.LogWarning("Document {DocumentId} not found for OCR result", id);
+            logger.LogWarning("Document {DocumentId} not found for OCR result", id);
             return false;
         }
 
@@ -258,8 +210,8 @@ public class DocumentService : IDocumentService
         else
             document.MarkAsFailed();
 
-        await _repository.UpdateAsync(document, cancellationToken);
-        _logger.LogInformation("Document {DocumentId} processed with status {Status}", id, document.Status);
+        await repository.UpdateAsync(document, cancellationToken);
+        logger.LogInformation("Document {DocumentId} processed with status {Status}", id, document.Status);
         return true;
     }
 }

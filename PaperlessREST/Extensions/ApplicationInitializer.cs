@@ -1,4 +1,3 @@
-using Elastic.Clients.Elasticsearch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Minio;
@@ -15,15 +14,6 @@ public static class ApplicationInitializer
         await InitialiseDatabaseAsync(scope.ServiceProvider, app.Logger);
         await InitialiseStorageAsync(scope.ServiceProvider, app.Logger);
 
-        // try
-        // {
-        //     await InitialiseElasticsearchAsync(scope.ServiceProvider, app.Logger);
-        // }
-        // catch (Exception ex)
-        // {
-        //     app.Logger.LogError(ex,
-        //         "Failed to initialize Elasticsearch. The application will continue but search functionality may be limited.");
-        // }
     }
 
     // ------------------------------------------------- Database
@@ -51,30 +41,4 @@ public static class ApplicationInitializer
         logger.LogInformation("MinIO bucket '{Bucket}' created", options.BucketName);
     }
 
-    // ------------------------------------------------- Elasticsearch
-    // private static async Task InitialiseElasticsearchAsync(IServiceProvider sp, ILogger logger)
-    // {
-    //     var elastic = sp.GetRequiredService<ElasticsearchClient>();
-    //     var indexName = elastic.ElasticsearchClientSettings.DefaultIndex;
-    //
-    //     var indexExists = await elastic.Indices.ExistsAsync(indexName);
-    //
-    //     if (!indexExists.Exists)
-    //     {
-    //         var createResponse = await elastic.Indices.CreateAsync(indexName, c => c
-    //             .Mappings(m => m
-    //                 .Properties<Document>(p => p
-    //                     .Keyword(k => k.Id)
-    //                     .Text(t => t.FileName)
-    //                     .Text(t => t.Content)
-    //                     .Date(d => d.CreatedAt)
-    //                     .Keyword(k => k.Status)
-    //                 )
-    //             )
-    //         );
-    //
-    //         logger.LogInformation("Elasticsearch index '{Index}' created: {Success}", indexName,
-    //             createResponse.IsValidResponse);
-    //     }
-    // }
 }

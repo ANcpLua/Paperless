@@ -8,6 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 					Items\compose.yaml = Solution Items\compose.yaml
 					Items\.env = Solution Items\.env
 					Solution Items\nginx.conf = Solution Items\nginx.conf
+					Solution Items\find_elastic_9_1_5_repos.sh = Solution Items\find_elastic_9_1_5_repos.sh
 				EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaperlessREST", "PaperlessREST\PaperlessREST.csproj", "{25227D74-D9EC-4A28-9530-8F247EAA0E0F}"
@@ -20,6 +21,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paperless.UnitTests", "Paperless.UnitTests\Paperless.UnitTests.csproj", "{B293CFF3-5907-4FE3-83EB-94F2C78D19F3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaperlessServices.Tests", "PaperlessServices.Tests\PaperlessServices.Tests.csproj", "{C3708AD8-9A58-4C78-91DD-AC9835492C75}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "TestProject1\TestProject1.csproj", "{CD1DF24B-06E2-4B7C-B0B3-0EE465C82513}"
 EndProject
 Global
 				GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +52,10 @@ Global
 					{C3708AD8-9A58-4C78-91DD-AC9835492C75}.Debug|Any CPU.Build.0 = Debug|Any CPU
 					{C3708AD8-9A58-4C78-91DD-AC9835492C75}.Release|Any CPU.ActiveCfg = Release|Any CPU
 					{C3708AD8-9A58-4C78-91DD-AC9835492C75}.Release|Any CPU.Build.0 = Release|Any CPU
+					{CD1DF24B-06E2-4B7C-B0B3-0EE465C82513}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+					{CD1DF24B-06E2-4B7C-B0B3-0EE465C82513}.Debug|Any CPU.Build.0 = Debug|Any CPU
+					{CD1DF24B-06E2-4B7C-B0B3-0EE465C82513}.Release|Any CPU.ActiveCfg = Release|Any CPU
+					{CD1DF24B-06E2-4B7C-B0B3-0EE465C82513}.Release|Any CPU.Build.0 = Release|Any CPU
 				EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B293CFF3-5907-4FE3-83EB-94F2C78D19F3} = {DD737D32-0265-495A-BB61-48B9D41A35A9}
