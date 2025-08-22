@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
 namespace PaperlessREST;

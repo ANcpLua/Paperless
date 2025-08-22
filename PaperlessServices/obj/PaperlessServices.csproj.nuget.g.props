@@ -13,8 +13,6 @@
     <SourceRoot Include="/Users/ancplua/.nuget/packages/" />
   </ItemGroup>
   <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <Import Project="$(NuGetPackageRoot)tunit.core/0.56.50/buildTransitive/net9.0/TUnit.Core.props" Condition="Exists('$(NuGetPackageRoot)tunit.core/0.56.50/buildTransitive/net9.0/TUnit.Core.props')" />
-    <Import Project="$(NuGetPackageRoot)tunit.assertions/0.56.50/buildTransitive/net9.0/TUnit.Assertions.props" Condition="Exists('$(NuGetPackageRoot)tunit.assertions/0.56.50/buildTransitive/net9.0/TUnit.Assertions.props')" />
-    <Import Project="$(NuGetPackageRoot)microsoft.extensions.configuration.usersecrets/10.0.0-preview.5.25277.114/buildTransitive/net8.0/Microsoft.Extensions.Configuration.UserSecrets.props" Condition="Exists('$(NuGetPackageRoot)microsoft.extensions.configuration.usersecrets/10.0.0-preview.5.25277.114/buildTransitive/net8.0/Microsoft.Extensions.Configuration.UserSecrets.props')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.extensions.configuration.usersecrets/10.0.0-preview.7.25380.108/buildTransitive/net8.0/Microsoft.Extensions.Configuration.UserSecrets.props" Condition="Exists('$(NuGetPackageRoot)microsoft.extensions.configuration.usersecrets/10.0.0-preview.7.25380.108/buildTransitive/net8.0/Microsoft.Extensions.Configuration.UserSecrets.props')" />
   </ImportGroup>
 </Project>

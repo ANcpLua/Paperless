@@ -11,23 +11,28 @@ public class DocumentEndpointTests : IntegrationTestBase
     [DisplayName("GET /documents - Returns most recent documents")]
     public async Task GetDocuments_ReturnsRecentDocuments()
     {
+        // Arrange
+
+        // Act
         var response = await Client.GetAsync(BaseUrl);
 
+        // Extract
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var error = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Response Status: {response.StatusCode}");
             Console.WriteLine($"Response Content: {error}");
         }
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        var documents = await response.Content.ReadFromJsonAsync<List<DocumentDto>>(
+            AppJsonSerializerContext.Default.ListDocumentDto);
+        var count = documents?.Count ?? 0;
 
+        // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        await Assert.That(response.Content.Headers.ContentType?.MediaType).IsEqualTo("application/json");
-
-        var documents =
-            await response.Content.ReadFromJsonAsync<List<DocumentDto>>(
-                AppJsonSerializerContext.Default.ListDocumentDto);
+        await Assert.That(mediaType).IsEqualTo("application/json");
         await Assert.That(documents).IsNotNull();
-        await Assert.That(documents!.Count).IsLessThanOrEqualTo(50);
+        await Assert.That(count).IsLessThanOrEqualTo(50);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -59,21 +64,21 @@ public class DocumentEndpointTests : IntegrationTestBase
         var pdfContent = await PdfTestHelper.CreateTestPdf();
         using var content = new MultipartFormDataContent();
         content.Add(new ByteArrayContent(pdfContent), "file", "test-document.pdf");
-
         var uploadResponse = await Client.PostAsync(BaseUrl, content);
-        var uploadResult =
-            await uploadResponse.Content.ReadFromJsonAsync<CreateDocumentResponse>(AppJsonSerializerContext.Default
-                .CreateDocumentResponse);
+        var uploadResult = await uploadResponse.Content.ReadFromJsonAsync<CreateDocumentResponse>(
+            AppJsonSerializerContext.Default.CreateDocumentResponse);
         var documentId = uploadResult!.Id;
+        var url = $"{BaseUrl}/{documentId}";
 
         // Act
-        var response = await Client.GetAsync($"{BaseUrl}/{documentId}");
+        var response = await Client.GetAsync(url);
+
+        // Extract
+        var document = await response.Content.ReadFromJsonAsync<DocumentDto>(
+            AppJsonSerializerContext.Default.DocumentDto);
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-        var document =
-            await response.Content.ReadFromJsonAsync<DocumentDto>(AppJsonSerializerContext.Default.DocumentDto);
         await Assert.That(document).IsNotNull();
         await Assert.That(document!.Id).IsEqualTo(documentId);
         await Assert.That(document.FileName).IsEqualTo("test-document.pdf");
@@ -96,12 +101,12 @@ public class DocumentEndpointTests : IntegrationTestBase
         // Act
         var response = await Client.PostAsync(BaseUrl, content);
 
+        // Extract
+        var result = await response.Content.ReadFromJsonAsync<CreateDocumentResponse>(
+            AppJsonSerializerContext.Default.CreateDocumentResponse);
+
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Accepted);
-
-        var result =
-            await response.Content.ReadFromJsonAsync<CreateDocumentResponse>(AppJsonSerializerContext.Default
-                .CreateDocumentResponse);
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.FileName).IsEqualTo(fileName);
         await Assert.That(result.Status).IsEqualTo("Pending");
@@ -120,15 +125,14 @@ public class DocumentEndpointTests : IntegrationTestBase
         // Act
         var response = await Client.PostAsync(BaseUrl, content);
 
+        // Extract
+        var problemDetails = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>(
+            AppJsonSerializerContext.Default.HttpValidationProblemDetails);
+        var errors = problemDetails!.Errors.SelectMany(kvp => kvp.Value).ToList();
+
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
-
-        var problemDetails =
-            await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>(AppJsonSerializerContext.Default
-                .HttpValidationProblemDetails);
         await Assert.That(problemDetails).IsNotNull();
-
-        var errors = problemDetails!.Errors.SelectMany(kvp => kvp.Value);
         await Assert.That(errors.Any(e => e.Contains("Only PDF files are allowed"))).IsTrue();
     }
 
@@ -143,7 +147,7 @@ public class DocumentEndpointTests : IntegrationTestBase
 
         using var content1 = new MultipartFormDataContent();
         content1.Add(new ByteArrayContent(pdfContent), "file", duplicateFileName);
-        await Client.PostAsync(BaseUrl, content1);
+        _ = await Client.PostAsync(BaseUrl, content1);
 
         using var content2 = new MultipartFormDataContent();
         content2.Add(new ByteArrayContent(pdfContent), "file", duplicateFileName);
@@ -151,15 +155,14 @@ public class DocumentEndpointTests : IntegrationTestBase
         // Act
         var response = await Client.PostAsync(BaseUrl, content2);
 
+        // Extract
+        var problemDetails = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>(
+            AppJsonSerializerContext.Default.HttpValidationProblemDetails);
+        var errors = problemDetails!.Errors.SelectMany(kvp => kvp.Value).ToList();
+
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
-
-        var problemDetails =
-            await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>(AppJsonSerializerContext.Default
-                .HttpValidationProblemDetails);
         await Assert.That(problemDetails).IsNotNull();
-
-        var errors = problemDetails!.Errors.SelectMany(kvp => kvp.Value);
         await Assert.That(errors.Any(e => e.Contains("A document with this filename already exists"))).IsTrue();
     }
 
@@ -175,17 +178,14 @@ public class DocumentEndpointTests : IntegrationTestBase
         var pdfContent = await PdfTestHelper.CreateTestPdf();
         using var content = new MultipartFormDataContent();
         content.Add(new ByteArrayContent(pdfContent), "file", $"to-delete-{Guid.NewGuid()}.pdf");
-
         var uploadResponse = await Client.PostAsync(BaseUrl, content);
-
-        await Assert.That(uploadResponse.StatusCode).IsEqualTo(HttpStatusCode.Accepted);
-        var uploadResult =
-            await uploadResponse.Content.ReadFromJsonAsync<CreateDocumentResponse>(AppJsonSerializerContext.Default
-                .CreateDocumentResponse);
+        var uploadResult = await uploadResponse.Content.ReadFromJsonAsync<CreateDocumentResponse>(
+            AppJsonSerializerContext.Default.CreateDocumentResponse);
         var documentId = uploadResult!.Id;
+        var url = $"{BaseUrl}/{documentId}";
 
         // Act
-        var response = await Client.DeleteAsync($"{BaseUrl}/{documentId}");
+        var response = await Client.DeleteAsync(url);
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
@@ -203,7 +203,6 @@ public class DocumentEndpointTests : IntegrationTestBase
         var response = await Client.DeleteAsync(url);
 
         // Assert
-        // Non-existent documents return 404 due to KeyNotFoundException
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }
 
@@ -215,30 +214,18 @@ public class DocumentEndpointTests : IntegrationTestBase
         var pdfContent = await PdfTestHelper.CreateTestPdf();
         using var content = new MultipartFormDataContent();
         content.Add(new ByteArrayContent(pdfContent), "file", $"verify-delete-{Guid.NewGuid()}.pdf");
-
         var uploadResponse = await Client.PostAsync(BaseUrl, content);
-
-        if (uploadResponse.StatusCode != HttpStatusCode.Accepted)
-        {
-            var error = await uploadResponse.Content.ReadAsStringAsync();
-            Console.WriteLine($"Upload failed: {uploadResponse.StatusCode} - {error}");
-        }
-
-        await Assert.That(uploadResponse.StatusCode).IsEqualTo(HttpStatusCode.Accepted);
-        var uploadResult =
-            await uploadResponse.Content.ReadFromJsonAsync<CreateDocumentResponse>(AppJsonSerializerContext.Default
-                .CreateDocumentResponse);
+        var uploadResult = await uploadResponse.Content.ReadFromJsonAsync<CreateDocumentResponse>(
+            AppJsonSerializerContext.Default.CreateDocumentResponse);
         var documentId = uploadResult!.Id;
+        var deleteUrl = $"{BaseUrl}/{documentId}";
 
-        // Act - Delete the document
-        var deleteResponse = await Client.DeleteAsync($"{BaseUrl}/{documentId}");
+        // Act
+        var deleteResponse = await Client.DeleteAsync(deleteUrl);
+        var getResponse = await Client.GetAsync(deleteUrl);
+
+        // Assert
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
-
-        // Verify it's removed from database
-        var getResponse = await Client.GetAsync($"{BaseUrl}/{documentId}");
         await Assert.That(getResponse.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
-
-        // Note: We don't verify Elasticsearch deletion as documents aren't indexed by the web server
-        // The OCR service handles indexing
     }
 }

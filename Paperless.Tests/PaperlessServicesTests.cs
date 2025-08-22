@@ -1,22 +1,12 @@
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using CreatePdf.NET;
+
+
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
 using Paperless.Tests;
-using PaperlessServices;
 using SWEN3.Paperless.RabbitMq.Models;
-using TUnit.Assertions;
-using TUnit.Core;
-using TUnit.Core.Interfaces;
-
-namespace Paperless.Tests.Services;
 
 /// <summary>
 /// Provides a configured test host for PaperlessServices testing.
@@ -52,12 +42,12 @@ public class PaperlessServicesHost : IAsyncInitializer
     }
 
     // Services accessors
-    public IOcrService OcrService => _host!.Services.GetRequiredService<IOcrService>();
     public IOcrProcessor OcrProcessor => _host!.Services.GetRequiredService<IOcrProcessor>();
     public IStorageService StorageService => _host!.Services.GetRequiredService<IStorageService>();
     public ISearchIndexService SearchIndexService => _host!.Services.GetRequiredService<ISearchIndexService>();
     public IMinioClient MinioClient => _host!.Services.GetRequiredService<IMinioClient>();
     public IOptions<MinioOptions> MinioOptions => _host!.Services.GetRequiredService<IOptions<MinioOptions>>();
+    public IOcrService OcrService => _host!.Services.GetRequiredService<IOcrService>();
 }
 
 /// <summary>

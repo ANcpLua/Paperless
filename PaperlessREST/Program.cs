@@ -43,22 +43,15 @@ namespace PaperlessREST
         Task<bool> FileNameExistsAsync(string fileName, CancellationToken cancellationToken = default);
     }
 
-    public class DocumentRepository : IDocumentRepository
+    public class DocumentRepository(
+        IDbContextFactory<DocumentPersistence> contextFactory,
+        ILogger<DocumentRepository> logger)
+        : IDocumentRepository
     {
-        private readonly IDbContextFactory<DocumentPersistence> _contextFactory;
-        private readonly ILogger<DocumentRepository> _logger;
-
-        public DocumentRepository(IDbContextFactory<DocumentPersistence> contextFactory,
-            ILogger<DocumentRepository> logger)
-        {
-            _contextFactory = contextFactory;
-            _logger = logger;
-        }
-
         public async IAsyncEnumerable<Document> GetRecentDocumentsAsync(int limit,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
             var entities = db.Documents
                 .OrderByDescending(d => d.CreatedAt)
                 .Take(limit)
@@ -72,46 +65,46 @@ namespace PaperlessREST
 
         public async ValueTask<Document?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
             var entity = await db.Documents.FindAsync([id], cancellationToken);
             return entity?.ToDocument();
         }
 
         public async Task<Document> AddAsync(Document document, CancellationToken cancellationToken = default)
         {
-            await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
             var entity = document.ToDocumentEntity();
             db.Documents.Add(entity);
             await db.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Document {DocumentId} persisted to database", entity.Id);
+            logger.LogInformation("Document {DocumentId} persisted to database", entity.Id);
             return entity.ToDocument();
         }
 
         public async Task<Document?> UpdateAsync(Document document, CancellationToken cancellationToken = default)
         {
-            await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
             var entity = document.ToDocumentEntity();
             db.Documents.Update(entity);
             await db.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Document {DocumentId} updated in database", entity.Id);
+            logger.LogInformation("Document {DocumentId} updated in database", entity.Id);
             return entity.ToDocument();
         }
 
         public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
             var entity = await db.Documents.FindAsync([id], cancellationToken);
             if (entity is null) return false;
 
             db.Documents.Remove(entity);
             await db.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Document {DocumentId} removed from database", id);
+            logger.LogInformation("Document {DocumentId} removed from database", id);
             return true;
         }
 
         public async Task<bool> FileNameExistsAsync(string fileName, CancellationToken cancellationToken = default)
         {
-            await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
             return await db.Documents.AnyAsync(d => d.FileName == fileName, cancellationToken);
         }
     }
@@ -133,13 +126,8 @@ namespace PaperlessREST
         public bool UseSsl { get; set; } = false;
     }
 
-    public class DocumentPersistence : DbContext
+    public class DocumentPersistence(DbContextOptions<DocumentPersistence> options) : DbContext(options)
     {
-        public DocumentPersistence(DbContextOptions<DocumentPersistence> options)
-            : base(options)
-        {
-        }
-
         public DbSet<DocumentEntity> Documents => Set<DocumentEntity>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -179,37 +167,25 @@ namespace PaperlessREST
         }
     }
 
-    public class OcrResultListener : BackgroundService
+    public class OcrResultListener(
+        IRabbitMqConsumerFactory consumerFactory,
+        IDocumentService documentService,
+        ISseStream<OcrEvent> stream,
+        ILogger<OcrResultListener> logger)
+        : BackgroundService
     {
-        private readonly IRabbitMqConsumerFactory _consumerFactory;
-        private readonly IDocumentService _documentService;
-        private readonly ISseStream<OcrEvent> _stream;
-        private readonly ILogger<OcrResultListener> _logger;
-
-        public OcrResultListener(
-            IRabbitMqConsumerFactory consumerFactory,
-            IDocumentService documentService,
-            ISseStream<OcrEvent> stream,
-            ILogger<OcrResultListener> logger)
-        {
-            _consumerFactory = consumerFactory;
-            _documentService = documentService;
-            _stream = stream;
-            _logger = logger;
-        }
-
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("OCR Result Listener started");
+            logger.LogInformation("OCR Result Listener started");
 
-            await using var consumer = await _consumerFactory.CreateConsumerAsync<OcrEvent>();
+            await using var consumer = await consumerFactory.CreateConsumerAsync<OcrEvent>();
 
             await foreach (var result in consumer.ConsumeAsync(stoppingToken))
             {
                 await ProcessMessage(result, consumer, stoppingToken);
             }
 
-            _logger.LogInformation("OCR Result Listener stopped");
+            logger.LogInformation("OCR Result Listener stopped");
         }
 
         private async Task ProcessMessage(OcrEvent result, IRabbitMqConsumer<OcrEvent> consumer,
@@ -217,13 +193,13 @@ namespace PaperlessREST
         {
             try
             {
-                _logger.LogInformation(
+                logger.LogInformation(
                     "Received OCR result for job {JobId} with status {Status}",
                     result.JobId,
                     result.Status);
 
                 var content = result.Status is "Completed" ? result.Text : null;
-                var processed = await _documentService.ProcessOcrResultAsync(
+                var processed = await documentService.ProcessOcrResultAsync(
                     result.JobId,
                     result.Status,
                     content,
@@ -235,13 +211,13 @@ namespace PaperlessREST
                     return;
                 }
 
-                _stream.Publish(result);
+                stream.Publish(result);
                 await consumer.AckAsync();
-                _logger.LogInformation("Successfully processed OCR result for job {JobId}", result.JobId);
+                logger.LogInformation("Successfully processed OCR result for job {JobId}", result.JobId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing OCR result for job {JobId}", result.JobId);
+                logger.LogError(ex, "Error processing OCR result for job {JobId}", result.JobId);
                 await consumer.NackAsync(requeue: true);
             }
         }

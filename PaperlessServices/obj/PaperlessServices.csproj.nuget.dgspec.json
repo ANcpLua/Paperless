@@ -52,7 +52,7 @@
             },
             "Elastic.Clients.Elasticsearch": {
               "target": "Package",
-              "version": "[9.0.7, )"
+              "version": "[9.1.5, )"
             },
             "JetBrains.Annotations": {
               "target": "Package",
@@ -60,11 +60,11 @@
             },
             "Microsoft.Extensions.Hosting": {
               "target": "Package",
-              "version": "[10.0.0-preview.5.25277.114, )"
+              "version": "[10.0.0-preview.7.25380.108, )"
             },
             "Microsoft.Extensions.Logging.Abstractions": {
               "target": "Package",
-              "version": "[10.0.0-preview.6.25358.103, )"
+              "version": "[10.0.0-preview.7.25380.108, )"
             },
             "Microsoft.Extensions.Options.DataAnnotations": {
               "target": "Package",
@@ -81,18 +81,6 @@
             "SWEN3.Paperless.RabbitMq": {
               "target": "Package",
               "version": "[1.0.3, )"
-            },
-            "TUnit.Assertions": {
-              "target": "Package",
-              "version": "[0.56.50, )"
-            },
-            "TUnit.Core": {
-              "target": "Package",
-              "version": "[0.56.50, )"
-            },
-            "Testcontainers.Minio": {
-              "target": "Package",
-              "version": "[4.6.0, )"
             }
           },
           "imports": [
