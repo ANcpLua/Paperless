@@ -1,7 +1,6 @@
 // ElasticsearchDemo/Services/ElasticsearchInitializer.cs
 
 using System.ComponentModel.DataAnnotations;
-using CommunityToolkit.HighPerformance.Helpers;
 using Elastic.Clients.Elasticsearch;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;

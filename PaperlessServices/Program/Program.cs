@@ -4,35 +4,11 @@ using Elastic.Clients.Elasticsearch;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
-using PaperlessServices;
+using PaperlessServices.Program;
 using SWEN3.Paperless.RabbitMq;
 using SWEN3.Paperless.RabbitMq.Consuming;
 using SWEN3.Paperless.RabbitMq.Models;
 using SWEN3.Paperless.RabbitMq.Publishing;
-using Testcontainers.Elasticsearch;
-using Testcontainers.Minio;
-using Testcontainers.RabbitMq;
-using TUnit.Core.Interfaces;
-
-// Check if we're running tests
-var isTestRun = args.Contains("--test") || Environment.GetEnvironmentVariable("DOTNET_RUNNING_TESTS") == "true";
-
-if (isTestRun)
-{
-    // If running tests, use the test containers manager
-    var testManager = new TestContainersManager();
-    await testManager.InitializeAsync();
-    var config = testManager.GetConfiguration();
-
-    // Override configuration for testing
-    args = ["--config", "appsettings.Testing.json"];
-    Environment.SetEnvironmentVariable("DOTNET_RUNNING_TESTS", "true");
-    Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
-
-    // Add configuration to the host builder
-    Host.CreateDefaultBuilder(args)
-        .ConfigureAppConfiguration((_, configBuilder) => { configBuilder.AddInMemoryCollection(config); });
-}
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -42,7 +18,7 @@ var host = builder.Build();
 
 await host.RunAsync();
 
-namespace PaperlessServices
+namespace PaperlessServices.Program
 {
     public static class ServiceCollectionExtensions
     {
@@ -304,7 +280,6 @@ namespace PaperlessServices
         public bool UseSsl { get; set; } = false;
     }
 }
-
 
 // // ============== LEAN TEST INFRASTRUCTURE ==============
 // #if DEBUG

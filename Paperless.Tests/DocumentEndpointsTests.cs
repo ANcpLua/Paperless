@@ -23,9 +23,10 @@ public class DocumentEndpointTests : IntegrationTestBase
             Console.WriteLine($"Response Status: {response.StatusCode}");
             Console.WriteLine($"Response Content: {error}");
         }
+
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         var documents = await response.Content.ReadFromJsonAsync<List<DocumentDto>>(
-            AppJsonSerializerContext.Default.ListDocumentDto);
+            PaperlessREST.AppJsonSerializerContext.Default.ListDocumentDto);
         var count = documents?.Count ?? 0;
 
         // Assert
@@ -61,12 +62,12 @@ public class DocumentEndpointTests : IntegrationTestBase
     public async Task GetDocumentById_ExistingDocument_ReturnsDocument()
     {
         // Arrange
-        var pdfContent = await PdfTestHelper.CreateTestPdf();
+        var pdfContent = await PdfTestHelper.CreatePdfWithTextAsync("This is a test document");
         using var content = new MultipartFormDataContent();
         content.Add(new ByteArrayContent(pdfContent), "file", "test-document.pdf");
         var uploadResponse = await Client.PostAsync(BaseUrl, content);
         var uploadResult = await uploadResponse.Content.ReadFromJsonAsync<CreateDocumentResponse>(
-            AppJsonSerializerContext.Default.CreateDocumentResponse);
+            PaperlessREST.AppJsonSerializerContext.Default.CreateDocumentResponse);
         var documentId = uploadResult!.Id;
         var url = $"{BaseUrl}/{documentId}";
 
@@ -75,7 +76,7 @@ public class DocumentEndpointTests : IntegrationTestBase
 
         // Extract
         var document = await response.Content.ReadFromJsonAsync<DocumentDto>(
-            AppJsonSerializerContext.Default.DocumentDto);
+            PaperlessREST.AppJsonSerializerContext.Default.DocumentDto);
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -93,7 +94,7 @@ public class DocumentEndpointTests : IntegrationTestBase
     public async Task UploadDocument_ValidPdf_Returns202Accepted()
     {
         // Arrange
-        var pdfContent = await PdfTestHelper.CreateTestPdf();
+        var pdfContent = await PdfTestHelper.CreatePdfWithTextAsync("This is a test document");
         using var content = new MultipartFormDataContent();
         var fileName = $"test-{Guid.NewGuid()}.pdf";
         content.Add(new ByteArrayContent(pdfContent), "file", fileName);
@@ -103,7 +104,7 @@ public class DocumentEndpointTests : IntegrationTestBase
 
         // Extract
         var result = await response.Content.ReadFromJsonAsync<CreateDocumentResponse>(
-            AppJsonSerializerContext.Default.CreateDocumentResponse);
+            PaperlessREST.AppJsonSerializerContext.Default.CreateDocumentResponse);
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Accepted);
@@ -127,7 +128,7 @@ public class DocumentEndpointTests : IntegrationTestBase
 
         // Extract
         var problemDetails = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>(
-            AppJsonSerializerContext.Default.HttpValidationProblemDetails);
+            PaperlessREST.AppJsonSerializerContext.Default.HttpValidationProblemDetails);
         var errors = problemDetails!.Errors.SelectMany(kvp => kvp.Value).ToList();
 
         // Assert
@@ -142,7 +143,7 @@ public class DocumentEndpointTests : IntegrationTestBase
     public async Task UploadDocument_DuplicateFilename_ReturnsBusinessError()
     {
         // Arrange
-        var pdfContent = await PdfTestHelper.CreateTestPdf();
+        var pdfContent = await PdfTestHelper.CreatePdfWithTextAsync("This is a test document");
         var duplicateFileName = $"duplicate-{Guid.NewGuid()}.pdf";
 
         using var content1 = new MultipartFormDataContent();
@@ -157,7 +158,7 @@ public class DocumentEndpointTests : IntegrationTestBase
 
         // Extract
         var problemDetails = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>(
-            AppJsonSerializerContext.Default.HttpValidationProblemDetails);
+            PaperlessREST.AppJsonSerializerContext.Default.HttpValidationProblemDetails);
         var errors = problemDetails!.Errors.SelectMany(kvp => kvp.Value).ToList();
 
         // Assert
@@ -175,12 +176,12 @@ public class DocumentEndpointTests : IntegrationTestBase
     public async Task DeleteDocument_ExistingDocument_ReturnsNoContent()
     {
         // Arrange
-        var pdfContent = await PdfTestHelper.CreateTestPdf();
+        var pdfContent = await PdfTestHelper.CreatePdfWithTextAsync("This is a test document");
         using var content = new MultipartFormDataContent();
         content.Add(new ByteArrayContent(pdfContent), "file", $"to-delete-{Guid.NewGuid()}.pdf");
         var uploadResponse = await Client.PostAsync(BaseUrl, content);
         var uploadResult = await uploadResponse.Content.ReadFromJsonAsync<CreateDocumentResponse>(
-            AppJsonSerializerContext.Default.CreateDocumentResponse);
+            PaperlessREST.AppJsonSerializerContext.Default.CreateDocumentResponse);
         var documentId = uploadResult!.Id;
         var url = $"{BaseUrl}/{documentId}";
 
@@ -211,12 +212,12 @@ public class DocumentEndpointTests : IntegrationTestBase
     public async Task DeleteDocument_VerifyRemoval_DocumentNotFound()
     {
         // Arrange
-        var pdfContent = await PdfTestHelper.CreateTestPdf();
+        var pdfContent = await PdfTestHelper.CreatePdfWithTextAsync("This is a test document");
         using var content = new MultipartFormDataContent();
         content.Add(new ByteArrayContent(pdfContent), "file", $"verify-delete-{Guid.NewGuid()}.pdf");
         var uploadResponse = await Client.PostAsync(BaseUrl, content);
         var uploadResult = await uploadResponse.Content.ReadFromJsonAsync<CreateDocumentResponse>(
-            AppJsonSerializerContext.Default.CreateDocumentResponse);
+            PaperlessREST.AppJsonSerializerContext.Default.CreateDocumentResponse);
         var documentId = uploadResult!.Id;
         var deleteUrl = $"{BaseUrl}/{documentId}";
 
