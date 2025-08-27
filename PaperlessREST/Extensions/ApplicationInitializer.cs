@@ -13,7 +13,6 @@ public static class ApplicationInitializer
 
         await InitialiseDatabaseAsync(scope.ServiceProvider, app.Logger);
         await InitialiseStorageAsync(scope.ServiceProvider, app.Logger);
-
     }
 
     // ------------------------------------------------- Database
@@ -40,5 +39,4 @@ public static class ApplicationInitializer
         await minio.MakeBucketAsync(new MakeBucketArgs().WithBucket(options.BucketName));
         logger.LogInformation("MinIO bucket '{Bucket}' created", options.BucketName);
     }
-
 }

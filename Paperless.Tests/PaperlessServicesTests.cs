@@ -1,12 +1,12 @@
-
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
-using Paperless.Tests;
+using PaperlessServices.Program;
 using SWEN3.Paperless.RabbitMq.Models;
+
+namespace Paperless.Tests;
 
 /// <summary>
 /// Provides a configured test host for PaperlessServices testing.
@@ -24,7 +24,7 @@ public class PaperlessServicesHost : IAsyncInitializer
 
         var builder = Host.CreateApplicationBuilder();
         builder.Configuration.AddInMemoryCollection(Containers.GetConfiguration());
-        builder.Services.AddOcrServices(builder.Configuration);
+        OcrServicesServiceCollectionAdapter.AddOcrServices(builder.Services, builder.Configuration);
         // Override OCR and Search services with lightweight fakes for deterministic tests
         builder.Services.AddSingleton<ISearchIndexService, FakeSearchIndexService>();
 

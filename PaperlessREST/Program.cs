@@ -8,7 +8,6 @@ using JetBrains.Annotations;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PaperlessREST;
 using PaperlessREST.Extensions;
 using PaperlessREST.Services;
 using SWEN3.Paperless.RabbitMq.Consuming;
@@ -222,66 +221,66 @@ namespace PaperlessREST
             }
         }
     }
-}
 
-public record SearchQuery
-{
-    [Required(ErrorMessage = "Search query is required")]
-    [StringLength(100, MinimumLength = 1, ErrorMessage = "Search query must be between 1 and 100 characters")]
-    public required string Query { get; init; }
-
-    [Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")]
-    public int Limit { get; init; } = 10;
-}
-
-public class UploadDocumentRequest : IValidatableObject
-{
-    [Required(ErrorMessage = "File is required")]
-    public IFormFile File { get; set; } = null!;
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    public record SearchQuery
     {
-        if (!File.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-        {
-            yield return new ValidationResult(
-                "Only PDF files are allowed",
-                [nameof(File)]);
-        }
+        [Required(ErrorMessage = "Search query is required")]
+        [StringLength(100, MinimumLength = 1, ErrorMessage = "Search query must be between 1 and 100 characters")]
+        public required string Query { get; init; }
 
-        if (File.Length > 50 * 1024 * 1024)
-        {
-            yield return new ValidationResult(
-                "File size must not exceed 50MB",
-                [nameof(File)]);
-        }
+        [Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")]
+        public int Limit { get; init; } = 10;
     }
-}
 
-[UsedImplicitly]
-public class UploadDocumentBusinessValidator : AbstractValidator<UploadDocumentRequest>
-{
-    public UploadDocumentBusinessValidator(IDocumentRepository repository)
+    public class UploadDocumentRequest : IValidatableObject
     {
-        RuleFor(x => x.File.FileName)
-            .MustAsync(async (fileName, cancellation) =>
+        [Required(ErrorMessage = "File is required")]
+        public IFormFile File { get; set; } = null!;
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (!File.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
             {
-                var exists = await repository.FileNameExistsAsync(fileName, cancellation);
-                return !exists;
-            })
-            .WithMessage("A document with this filename already exists");
-    }
-}
+                yield return new ValidationResult(
+                    "Only PDF files are allowed",
+                    [nameof(File)]);
+            }
 
-[JsonSourceGenerationOptions(
-    JsonSerializerDefaults.Web,
-    GenerationMode = JsonSourceGenerationMode.Default)]
-[JsonSerializable(typeof(Document))]
-[JsonSerializable(typeof(DocumentDto))]
-[JsonSerializable(typeof(CreateDocumentResponse))]
-[JsonSerializable(typeof(SearchQuery))]
-[JsonSerializable(typeof(UploadDocumentRequest))]
-[JsonSerializable(typeof(List<DocumentDto>))]
-[JsonSerializable(typeof(List<object>))]
-[JsonSerializable(typeof(HttpValidationProblemDetails))]
-[JsonSerializable(typeof(ProblemDetails))]
-public partial class AppJsonSerializerContext : JsonSerializerContext;
+            if (File.Length > 50 * 1024 * 1024)
+            {
+                yield return new ValidationResult(
+                    "File size must not exceed 50MB",
+                    [nameof(File)]);
+            }
+        }
+    }
+
+    [UsedImplicitly]
+    public class UploadDocumentBusinessValidator : AbstractValidator<UploadDocumentRequest>
+    {
+        public UploadDocumentBusinessValidator(IDocumentRepository repository)
+        {
+            RuleFor(x => x.File.FileName)
+                .MustAsync(async (fileName, cancellation) =>
+                {
+                    var exists = await repository.FileNameExistsAsync(fileName, cancellation);
+                    return !exists;
+                })
+                .WithMessage("A document with this filename already exists");
+        }
+    }
+
+    [JsonSourceGenerationOptions(
+        JsonSerializerDefaults.Web,
+        GenerationMode = JsonSourceGenerationMode.Default)]
+    [JsonSerializable(typeof(Document))]
+    [JsonSerializable(typeof(DocumentDto))]
+    [JsonSerializable(typeof(CreateDocumentResponse))]
+    [JsonSerializable(typeof(SearchQuery))]
+    [JsonSerializable(typeof(UploadDocumentRequest))]
+    [JsonSerializable(typeof(List<DocumentDto>))]
+    [JsonSerializable(typeof(List<object>))]
+    [JsonSerializable(typeof(HttpValidationProblemDetails))]
+    [JsonSerializable(typeof(ProblemDetails))]
+    public partial class AppJsonSerializerContext : JsonSerializerContext;
+}

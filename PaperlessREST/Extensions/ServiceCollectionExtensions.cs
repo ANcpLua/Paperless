@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
 using Asp.Versioning;
 using Elastic.Clients.Elasticsearch;
 using FluentValidation;
+using Mapster;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -31,15 +34,16 @@ public static class ServiceCollectionExtensions
         {
             var opt = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
             var logger = sp.GetService<ILogger<IMinioClient>>();
-            
-            logger?.LogDebug("Creating MinIO client - Endpoint: {Endpoint}, AccessKey: {AccessKey}, Bucket: {Bucket}, SSL: {SSL}", 
+
+            logger?.LogDebug(
+                "Creating MinIO client - Endpoint: {Endpoint}, AccessKey: {AccessKey}, Bucket: {Bucket}, SSL: {SSL}",
                 opt.Endpoint, opt.AccessKey, opt.BucketName, opt.UseSsl);
-            
+
             if (string.IsNullOrWhiteSpace(opt.Endpoint))
             {
                 throw new InvalidOperationException("MinIO endpoint is not configured");
             }
-            
+
             return new MinioClient()
                 .WithEndpoint(opt.Endpoint)
                 .WithCredentials(opt.AccessKey, opt.SecretKey)
@@ -101,5 +105,51 @@ public static class ServiceCollectionExtensions
         });
 
         return services;
+    }
+}
+
+public static class ValidationHandlerExtensions
+{
+    public static IServiceCollection AddErrorHandlingAndValidation(this IServiceCollection services)
+    {
+        services.AddValidation();
+        services.Configure<TimeOffsetOptions>(o => o.Offset = TimeSpan.Zero);
+        services.AddExceptionHandler<OptimizedExceptionHandler>();
+        services.AddProblemDetails();
+        services.ConfigureOptions<ProblemDetailsCustomization>();
+        return services;
+    }
+}
+
+public static class ApplicationBuilderExtensions
+{
+    public static IApplicationBuilder ConfigureMiddleware(this IApplicationBuilder app)
+    {
+        app.UseStaticFiles();
+        app.UseExceptionHandler();
+        app.UseStatusCodePages();
+        app.UseHttpLogging();
+        return app;
+    }
+}
+
+public static class DependenciesConfig
+{
+    public static void AddDependencies(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHttpLogging(o =>
+        {
+            o.LoggingFields = HttpLoggingFields.RequestProperties | HttpLoggingFields.RequestHeaders;
+        });
+        builder.Services.ConfigureHttpJsonOptions(o =>
+        {
+            o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            o.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
+            o.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
+        });
+        builder.Services.Configure<TimeOffsetOptions>(builder.Configuration.GetSection("TimeOffset"));
+        builder.Services.AddMapster();
+        builder.Services.AddPaperlessServices(builder.Configuration);
+        builder.Services.AddErrorHandlingAndValidation();
     }
 }
