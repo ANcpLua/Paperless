@@ -24,11 +24,9 @@ public sealed class DocumentStorageService(
     public async Task UploadAsync(Stream stream, string storagePath, long length,
         CancellationToken cancellationToken = default)
     {
-        await minio.PutObjectAsync(new PutObjectArgs()
-            .WithBucket(options.Value.BucketName)
-            .WithObject(storagePath)
-            .WithStreamData(stream)
-            .WithObjectSize(length), cancellationToken);
+        await minio.PutObjectAsync(
+            new PutObjectArgs().WithBucket(options.Value.BucketName).WithObject(storagePath).WithStreamData(stream)
+                .WithObjectSize(length), cancellationToken);
 
         logger.LogInformation("Document uploaded to storage at {StoragePath}", storagePath);
     }
@@ -37,9 +35,8 @@ public sealed class DocumentStorageService(
     {
         try
         {
-            await minio.RemoveObjectAsync(new RemoveObjectArgs()
-                .WithBucket(options.Value.BucketName)
-                .WithObject(storagePath), cancellationToken);
+            await minio.RemoveObjectAsync(
+                new RemoveObjectArgs().WithBucket(options.Value.BucketName).WithObject(storagePath), cancellationToken);
 
             logger.LogInformation("Document removed from storage at {StoragePath}", storagePath);
             return true;
@@ -63,27 +60,16 @@ public interface IDocumentSearchService
 public class DocumentSearchService(ElasticsearchClient elastic, ILogger<DocumentSearchService> logger)
     : IDocumentSearchService
 {
-    public async IAsyncEnumerable<T> SearchAsync<T>(
-        string query,
-        int limit = 10,
+    public async IAsyncEnumerable<T> SearchAsync<T>(string query, int limit = 10,
         [EnumeratorCancellation] CancellationToken cancellationToken = default) where T : class
     {
         logger.LogInformation("Searching for query: {Query} (limit: {Limit})", query, limit);
 
-        var response = await elastic.SearchAsync<T>(s => s
-                .Indices(elastic.ElasticsearchClientSettings.DefaultIndex)
-                .Query(q => q
-                    .QueryString(qs => qs
-                        .Query(query)
-                        .DefaultField("*")
-                        .Type(TextQueryType.BestFields)
-                        .Fuzziness(new Fuzziness("AUTO"))
-                        .Lenient()
-                    )
-                )
-                .Size(limit)
-                .TrackScores()
-            , cancellationToken);
+        var response = await elastic.SearchAsync<T>(
+            s => s.Indices(elastic.ElasticsearchClientSettings.DefaultIndex).Query(q =>
+                q.QueryString(qs =>
+                    qs.Query(query).DefaultField("*").Type(TextQueryType.BestFields).Fuzziness(new Fuzziness("AUTO"))
+                        .Lenient())).Size(limit).TrackScores(), cancellationToken);
 
         logger.LogInformation("Found {Count} results", response.Documents.Count);
 
@@ -112,12 +98,11 @@ public interface IDocumentService
 
     ValueTask<Document?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<Document> UploadDocumentAsync(UploadDocumentRequest request,
-        CancellationToken cancellationToken = default);
+    Task<Document> UploadDocumentAsync(UploadDocumentRequest request, CancellationToken cancellationToken = default);
 
     Task DeleteDocumentAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<bool> ProcessOcrResultAsync(Guid id, string status, string? content, CancellationToken processedAt,
+    Task<bool> ProcessOcrResultAsync(Guid id, string status, string? content, DateTimeOffset processedAt,
         CancellationToken cancellationToken = default);
 }
 
@@ -127,8 +112,7 @@ public class DocumentService(
     IDocumentSearchService search,
     IRabbitMqPublisher publisher,
     ILogger<DocumentService> logger,
-    IValidator<UploadDocumentRequest> uploadValidator)
-    : IDocumentService
+    IValidator<UploadDocumentRequest> uploadValidator) : IDocumentService
 {
     public async Task<Document> UploadDocumentAsync(UploadDocumentRequest request,
         CancellationToken cancellationToken = default)
@@ -154,8 +138,8 @@ public class DocumentService(
         return repository.GetRecentDocumentsAsync(50, cancellationToken);
     }
 
-    public IAsyncEnumerable<object> SearchDocumentsAsync(
-        string query, int limit = 10, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<object> SearchDocumentsAsync(string query, int limit = 10,
+        CancellationToken cancellationToken = default)
     {
         return search.SearchAsync<object>(query, limit, cancellationToken);
     }
@@ -173,14 +157,9 @@ public class DocumentService(
             throw new KeyNotFoundException($"Document {id} not found");
         }
 
-        // Delete from PostgreSQL and MinIO (required)
-        await Task.WhenAll(
-            repository.DeleteAsync(id, cancellationToken),
-            storage.DeleteAsync(document.StoragePath, cancellationToken)
-        );
+        await Task.WhenAll(repository.DeleteAsync(id, cancellationToken),
+            storage.DeleteAsync(document.StoragePath, cancellationToken));
 
-        // Try to delete from Elasticsearch, but don't fail if it doesn't work
-        // The OCR service is responsible for managing Elasticsearch state
         try
         {
             await search.DeleteAsync(id, cancellationToken);
@@ -195,8 +174,8 @@ public class DocumentService(
         logger.LogInformation("Document {DocumentId} deleted successfully", id);
     }
 
-    public async Task<bool> ProcessOcrResultAsync(Guid id, string status, string? content,
-        CancellationToken processedAt, CancellationToken cancellationToken = default)
+    public async Task<bool> ProcessOcrResultAsync(Guid id, string status, string? content, DateTimeOffset processedAt,
+        CancellationToken cancellationToken = default)
     {
         var document = await repository.GetByIdAsync(id, cancellationToken);
         if (document is null)
