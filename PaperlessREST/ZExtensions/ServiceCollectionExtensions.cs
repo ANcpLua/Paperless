@@ -6,70 +6,57 @@ using Mapster;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Minio;
-using PaperlessREST.Services;
 using SWEN3.Paperless.RabbitMq;
 
-namespace PaperlessREST.Extensions;
+namespace PaperlessREST.ZExtensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddPaperlessServices(
-        this IServiceCollection services,
-        IConfiguration config)
+    public static IServiceCollection AddPaperlessServices(this IServiceCollection services, IConfiguration config)
     {
-        // ----------------------------- Messaging
-        services.AddPaperlessRabbitMq(config, includeOcrResultStream: true)
-            .AddHostedService<OcrResultListener>();
-
-        // ----------------------------- MinIO options + client
-        services.AddOptionsWithValidateOnStart<MinioOptions>()
-            .BindConfiguration("Storage:Minio")
-            .ValidateDataAnnotations();
-
-        // MinioClient is thread-safe and can be registered as a singleton.
-        services.AddSingleton<IMinioClient>(sp =>
-        {
-            var opt = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
-            var logger = sp.GetService<ILogger<IMinioClient>>();
-
-            logger?.LogDebug(
-                "Creating MinIO client - Endpoint: {Endpoint}, AccessKey: {AccessKey}, Bucket: {Bucket}, SSL: {SSL}",
-                opt.Endpoint, opt.AccessKey, opt.BucketName, opt.UseSsl);
-
-            if (string.IsNullOrWhiteSpace(opt.Endpoint))
-            {
-                throw new InvalidOperationException("MinIO endpoint is not configured");
-            }
-
-            return new MinioClient()
-                .WithEndpoint(opt.Endpoint)
-                .WithCredentials(opt.AccessKey, opt.SecretKey)
-                .WithSSL(opt.UseSsl)
-                .Build();
-        });
-
-        // ----------------------------- Elasticsearch
-        services.AddSingleton(new ElasticsearchClient(
-            new ElasticsearchClientSettings(new Uri(config["Elasticsearch:Uri"]!))
-                .DefaultIndex(config["Elasticsearch:IndexName"]!)
-                .ThrowExceptions()));
-
         // ----------------------------- Data layer
         services.AddDbContextFactory<DocumentPersistence>((_, opts) =>
         {
-            opts.UseNpgsql(config.GetConnectionString("PaperlessDb"),
-                o => o.MapEnum<DocumentStatus>());
+            opts.UseNpgsql(config.GetConnectionString("PaperlessDb"), o => o.MapEnum<DocumentStatus>());
         });
 
         // ----------------------------- Domain services
         // Changed to Singleton as their dependencies are now singletons or handled by factories.
         services.AddSingleton<IDocumentRepository, DocumentRepository>()
-            .AddSingleton<IDocumentStorageService, DocumentStorageService>()
-            .AddSingleton<IDocumentSearchService, DocumentSearchService>()
             .AddSingleton<IDocumentService, DocumentService>();
+
+        // ----------------------------- Infrastructure (MinIO)
+        services.AddOptionsWithValidateOnStart<PaperlessREST.MinioOptions>()
+            .BindConfiguration("Storage:Minio")
+            .ValidateDataAnnotations();
+
+        services.AddSingleton<IMinioClient>(sp =>
+        {
+            var opts = sp.GetRequiredService<IOptions<PaperlessREST.MinioOptions>>().Value;
+            return new MinioClient()
+                .WithEndpoint(opts.Endpoint)
+                .WithCredentials(opts.AccessKey, opts.SecretKey)
+                .WithSSL(opts.UseSsl)
+                .Build();
+        });
+
+        // ----------------------------- Infrastructure (Elasticsearch)
+        services.AddSingleton(new ElasticsearchClient(
+            new ElasticsearchClientSettings(new Uri(config["Elasticsearch:Uri"]!))
+                .DefaultIndex(config["Elasticsearch:IndexName"]!)
+                .ThrowExceptions()));
+
+        // ----------------------------- Messaging (RabbitMQ)
+        services.AddPaperlessRabbitMq(config, includeOcrResultStream: true);
+
+        // ----------------------------- Application services
+        services.AddSingleton<IDocumentStorageService, DocumentStorageService>()
+                .AddSingleton<IDocumentSearchService, DocumentSearchService>()
+                .AddHostedService<OcrResultListener>();
 
         // ----------------------------- Validation
         services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Singleton);
@@ -77,8 +64,7 @@ public static class ServiceCollectionExtensions
         // ----------------------------- OpenAPI
         services.AddOpenApi(o =>
         {
-            o.CreateSchemaReferenceId = t =>
-                t.Type.IsEnum ? null : OpenApiOptions.CreateDefaultSchemaReferenceId(t);
+            o.CreateSchemaReferenceId = t => t.Type.IsEnum ? null : OpenApiOptions.CreateDefaultSchemaReferenceId(t);
 
             o.AddDocumentTransformer((doc, _, _) =>
             {
@@ -110,13 +96,13 @@ public static class ServiceCollectionExtensions
 
 public static class ValidationHandlerExtensions
 {
-    public static IServiceCollection AddErrorHandlingAndValidation(this IServiceCollection services)
+    public static IServiceCollection AddOptimizedErrorHandling(this IServiceCollection services)
     {
-        services.AddValidation();
-        services.Configure<TimeOffsetOptions>(o => o.Offset = TimeSpan.Zero);
+        services.TryAddSingleton(TimeProvider.System);
         services.AddExceptionHandler<OptimizedExceptionHandler>();
         services.AddProblemDetails();
         services.ConfigureOptions<ProblemDetailsCustomization>();
+        services.Configure<TimeOffsetOptions>(_ => { });
         return services;
     }
 }
@@ -150,6 +136,6 @@ public static class DependenciesConfig
         builder.Services.Configure<TimeOffsetOptions>(builder.Configuration.GetSection("TimeOffset"));
         builder.Services.AddMapster();
         builder.Services.AddPaperlessServices(builder.Configuration);
-        builder.Services.AddErrorHandlingAndValidation();
+        builder.Services.AddOptimizedErrorHandling();
     }
 }
