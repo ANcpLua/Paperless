@@ -1,55 +1,68 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <EnablePreviewFeatures>true</EnablePreviewFeatures>
-        <LangVersion>latest</LangVersion>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-    </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<EnablePreviewFeatures>true</EnablePreviewFeatures>
+		<LangVersion>preview</LangVersion>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisLevel>latest</AnalysisLevel>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn> <!-- Suppress missing XML comment warnings for now -->
+	</PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Asp.Versioning.Http" Version="8.1.0"/>
-        <PackageReference Include="Asp.Versioning.Http.Client" Version="8.1.0"/>
-        <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
-        <PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.0.7"/>
-        <PackageReference Include="FluentValidation" Version="12.0.0"/>
-        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0"/>
-        <PackageReference Include="JetBrains.Annotations" Version="2025.2.0"/>
-        <PackageReference Include="Mapster" Version="7.4.0"/>
-        <PackageReference Include="Mapster.Core" Version="1.2.1"/>
-        <PackageReference Include="Mapster.DependencyInjection" Version="1.0.1"/>
-        <PackageReference Include="MapsterExtensions.Generator" Version="3.1.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.6.25358.103"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0-preview.5.25277.114"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="10.0.0-preview.5.25277.114"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-preview.5.25277.114">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-preview.5"/>
-        <PackageReference Include="RabbitMQ.Client" Version="7.1.2"/>
-        <PackageReference Include="Minio" Version="6.0.5"/>
-        
-        <PackageReference Include="Scalar.AspNetCore" Version="2.6.4" />
-        <PackageReference Include="Scalar.Kiota.Extension" Version="1.0.0-preview.6" />
-        <PackageReference Include="SWEN3.Paperless.RabbitMq" Version="1.0.3"/>
-    </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Asp.Versioning.Http.Client" Version="8.1.0"/>
+		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.1"/>
+		<PackageReference Include="DotNetEnv" Version="3.1.1"/>
+		<PackageReference Include="ErrorOr" Version="2.0.1"/>
+		<PackageReference Include="ErrorOrAspNetCoreExtensions" Version="2.0.1"/>
+		<PackageReference Include="Hangfire" Version="1.8.23"/>
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.23"/>
+		<PackageReference Include="Hangfire.PostgreSql" Version="1.21.1"/>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4"/> <!-- Override transitive 11.0.1 (GHSA-5crp-9r3c-p9vr) -->
+		<PackageReference Include="MapsterExtensions.Generator" Version="3.1.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="10.0.0"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="10.0.0"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.2.2"/>
+		<PackageReference Include="JetBrains.Annotations" Version="2025.2.4"/>
+		<PackageReference Include="Mapster.DependencyInjection" Version="1.0.1"/>
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0"/>
+		<PackageReference Include="Minio" Version="7.0.0"/>
+		<PackageReference Include="Npgsql" Version="10.0.0"/>
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0"/>
+		<PackageReference Include="Scalar.AspNetCore" Version="2.11.0"/>
+		<PackageReference Include="SWEN3.Paperless.RabbitMq" Version="2.3.1"/>
+		<PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0"/>
+		<PackageReference Include="AspNetCore.HealthChecks.Elasticsearch" Version="9.0.0"/>
+		<PackageReference Include="Testably.Abstractions" Version="10.0.0"/>
+		<PackageReference Include="Testably.Abstractions.FileSystem.Interface" Version="10.0.0"/>
+	</ItemGroup>
 
-    <ItemGroup>
-        <Content Include="..\.dockerignore">
-            <Link>.dockerignore</Link>
-        </Content>
-    </ItemGroup>
+	<ItemGroup>
+		<Content Include="..\.dockerignore">
+			<Link>.dockerignore</Link>
+		</Content>
+		<Content Include="Properties\launchSettings.json"/>
+		<Content Include="..\.env" Condition="'$(DOCKER_BUILD)' != 'true' AND Exists('$(MSBuildThisFileDirectory)..\.env')">
+			<Link>.env</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Schemas\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-    <ItemGroup>
-        <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
-        <None Include="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
-    </ItemGroup>
 
 </Project>

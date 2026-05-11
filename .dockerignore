@@ -1,31 +1,77 @@
-**/.classpath
-**/.dockerignore
-**/.env
+﻿# Git
 **/.git
 **/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
+**/.gitattributes
+
+# IDE
 **/.vs
 **/.vscode
+**/.idea
+**/.settings
+**/.project
+
+# Build output
+**/bin
+**/obj
+**/[Dd]ebug/
+**/[Rr]elease/
+**/[Bb]uild/
+**/[Oo]utput/
+
+# User files
 **/*.*proj.user
 **/*.dbmdl
 **/*.jfm
-**/azds.yaml
-**/bin
-**/charts
-**/docker-compose*
+
+# Docker files
 **/Dockerfile*
+**/docker-compose*
+**/.dockerignore
+
+# Test projects - exclude from production builds
+**/*.Tests/
+**/*.E2E.Tests/
+**/SampleIntegrationWorkerNOweb/
+**/TestResults/
+**/*.trx
+**/*.coverage
+
+# Package directories
 **/node_modules
-**/npm-debug.log
-**/obj
+**/packages/
+**/.nuget/
+
+# Environment and config
+**/.env
+**/.env.*
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*tests.json
 **/secrets.dev.yaml
 **/values.dev.yaml
-LICENSE
-README.md
 
-# Exclude development-specific configuration
-**/appsettings.Development.json
-**/appsettings.*.json
-!**/appsettings.json
-!**/appsettings.Production.json
+# Documentation
+**/LICENSE
+**/README*
+**/*.md
+
+# Logs and temp files
+**/npm-debug.log
+**/*.log
+**/logs/
+**/*.swp
+**/*.swo
+**/*~
+**/.DS_Store
+**/Thumbs.db
+
+# Other unnecessary files
+**/azds.yaml
+**/charts
+**/nginx.conf
+**/compose.yaml
+**/*.sh
+**/test.txt
+**/test_*.cs
+**/data/
+**/schemas/

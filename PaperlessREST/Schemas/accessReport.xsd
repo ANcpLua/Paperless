@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="accessReport">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="document" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="id" type="xs:string" use="required"/>
+						<xs:attribute name="accessCount" use="required">
+							<xs:simpleType>
+								<xs:restriction base="xs:long">
+									<xs:minInclusive value="0"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="date" type="xs:date" use="required"/>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

@@ -1,261 +1,284 @@
+'use strict';
+
 (() => {
-    // ─── GLOBAL STATE ──────────────────────────────────────────────
-    const documents = new Map();
-    let eventSource = null;
-    let searchQuery = '';
 
-    // ─── UTILITIES ────────────────────────────────────────────────
-    const $ = (id) => document.getElementById(id);
+	const documentStore = new Map();
+	let ocrStream = null;
+	let summaryStream = null;
+	let currentSearch = '';
 
-    const formatDate = (iso) =>
-        iso ? new Date(iso).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'}) : 'Unknown';
+	const getById = (id) => document.getElementById(id);
 
-    const notify = (msg, type = 'info') => {
-        const template = $('notificationTemplate');
-        const notification = template.content.cloneNode(true);
-        const container = notification.querySelector('.alert');
-        container.classList.add(`alert-${type}`);
-        notification.querySelector('[data-field="message"]').textContent = msg;
-        $('notificationContainer').appendChild(notification);
+	const formatDateTime = (iso) =>
+		iso ? new Date(iso).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'}) : 'Unknown';
 
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            const alerts = $('notificationContainer').querySelectorAll('.alert');
-            if (alerts.length > 0) alerts[0].remove();
-        }, 5000);
-    };
+	const showNotification = (message, type = 'info') => {
+		const template = getById('notificationTemplate');
+		const clone = template.content.cloneNode(true);
+		const alert = clone.querySelector('.alert');
+		alert.classList.add(`alert-${type}`);
+		clone.querySelector('[data-field="message"]').textContent = message;
+		getById('notificationContainer').appendChild(clone);
 
-    // ─── DARK MODE ────────────────────────────────────────────────
-    function toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-bs-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+		setTimeout(() => {
+			const alerts = getById('notificationContainer').querySelectorAll('.alert');
+			if (alerts.length > 0) alerts[0].remove();
+		}, 2000);
+	};
 
-        html.setAttribute('data-bs-theme', newTheme);
-        $('themeIcon').className = newTheme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+	function toggleTheme() {
+		const html = document.documentElement;
+		const theme = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+		html.setAttribute('data-bs-theme', theme);
+		getById('themeIcon').className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+		localStorage.setItem('theme', theme);
+	}
 
-        // Save preference
-        localStorage.setItem('theme', newTheme);
-    }
+	window.toggleTheme = toggleTheme;
 
-    window.toggleTheme = toggleTheme;
+	function connectOcrStream() {
+		if (ocrStream) ocrStream.close();
 
-    // ─── SERVER‑SENT EVENTS ───────────────────────────────────────
-    function initSSE() {
-        eventSource = new EventSource('/api/v1/ocr-results');
+		ocrStream = new EventSource('/api/v1/ocr-results');
+		ocrStream.onopen = () => getById('sseStatus').style.display = 'none';
+		ocrStream.onerror = () => {
+			getById('sseStatus').style.display = 'block';
+			ocrStream.close();
+			setTimeout(connectOcrStream, 5000);
+		};
 
-        eventSource.onopen = () => $('sseStatus').style.display = 'none';
-        eventSource.onerror = () => {
-            $('sseStatus').style.display = 'block';
-            setTimeout(initSSE, 5000);
-        };
+		ocrStream.addEventListener('ocr-completed', async (e) => {
+			console.log('OCR completed', JSON.parse(e.data));
+			await fetchDocuments();
+			showNotification('OCR completed', 'success');
+		});
 
-        const refresh = async (evt, label) => {
-            console.log(label, JSON.parse(evt.data));
-            await loadDocuments();
-            notify(`${label} for document`, label.includes('completed') ? 'success' : 'danger');
-        };
+		ocrStream.addEventListener('ocr-failed', async (e) => {
+			console.log('OCR failed', JSON.parse(e.data));
+			await fetchDocuments();
+			showNotification('OCR failed', 'danger');
+		});
+	}
 
-        eventSource.addEventListener('ocr-completed', e => refresh(e, 'OCR completed'));
-        eventSource.addEventListener('ocr-failed', e => refresh(e, 'OCR failed'));
-    }
+	function connectSummaryStream() {
+		if (summaryStream) summaryStream.close();
 
-    // ─── FILE UPLOAD ──────────────────────────────────────────────
-    function setupUploadZone() {
-        const zone = $('uploadZone'), input = $('fileInput');
+		summaryStream = new EventSource('/api/v1/events/genai');
+		summaryStream.onerror = () => {
+			summaryStream.close();
+			setTimeout(connectSummaryStream, 10000);
+		};
 
-        zone.addEventListener('dragover', e => {
-            e.preventDefault();
-            zone.classList.add('border-info', 'bg-info', 'bg-opacity-10');
-        });
-        zone.addEventListener('dragleave', () => {
-            zone.classList.remove('border-info', 'bg-info', 'bg-opacity-10');
-        });
-        zone.addEventListener('drop', e => {
-            e.preventDefault();
-            zone.classList.remove('border-info', 'bg-info', 'bg-opacity-10');
-            handleFiles(e.dataTransfer.files);
-        });
-        input.addEventListener('change', e => handleFiles(e.target.files));
-    }
+		summaryStream.addEventListener('genai-completed', async () => {
+			await fetchDocuments();
+			showNotification('Summary generated', 'success');
+		});
 
-    async function handleFiles(files) {
-        for (const f of files) {
-            if (f.type === 'application/pdf') await upload(f);
-            else notify(`${f.name} is not a PDF`, 'warning');
-        }
-    }
+		summaryStream.addEventListener('genai-failed', async () => {
+			await fetchDocuments();
+			showNotification('Summary generation failed', 'danger');
+		});
+	}
 
-    async function upload(file) {
-        const body = new FormData();
-        body.append('file', file);
-        try {
-            const res = await fetch('/api/v1/documents', {method: 'POST', body});
-            if (!res.ok) {
-                const p = await res.json().catch(() => ({}));
-                return notify(`Failed: ${p.detail || res.statusText}`, 'danger');
-            }
-            const doc = await res.json();
-            documents.set(doc.id, doc);
-            render();
-            notify(`Uploaded ${file.name}`, 'success');
-        } catch (err) {
-            console.error(err);
-            notify(`Error uploading ${file.name}`, 'danger');
-        }
-    }
+	function initializeUpload() {
+		const dropZone = getById('uploadZone');
+		const fileInput = getById('fileInput');
 
-    // ─── DOCUMENT CRUD ────────────────────────────────────────────
-    async function loadDocuments() {
-        try {
-            const res = await fetch('/api/v1/documents');
-            if (!res.ok) return;
-            documents.clear();
-            (await res.json()).forEach(d => documents.set(d.id, d));
-            render();
-        } catch (err) {
-            console.error(err);
-            notify('Failed to load documents', 'danger');
-        }
-    }
+		dropZone.addEventListener('dragover', e => {
+			e.preventDefault();
+			dropZone.classList.add('border-info', 'bg-info', 'bg-opacity-10');
+		});
 
-    async function deleteDocument(id) {
-        if (!confirm('Delete this document?')) return;
-        try {
-            const res = await fetch(`/api/v1/documents/${id}`, {method: 'DELETE'});
-            if (res.ok) {
-                documents.delete(id);
-                render();
-                notify('Deleted', 'success');
-            } else notify('Delete failed', 'danger');
-        } catch (err) {
-            console.error(err);
-            notify('Error deleting', 'danger');
-        }
-    }
+		dropZone.addEventListener('dragleave', () => {
+			dropZone.classList.remove('border-info', 'bg-info', 'bg-opacity-10');
+		});
 
-    // ─── SEARCH ──────────────────────
-    async function search() {
-        const q = $('searchInput').value.trim();
-        if (!q) {
-            searchQuery = '';
-            return loadDocuments();
-        }
+		dropZone.addEventListener('drop', e => {
+			e.preventDefault();
+			dropZone.classList.remove('border-info', 'bg-info', 'bg-opacity-10');
+			processFiles(e.dataTransfer.files);
+		});
 
-        const limit = 50;
-        const url = `/api/v1/documents/search?query=${encodeURIComponent(q)}&Limit=${limit}`;
+		fileInput.addEventListener('change', e => processFiles(e.target.files));
+	}
 
-        try {
-            const res = await fetch(url);
-            if (!res.ok) return notify('Server search failed', 'danger');
-            const hits = await res.json();
-            documents.clear();
-            hits.forEach(d => documents.set(d.id || d.Id, {...d, status: d.status || d.Status || 'Completed'}));
-            searchQuery = q;
-            render();
-            notify(`Found ${hits.length} result(s)`, 'info');
-        } catch (err) {
-            console.error(err);
-            notify('Search failed', 'danger');
-        }
-    }
+	async function processFiles(files) {
+		for (const file of files) {
+			if (file.type === 'application/pdf') {
+				await uploadFile(file);
+			} else {
+				showNotification(`${file.name} is not a PDF`, 'warning');
+			}
+		}
+	}
 
-    // ─── RENDERING ────────────────────────────────────────────────
-    function createCard(doc) {
-        const template = $('documentCardTemplate');
-        const card = template.content.cloneNode(true);
+	async function uploadFile(file) {
+		const formData = new FormData();
+		formData.append('file', file);
 
-        // Set filename
-        card.querySelector('[data-field="fileName"]').textContent = doc.fileName;
+		try {
+			const response = await fetch('/api/v1/documents', {method: 'POST', body: formData});
+			if (!response.ok) {
+				const error = await response.json().catch(() => ({}));
+				return showNotification(`Failed: ${error.detail || response.statusText}`, 'danger');
+			}
 
-        // Set dates
-        card.querySelector('[data-field="uploadDate"]').textContent = `Uploaded: ${formatDate(doc.createdAt)}`;
-        if (doc.processedAt) {
-            card.querySelector('[data-field="processedBreak"]').style.display = '';
-            card.querySelector('[data-field="processedDate"]').textContent = `Processed: ${formatDate(doc.processedAt)}`;
-        }
+			const document = await response.json();
+			documentStore.set(document.id, document);
+			renderDocuments();
+			showNotification(`Uploaded ${file.name}`, 'success');
+		} catch (err) {
+			console.error(err);
+			showNotification(`Error uploading ${file.name}`, 'danger');
+		}
+	}
 
-        // Set status badge
-        const badge = doc.status === 'Pending' ? 'warning' :
-            doc.status === 'Completed' ? 'success' : 'danger';
-        const statusBadge = card.querySelector('[data-field="statusBadge"]');
-        statusBadge.classList.add(`bg-${badge}`);
-        card.querySelector('[data-field="statusText"]').textContent = doc.status;
+	async function fetchDocuments() {
+		try {
+			const response = await fetch('/api/v1/documents');
+			if (!response.ok) return;
 
-        // Show spinner if pending
-        if (doc.status === 'Pending') {
-            card.querySelector('[data-field="spinner"]').style.display = '';
-        }
+			documentStore.clear();
+			const docs = await response.json();
+			docs.forEach(doc => documentStore.set(doc.id, doc));
+			renderDocuments();
+		} catch (err) {
+			console.error(err);
+			showNotification('Failed to load documents', 'danger');
+		}
+	}
 
-        // Show OCR preview if completed
-        if (doc.status === 'Completed' && doc.content) {
-            card.querySelector('[data-field="ocrPreview"]').style.display = '';
-            const preview = doc.content.slice(0, 500);
-            card.querySelector('[data-field="ocrText"]').textContent =
-                preview + (doc.content.length > 500 ? '…' : '');
-        }
+	async function removeDocument(id) {
+		if (!confirm('Delete this document?')) return;
 
-        // Show error if failed
-        if (doc.status === 'Failed' && doc.content) {
-            const errorDiv = card.querySelector('[data-field="errorMessage"]');
-            errorDiv.style.display = '';
-            errorDiv.textContent = `OCR failed: ${doc.content}`;
-        }
+		try {
+			const response = await fetch(`/api/v1/documents/${id}`, {method: 'DELETE'});
+			if (response.ok) {
+				documentStore.delete(id);
+				renderDocuments();
+				showNotification('Document deleted', 'success');
+			} else {
+				showNotification('Delete failed', 'danger');
+			}
+		} catch (err) {
+			console.error(err);
+			showNotification('Error deleting document', 'danger');
+		}
+	}
 
-        // Set delete action
-        card.querySelector('[data-action="delete"]').onclick = () => deleteDocument(doc.id);
+	async function searchDocuments() {
+		const query = getById('searchInput').value.trim();
+		if (!query) {
+			currentSearch = '';
+			return fetchDocuments();
+		}
 
-        return card;
-    }
+		try {
+			const response = await fetch(`/api/v1/documents/search?query=${encodeURIComponent(query)}&Limit=50`);
+			if (!response.ok) return showNotification('Search failed', 'danger');
 
-    function render() {
-        const container = $('documentsContainer');
-        const list = Array.from(documents.values()).filter(d => {
-            if (!searchQuery) return true;
-            const q = searchQuery.toLowerCase();
-            return d.fileName.toLowerCase().includes(q) ||
-                (d.content && d.content.toLowerCase().includes(q));
-        });
+			const results = await response.json();
+			documentStore.clear();
+			results.forEach(doc => documentStore.set(doc.id || doc.Id, {
+				...doc,
+				status: doc.status || doc.Status || 'Completed'
+			}));
 
-        container.innerHTML = '';
+			currentSearch = query;
+			renderDocuments();
+			showNotification(`Found ${results.length} result(s)`, 'info');
+		} catch (err) {
+			console.error(err);
+			showNotification('Search failed', 'danger');
+		}
+	}
 
-        if (list.length === 0) {
-            const template = $('emptyStateTemplate');
-            const emptyState = template.content.cloneNode(true);
-            emptyState.querySelector('[data-field="emptyMessage"]').textContent =
-                searchQuery ? 'No documents match your search' : 'No documents uploaded yet';
-            container.appendChild(emptyState);
-        } else {
-            list.forEach(doc => container.appendChild(createCard(doc)));
-        }
-    }
 
-    // ─── EVENT LISTENERS ──────────────────────────────────────────
-    function setupUI() {
-        // Restore theme preference
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.documentElement.setAttribute('data-bs-theme', 'dark');
-            $('themeIcon').className = 'bi bi-sun';
-        }
+	function renderDocuments() {
+		const container = getById('documentsContainer');
+		const filtered = Array.from(documentStore.values()).filter(doc => {
+			if (!currentSearch) return true;
+			const search = currentSearch.toLowerCase();
+			return doc.fileName.toLowerCase().includes(search) ||
+				(doc.content && doc.content.toLowerCase().includes(search));
+		});
 
-        $('searchBtn').onclick = search;
-        $('searchInput').addEventListener('keypress', e => e.key === 'Enter' && search());
-        $('clearSearchBtn').onclick = async () => {
-            $('searchInput').value = '';
-            searchQuery = '';
-            await loadDocuments();
-        };
-        $('refreshBtn').onclick = async () => await loadDocuments();
-    }
+		container.innerHTML = '';
 
-    // ─── INIT ─────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', async () => {
-        setupUploadZone();
-        setupUI();
-        initSSE();
-        await loadDocuments();
-    });
+		if (filtered.length === 0) {
+			const empty = getById('emptyStateTemplate').content.cloneNode(true);
+			empty.querySelector('[data-field="emptyMessage"]').textContent =
+				currentSearch ? 'No documents match your search' : 'No documents uploaded yet';
+			container.appendChild(empty);
+		} else {
+			filtered.forEach(doc => container.appendChild(buildDocumentCard(doc)));
+		}
+	}
 
-    window.addEventListener('beforeunload', () => eventSource?.close());
+
+	function buildDocumentCard(doc) {
+		const template = getById('documentCardTemplate');
+		const card = template.content.cloneNode(true);
+
+		card.querySelector('[data-field="fileName"]').textContent = doc.fileName;
+		card.querySelector('[data-field="uploadDate"]').textContent = `Uploaded: ${formatDateTime(doc.createdAt)}`;
+
+		if (doc.processedAt) {
+			card.querySelector('[data-field="processedBreak"]').style.display = '';
+			card.querySelector('[data-field="processedDate"]').textContent = `Processed: ${formatDateTime(doc.processedAt)}`;
+		}
+
+		const statusColor = doc.status === 'Pending' ? 'warning' :
+			doc.status === 'Completed' ? 'success' : 'danger';
+		const badge = card.querySelector('[data-field="statusBadge"]');
+		badge.classList.add(`bg-${statusColor}`);
+		card.querySelector('[data-field="statusText"]').textContent = doc.status;
+
+		if (doc.status === 'Pending') {
+			card.querySelector('[data-field="spinner"]').style.display = '';
+		}
+
+		if (doc.status === 'Completed' && doc.content) {
+			card.querySelector('[data-field="ocrPreview"]').style.display = '';
+			card.querySelector('[data-field="ocrText"]').textContent =
+				doc.content.slice(0, 500) + (doc.content.length > 500 ? '…' : '');
+		}
+
+		if (doc.summary) {
+			card.querySelector('[data-field="genaiSection"]').style.display = '';
+			card.querySelector('[data-field="genaiText"]').textContent = doc.summary;
+		}
+
+		card.querySelector('[data-action="delete"]').onclick = () => removeDocument(doc.id);
+
+		return card;
+	}
+
+	document.addEventListener('DOMContentLoaded', async () => {
+
+		if (localStorage.getItem('theme') === 'dark') {
+			document.documentElement.setAttribute('data-bs-theme', 'dark');
+			getById('themeIcon').className = 'bi bi-sun';
+		}
+
+		initializeUpload();
+		connectOcrStream();
+		connectSummaryStream();
+
+		getById('searchBtn').onclick = searchDocuments;
+		getById('searchInput').addEventListener('keypress', e => e.key === 'Enter' && searchDocuments());
+		getById('clearSearchBtn').onclick = () => {
+			getById('searchInput').value = '';
+			currentSearch = '';
+			fetchDocuments();
+		};
+		getById('refreshBtn').onclick = fetchDocuments;
+
+		await fetchDocuments();
+	});
+
+	window.addEventListener('beforeunload', () => {
+		ocrStream?.close();
+		summaryStream?.close();
+	});
 })();

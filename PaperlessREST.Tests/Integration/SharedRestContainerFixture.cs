@@ -1,0 +1,155 @@
+using PaperlessREST.Host;
+
+[assembly: CaptureConsole]
+[assembly: CaptureTrace]
+
+namespace PaperlessREST.Tests.Integration;
+
+public sealed class SharedRestContainerFixture : IAsyncLifetime
+{
+	#region Static Constructor
+
+	static SharedRestContainerFixture()
+	{
+		Env.TraversePath().Load(".env.test");
+	}
+
+	#endregion
+
+	#region Constructor
+
+	public SharedRestContainerFixture()
+	{
+		string postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:16-alpine";
+		string rabbitImage = Environment.GetEnvironmentVariable("RABBITMQ_IMAGE") ?? "rabbitmq:3.13-management-alpine";
+		string minioImage = Environment.GetEnvironmentVariable("MINIO_IMAGE") ??
+		                    "minio/minio:RELEASE.2025-07-23T15-54-02Z";
+		string elasticImage = Environment.GetEnvironmentVariable("ELASTIC_IMAGE") ??
+		                      "docker.elastic.co/elasticsearch/elasticsearch:9.1.3";
+
+		_postgres = new PostgreSqlBuilder()
+			.WithImage(postgresImage)
+			.WithWaitStrategy(Wait.ForUnixContainer()
+				.UntilMessageIsLogged("database system is ready to accept connections"))
+			.Build();
+
+		_rabbit = new RabbitMqBuilder()
+			.WithImage(rabbitImage)
+			.Build();
+
+		_minio = new MinioBuilder()
+			.WithImage(minioImage)
+			.Build();
+
+		_elastic = new ElasticsearchBuilder()
+			.WithImage(elasticImage)
+			.WithEnvironment("discovery.type", "single-node")
+			.WithEnvironment("xpack.security.enabled", "false")
+			.WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+			.WithEnvironment("bootstrap.memory_lock", "false")
+			.WithWaitStrategy(Wait.ForUnixContainer()
+				.UntilMessageIsLogged("started"))
+			.Build();
+	}
+
+	#endregion
+
+	#region Public Methods
+
+	public AsyncServiceScope CreateAsyncScope() => Services.CreateAsyncScope();
+
+	#endregion
+
+	#region Fields
+
+	private readonly string _bucketName = $"test-{Guid.NewGuid():N}";
+	private readonly ElasticsearchContainer _elastic;
+	private readonly MinioContainer _minio;
+	private readonly PostgreSqlContainer _postgres;
+	private readonly RabbitMqContainer _rabbit;
+
+	private WebApplicationFactory<Program> _factory = null!;
+
+	#endregion
+
+	#region Properties
+
+	public HttpClient Client { get; private set; } = null!;
+	public IServiceProvider Services { get; private set; } = null!;
+	public IDbContextFactory<DocumentPersistence> DbFactory { get; private set; } = null!;
+
+	#endregion
+
+	#region IAsyncLifetime
+
+	public async ValueTask InitializeAsync()
+	{
+		await Task.WhenAll(
+			_postgres.StartAsync(),
+			_rabbit.StartAsync(),
+			_minio.StartAsync(),
+			_elastic.StartAsync()
+		);
+
+		Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Test");
+		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__PAPERLESSDB", _postgres.GetConnectionString());
+		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__HANGFIRE", _postgres.GetConnectionString());
+		Environment.SetEnvironmentVariable("RABBITMQ__URI", _rabbit.GetConnectionString());
+		string minioEndpoint = $"{_minio.Hostname}:{_minio.GetMappedPublicPort(9000)}";
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__ENDPOINT", minioEndpoint);
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__ACCESSKEY", _minio.GetAccessKey());
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__SECRETKEY", _minio.GetSecretKey());
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__BUCKETNAME", _bucketName);
+		Environment.SetEnvironmentVariable("ELASTICSEARCH__URI",
+			$"http://{_elastic.Hostname}:{_elastic.GetMappedPublicPort(9200)}");
+
+		IMinioClient? minioClient = new MinioClient()
+			.WithEndpoint(minioEndpoint)
+			.WithCredentials(_minio.GetAccessKey(), _minio.GetSecretKey())
+			.Build();
+		await minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_bucketName));
+
+		_factory = new WebApplicationFactory<Program>()
+			.WithWebHostBuilder(builder =>
+			{
+				builder.ConfigureTestServices(services =>
+				{
+					services.RemoveAll<IHostedService>();
+
+					services.RemoveAll<IDbContextFactory<DocumentPersistence>>();
+
+					NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(_postgres.GetConnectionString())
+						.MapEnum<DocumentStatus>("document_status")
+						.Build();
+
+					services.AddPooledDbContextFactory<DocumentPersistence>(opts =>
+						opts.UseNpgsql(dataSource));
+
+					services.RemoveAll<JobStorage>();
+					services.AddSingleton<JobStorage>(new MemoryStorage());
+
+					services.AddFakeLogging();
+				});
+			});
+
+		Client = _factory.CreateClient();
+		Services = _factory.Services;
+		DbFactory = Services.GetRequiredService<IDbContextFactory<DocumentPersistence>>();
+
+		await using DocumentPersistence db = await DbFactory.CreateDbContextAsync();
+		await db.Database.MigrateAsync();
+	}
+
+	public async ValueTask DisposeAsync()
+	{
+		await _factory.DisposeAsync();
+		await Task.WhenAll(
+			_postgres.DisposeAsync().AsTask(),
+			_rabbit.DisposeAsync().AsTask(),
+			_minio.DisposeAsync().AsTask(),
+			_elastic.DisposeAsync().AsTask()
+		);
+	}
+
+	#endregion
+}

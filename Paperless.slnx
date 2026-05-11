@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="PaperlessREST/PaperlessREST.csproj" />
+    <Project Path="PaperlessServices/PaperlessServices.csproj" />
+    <Project Path="PaperlessUI.Blazor/PaperlessUI.Blazor.csproj" />
+    <Project Path="PaperlessUI.Angular/PaperlessUI.Angular.esproj" />
+    <Project Path="PaperlessUI.React/PaperlessUI.React.esproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="PaperlessREST.Tests/PaperlessREST.Tests.csproj" />
+    <Project Path="PaperlessServices.Tests/PaperlessServices.Tests.csproj" />
+  </Folder>
+  <Folder Name="/build/">
+    <Project Path="Pipeline/Build.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,9 @@
+<Project>
+
+	<!-- Enable new dotnet test experience for .NET 10 + Microsoft Testing Platform -->
+	<!-- Applied to all projects; only test projects (with MTP packages) will use it -->
+	<PropertyGroup>
+		<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+	</PropertyGroup>
+
+</Project>
