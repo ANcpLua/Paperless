@@ -112,8 +112,8 @@ jobs:
                     cache: pnpm
                     cache-dependency-path: PaperlessUI.Angular/pnpm-lock.yaml
             -   run: pnpm install --frozen-lockfile=false
-            -   run: pnpm run build -- --configuration production
-            -   run: pnpm run test -- --watch=false --browsers=ChromeHeadless || true # tests opt-in; non-blocking until a real spec exists
+            -   run: pnpm run build  # ng build defaults to production
+            # `ng test` needs a real browser; opt-in only — wire later via Playwright/Karma headless.
 
     frontend-react:
         name: Build (PaperlessUI.React)
