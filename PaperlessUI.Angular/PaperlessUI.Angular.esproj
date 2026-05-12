@@ -1,13 +1,49 @@
-<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.5483906">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+
+  <!--
+    Hand-rolled esproj: drops Microsoft.VisualStudio.JavaScript.Sdk entirely
+    (its versions ship on VS-Windows's private feed; on nuget.org only every
+    Nth build is published — pinning is fragile and the SDK assumes npm).
+    CI builds this project in its own pnpm job (see .github/workflows/ci.yml),
+    so the MSBuild targets below are no-ops by default and exist purely so
+    'dotnet build Paperless.slnx' succeeds and Rider's solution explorer
+    surfaces the directory tree.
+  -->
+
   <PropertyGroup>
-    <StartupCommand>pnpm run start</StartupCommand>
-    <JavaScriptTestRoot>src\</JavaScriptTestRoot>
-    <JavaScriptTestFramework>Jasmine</JavaScriptTestFramework>
-    <!-- Allows the build (or compile) script located on package.json to run on Build -->
-    <ShouldRunBuildScript>false</ShouldRunBuildScript>
-    <!-- pnpm-managed; skip the JS SDK's npm install so dotnet build doesn't clobber pnpm-lock.yaml -->
-    <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
-    <!-- Folder where production build objects will be placed -->
-    <BuildOutputFolder>$(MSBuildProjectDirectory)\dist\paperless-ui-angular</BuildOutputFolder>
+    <FrontendRoot>$(MSBuildProjectDirectory)/</FrontendRoot>
+    <PnpmExe Condition="'$(PnpmExe)' == ''">pnpm</PnpmExe>
+    <DistDir>$(FrontendRoot)dist/paperless-ui-angular</DistDir>
+    <RunFrontendOnBuild Condition="'$(RunFrontendOnBuild)' == ''">false</RunFrontendOnBuild>
   </PropertyGroup>
+
+  <Target Name="Restore">
+    <Message Text="[PaperlessUI.Angular] Restore is a no-op; pnpm install runs in the CI frontend job." Importance="low"/>
+  </Target>
+
+  <Target Name="Build" DependsOnTargets="Restore">
+    <Message Text="[PaperlessUI.Angular] Build is a no-op; pnpm run build runs in the CI frontend job." Importance="low"/>
+    <Exec Command="$(PnpmExe) install --frozen-lockfile=false" WorkingDirectory="$(FrontendRoot)" Condition=" '$(RunFrontendOnBuild)' == 'true' "/>
+    <Exec Command="$(PnpmExe) run build" WorkingDirectory="$(FrontendRoot)" Condition=" '$(RunFrontendOnBuild)' == 'true' "/>
+  </Target>
+
+  <Target Name="Test">
+    <Message Text="[PaperlessUI.Angular] Test is a no-op here; run pnpm test inside the project." Importance="low"/>
+  </Target>
+
+  <Target Name="Clean">
+    <RemoveDir Directories="$(DistDir)" Condition="Exists('$(DistDir)')"/>
+  </Target>
+
+  <ItemGroup>
+    <None Include="package.json"/>
+    <None Include="pnpm-lock.yaml" Condition="Exists('pnpm-lock.yaml')"/>
+    <None Include="angular.json" Condition="Exists('angular.json')"/>
+    <None Include="tsconfig.json" Condition="Exists('tsconfig.json')"/>
+    <None Include="src/**/*"/>
+    <None Include="public/**/*" Condition="Exists('public')"/>
+    <None Remove="node_modules/**"/>
+    <None Remove="dist/**"/>
+  </ItemGroup>
+
 </Project>
