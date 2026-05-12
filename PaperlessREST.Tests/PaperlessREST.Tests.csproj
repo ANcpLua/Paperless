@@ -68,6 +68,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\PaperlessREST\PaperlessREST.csproj"/>
+		<ProjectReference Include="..\Paperless.Contracts\Paperless.Contracts.csproj"/>
 	</ItemGroup>
 
 

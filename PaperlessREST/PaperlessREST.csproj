@@ -51,6 +51,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Paperless.Contracts\Paperless.Contracts.csproj"/>
+	</ItemGroup>
+
+	<ItemGroup>
 		<Content Include="..\.dockerignore">
 			<Link>.dockerignore</Link>
 		</Content>
