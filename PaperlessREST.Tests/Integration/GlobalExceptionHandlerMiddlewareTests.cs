@@ -141,7 +141,7 @@ public sealed class GlobalExceptionHandlerMiddlewareTests
 		: IAsyncDisposable
 	{
 		public HttpClient Client { get; } = client;
-		public FakeLogCollector LogCollector { get; } = logCollector;
+		private FakeLogCollector LogCollector { get; } = logCollector;
 
 		public async ValueTask DisposeAsync()
 		{
