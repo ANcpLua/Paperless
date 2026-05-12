@@ -1,0 +1,1 @@
+openapi-typescript output target — `pnpm run generate:types` writes api.ts here once the PaperlessREST OpenAPI document is wired up.
