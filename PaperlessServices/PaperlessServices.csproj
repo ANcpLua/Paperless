@@ -13,16 +13,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CreatePdf.NET" Version="3.0.3"/>
-		<PackageReference Include="DotNetEnv" Version="3.1.1"/>
-		<PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.2.2"/>
-		<PackageReference Include="ErrorOr" Version="2.0.1"/>
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.0.0"/>
-		<PackageReference Include="Minio" Version="7.0.0"/>
-		<PackageReference Include="SWEN3.Paperless.RabbitMq" Version="2.3.1"/>
+		<PackageReference Include="CreatePdf.NET"/>
+		<PackageReference Include="DotNetEnv"/>
+		<PackageReference Include="Elastic.Clients.Elasticsearch"/>
+		<PackageReference Include="ErrorOr"/>
+		<PackageReference Include="Microsoft.Extensions.Hosting"/>
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations"/>
+		<PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions"/>
+		<PackageReference Include="Minio"/>
+		<PackageReference Include="SWEN3.Paperless.RabbitMq"/>
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(DOCKER_BUILD)' != 'true' AND Exists('$(MSBuildThisFileDirectory)..\.env')">
