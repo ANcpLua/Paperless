@@ -1,0 +1,52 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- .NET 10 platform -->
+    <MicrosoftEntityFrameworkCoreVersion>10.0.0</MicrosoftEntityFrameworkCoreVersion>
+    <MicrosoftAspNetCoreVersion>10.0.0</MicrosoftAspNetCoreVersion>
+    <MicrosoftAspNetCoreMvcTestingVersion>10.0.7</MicrosoftAspNetCoreMvcTestingVersion>
+    <MicrosoftExtensionsVersion>10.0.0</MicrosoftExtensionsVersion>
+    <NpgsqlVersion>10.0.0</NpgsqlVersion>
+
+    <!-- API versioning -->
+    <AspVersioningHttpClientVersion>8.1.0</AspVersioningHttpClientVersion>
+    <AspVersioningMvcApiExplorerVersion>8.1.1</AspVersioningMvcApiExplorerVersion>
+
+    <!-- Health checks -->
+    <AspNetCoreHealthChecksVersion>9.0.0</AspNetCoreHealthChecksVersion>
+
+    <!-- Test stack (MTP v2 + xUnit v3) -->
+    <AwesomeAssertionsVersion>9.3.0</AwesomeAssertionsVersion>
+    <AwesomeAssertionsAnalyzersVersion>9.0.8</AwesomeAssertionsAnalyzersVersion>
+    <MartinCostelloLoggingXUnitV3Version>0.7.1</MartinCostelloLoggingXUnitV3Version>
+    <MoqVersion>4.20.72</MoqVersion>
+    <XunitV3MtpV2Version>3.2.1</XunitV3MtpV2Version>
+    <MicrosoftTestingExtensionsCodeCoverageVersion>18.1.0</MicrosoftTestingExtensionsCodeCoverageVersion>
+    <MicrosoftTestingExtensionsTrxReportVersion>2.0.2</MicrosoftTestingExtensionsTrxReportVersion>
+
+    <!-- Testably (in-memory filesystem) -->
+    <TestablyAbstractionsVersion>10.0.0</TestablyAbstractionsVersion>
+    <TestablyAbstractionsTestingVersion>5.0.1</TestablyAbstractionsTestingVersion>
+
+    <!-- Testcontainers (shared major version for the suite) -->
+    <TestcontainersVersion>4.9.0</TestcontainersVersion>
+
+    <!-- Domain libraries -->
+    <CreatePdfNETVersion>3.0.3</CreatePdfNETVersion>
+    <DotNetEnvVersion>3.1.1</DotNetEnvVersion>
+    <ElasticClientsElasticsearchVersion>9.2.2</ElasticClientsElasticsearchVersion>
+    <ErrorOrVersion>2.0.1</ErrorOrVersion>
+    <ErrorOrAspNetCoreExtensionsVersion>2.0.1</ErrorOrAspNetCoreExtensionsVersion>
+    <HangfireVersion>1.8.23</HangfireVersion>
+    <HangfirePostgreSqlVersion>1.21.1</HangfirePostgreSqlVersion>
+    <HangfireMemoryStorageVersion>1.8.1.2</HangfireMemoryStorageVersion>
+    <JetBrainsAnnotationsVersion>2025.2.4</JetBrainsAnnotationsVersion>
+    <MapsterDependencyInjectionVersion>1.0.1</MapsterDependencyInjectionVersion>
+    <MapsterExtensionsGeneratorVersion>3.1.0</MapsterExtensionsGeneratorVersion>
+    <MinioVersion>7.0.0</MinioVersion>
+    <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
+    <ScalarAspNetCoreVersion>2.11.0</ScalarAspNetCoreVersion>
+    <SwenPaperlessRabbitMqVersion>2.3.1</SwenPaperlessRabbitMqVersion>
+  </PropertyGroup>
+
+</Project>

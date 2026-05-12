@@ -15,39 +15,39 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Asp.Versioning.Http.Client" Version="8.1.0"/>
-		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.1"/>
-		<PackageReference Include="DotNetEnv" Version="3.1.1"/>
-		<PackageReference Include="ErrorOr" Version="2.0.1"/>
-		<PackageReference Include="ErrorOrAspNetCoreExtensions" Version="2.0.1"/>
-		<PackageReference Include="Hangfire" Version="1.8.23"/>
-		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.23"/>
-		<PackageReference Include="Hangfire.PostgreSql" Version="1.21.1"/>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.4"/> <!-- Override transitive 11.0.1 (GHSA-5crp-9r3c-p9vr) -->
-		<PackageReference Include="MapsterExtensions.Generator" Version="3.1.0">
+		<PackageReference Include="Asp.Versioning.Http.Client"/>
+		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer"/>
+		<PackageReference Include="DotNetEnv"/>
+		<PackageReference Include="ErrorOr"/>
+		<PackageReference Include="ErrorOrAspNetCoreExtensions"/>
+		<PackageReference Include="Hangfire"/>
+		<PackageReference Include="Hangfire.AspNetCore"/>
+		<PackageReference Include="Hangfire.PostgreSql"/>
+		<PackageReference Include="Newtonsoft.Json"/> <!-- Override transitive 11.0.1 (GHSA-5crp-9r3c-p9vr) -->
+		<PackageReference Include="MapsterExtensions.Generator">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="10.0.0"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="10.0.0"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+		<PackageReference Include="Microsoft.EntityFrameworkCore"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.2.2"/>
-		<PackageReference Include="JetBrains.Annotations" Version="2025.2.4"/>
-		<PackageReference Include="Mapster.DependencyInjection" Version="1.0.1"/>
-		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0"/>
-		<PackageReference Include="Minio" Version="7.0.0"/>
-		<PackageReference Include="Npgsql" Version="10.0.0"/>
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0"/>
-		<PackageReference Include="Scalar.AspNetCore" Version="2.11.0"/>
-		<PackageReference Include="SWEN3.Paperless.RabbitMq" Version="2.3.1"/>
-		<PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0"/>
-		<PackageReference Include="AspNetCore.HealthChecks.Elasticsearch" Version="9.0.0"/>
-		<PackageReference Include="Testably.Abstractions" Version="10.0.0"/>
-		<PackageReference Include="Testably.Abstractions.FileSystem.Interface" Version="10.0.0"/>
+		<PackageReference Include="Elastic.Clients.Elasticsearch"/>
+		<PackageReference Include="JetBrains.Annotations"/>
+		<PackageReference Include="Mapster.DependencyInjection"/>
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+		<PackageReference Include="Minio"/>
+		<PackageReference Include="Npgsql"/>
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+		<PackageReference Include="Scalar.AspNetCore"/>
+		<PackageReference Include="SWEN3.Paperless.RabbitMq"/>
+		<PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
+		<PackageReference Include="AspNetCore.HealthChecks.Elasticsearch"/>
+		<PackageReference Include="Testably.Abstractions"/>
+		<PackageReference Include="Testably.Abstractions.FileSystem.Interface"/>
 	</ItemGroup>
 
 	<ItemGroup>

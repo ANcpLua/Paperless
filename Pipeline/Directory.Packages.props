@@ -1,0 +1,12 @@
+<Project>
+  <!--
+  Pipeline opts out of central package management.
+
+  Pipeline/Directory.Build.props already isolates this subtree from the parent
+  Directory.Build.props (see the commented Import). Nuke build pinning is kept
+  on Build.csproj directly so the NUKE bootstrap stays self-contained.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>
