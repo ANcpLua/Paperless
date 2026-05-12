@@ -3,10 +3,14 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --port 4200 --proxy-config proxy.conf.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test --watch=false",
+    "test:watch": "ng test",
+    "generate:openapi": "node -e \"const fs=require('node:fs');fs.rmSync('../PaperlessREST/openapi/paperless.json',{force:true})\" && dotnet build ../PaperlessREST/PaperlessREST.csproj -tlp:ErrorsOnly && node -e \"if(!require('node:fs').existsSync('../PaperlessREST/openapi/paperless.json')){console.error('paperless.json not generated');process.exit(1)}\"",
+    "generate:types": "openapi-typescript ../PaperlessREST/openapi/paperless.json -o src/app/core/api/generated/api-types.ts",
+    "generate": "pnpm run generate:openapi && pnpm run generate:types"
   },
   "private": true,
   "packageManager": "pnpm@10.30.2",
