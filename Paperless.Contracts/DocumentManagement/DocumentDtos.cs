@@ -1,8 +1,13 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using Paperless.Contracts.Validation;
 
 namespace Paperless.Contracts.DocumentManagement;
+
+// All records below are pure transport DTOs. Behaviour belongs in BL/DAL/API;
+// coverage on compiler-generated record members (Equals/GetHashCode/PrintMembers/
+// copy ctors) just adds noise to the score without exercising real code paths.
 
 /// <summary>
 ///     Query parameters for paginated document listing.
@@ -11,6 +16,7 @@ namespace Paperless.Contracts.DocumentManagement;
 ///     Uses cursor-based pagination with GUIDv7 (time-ordered) document IDs.
 ///     Pass the last document's ID as <see cref="Cursor"/> to get the next page.
 /// </remarks>
+[ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]
 public sealed record PaginationQuery
 {
 	[Range(PaginationConstraints.MinPageSize, PaginationConstraints.MaxPageSize,
@@ -25,6 +31,7 @@ public sealed record PaginationQuery
 /// <summary>
 ///     Query parameters for document search.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]
 public sealed record SearchQuery
 {
 	[StringLength(SearchConstraints.QueryMaxLength, MinimumLength = SearchConstraints.QueryMinLength,
@@ -40,6 +47,7 @@ public sealed record SearchQuery
 /// <summary>
 ///     Represents document metadata returned by the API.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]
 public sealed record DocumentDto
 {
 	[Description("Unique document identifier")]
@@ -68,6 +76,7 @@ public sealed record DocumentDto
 /// <summary>
 ///     Response returned after successfully uploading a document.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]
 public sealed record CreateDocumentResponse
 {
 	[Description("Unique document identifier")]
@@ -84,6 +93,7 @@ public sealed record CreateDocumentResponse
 /// <summary>
 ///     Represents a document search result with relevant fields.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]
 public sealed record DocumentSearchResultDto
 {
 	[Description("Unique document identifier")]
@@ -104,6 +114,7 @@ public sealed record DocumentSearchResultDto
 /// <summary>
 ///     Response containing a document summary.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]
 public sealed record SummaryDto
 {
 	[Description("AI-generated summary of the document content")]
@@ -117,6 +128,7 @@ public sealed record SummaryDto
 ///     Uses cursor-based pagination for efficient traversal of large datasets.
 ///     The <see cref="NextCursor"/> is null when there are no more pages.
 /// </remarks>
+[ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]
 public sealed record PaginatedDocumentsResponse
 {
 	[Description("List of documents in this page")]

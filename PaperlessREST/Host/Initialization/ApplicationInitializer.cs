@@ -3,6 +3,7 @@ namespace PaperlessREST.Host.Initialization;
 /// <summary>
 ///     Initializes the database by running pending migrations.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Host wiring - thin wrapper over EF Core MigrateAsync; exercised by deploy, not unit tests")]
 public sealed class DatabaseInitializer(
 	IDbContextFactory<DocumentPersistence> contextFactory,
 	ILogger<DatabaseInitializer> logger) : IApplicationInitializer
@@ -40,6 +41,7 @@ public interface IApplicationInitializer
 /// <summary>
 ///     Registers recurring Hangfire jobs.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Host wiring - registers a single recurring job at startup; exercised by deploy, not unit tests")]
 public sealed class JobSchedulerInitializer(
 	IRecurringJobManager jobManager,
 	IOptions<BatchOptions> options,
@@ -68,6 +70,7 @@ public sealed class JobSchedulerInitializer(
 /// <summary>
 ///     Ensures the MinIO storage bucket exists.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Host wiring - idempotent MinIO bucket creation at startup; exercised by deploy, not unit tests")]
 public sealed class StorageInitializer(
 	IMinioClient minioClient,
 	IOptions<MinioOptions> options,
