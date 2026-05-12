@@ -6,8 +6,9 @@ conversation. Everything inside the fenced block is the prompt — the framing
 above is just for humans who land here.
 
 The handoff assumes the preflight cleanup in PR #7 (transport DTOs, host
-wiring, and `Program.cs` excluded from coverage) and the NUKE `Verify` target
-in PR #8 are already on `main`.
+wiring, and `Program.cs` excluded from coverage), the NUKE `Verify` target
+in PR #8, and the `scripts/verify-strict.sh` wrapper (95/75 hardcoded) are
+already on `main`.
 
 ---
 
@@ -15,10 +16,9 @@ in PR #8 are already on `main`.
 Push backend coverage to 95% line / 75% branch on PaperlessREST + PaperlessServices (excluding generated code). Baseline is 86.1% line (815/947) after the preflight in PR #7 — transport DTOs, host wiring, and Program.cs are already excluded, so anything still showing up represents real testable behaviour.
 
 ## Inner loop
-One command, end-to-end:
+One command, end-to-end (95/75 baked in by `scripts/verify-strict.sh`):
 
-    ./build.sh Verify --coverage-min-line 95 --coverage-min-branch 75 \
-                      --coverage-format markdown --coverage-exclude-generated-param true
+    ./scripts/verify-strict.sh
 
 For tighter iteration without re-running tests:
 
@@ -68,6 +68,13 @@ Report what's left if anything proves genuinely untestable (record records, unre
 - Coverage Cobertura artifacts land in `Artifacts/coverage/<TestProject>/coverage.cobertura.xml`,
   not the dotcov-README default of `TestResults/**`. `Build.cs` already points
   `ICoverageReport.CoverageSearchDirectory` at that location.
+- `scripts/verify-strict.sh` is a thin pass-through that `cd`s to the repo root,
+  prepends `--coverage-min-line 95 --coverage-min-branch 75 --coverage-format
+  markdown --coverage-exclude-generated-param true` to `./build.sh Verify`, and
+  forwards any extra args. Stays outside NUKE's discoverability (`./build.sh
+  --plan` won't list it) but gives the coverage push a single muscle-memory
+  command. Once `.github/workflows/ci.yml` ratchets to 95/75, CI can call the
+  wrapper too and the threshold lives in exactly one place.
 
 If the `dotcov.tool` / `DotCov.Nuke` packages get bumped past 0.1.1, re-check
 parameter names — newer versions may drop the `-param` suffix.
