@@ -82,6 +82,25 @@ internal sealed class Build : NukeBuild,
 			Log.Information("CI pipeline completed successfully");
 		});
 
+	/// <summary>
+	///     One-shot local verify: Clean → Compile → all tests with Cobertura → DotCov gate.
+	///     Mirrors what CI runs end-to-end; ideal for the coverage push iterator loop.
+	/// </summary>
+	/// <remarks>
+	///     Threshold overrides flow through as usual, e.g.
+	///     <c>./build.sh Verify --coverage-min-line 95 --coverage-min-branch 75 --coverage-exclude-generated-param true</c>.
+	///     Without args, DotCov.Nuke's defaults apply.
+	/// </remarks>
+	Target Verify => d => d
+		.Description("All tests + Cobertura + DotCov gate in one run")
+		.DependsOn<ICompile>(x => x.Clean)
+		.DependsOn<ICoverage>(x => x.Coverage)
+		.DependsOn<ICoverageReport>(x => x.ReportCoverage)
+		.Executes(() =>
+		{
+			Log.Information("Verify completed — artifacts in Artifacts/coverage/");
+		});
+
 	/// <summary>Start full stack for development.</summary>
 	Target Dev => d => d
 		.Description("Start development environment (Docker + compile)")
