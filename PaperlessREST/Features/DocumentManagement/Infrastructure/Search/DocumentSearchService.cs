@@ -28,8 +28,8 @@ public sealed class DocumentSearchService(
 	{
 		logger.LogInformation("Searching for query: {Query} (limit: {Limit})", query, limit);
 
-		string searchQuery = query.Length > SearchConstraints.ServiceQueryMaxLength
-			? query[..SearchConstraints.ServiceQueryMaxLength]
+		string searchQuery = query.Length > SearchServiceConstraints.ServiceQueryMaxLength
+			? query[..SearchServiceConstraints.ServiceQueryMaxLength]
 			: query;
 
 		SearchResponse<T> response = await elastic.SearchAsync<T>(

@@ -13,39 +13,13 @@ public static class FileUploadConstraints
 }
 
 /// <summary>
-/// Search query validation constraints.
+/// Server-side search constants that don't belong on the public contract.
+/// Boundary-level <see cref="Paperless.Contracts.Validation.SearchConstraints"/> covers query / limit ranges.
 /// </summary>
-public static class SearchConstraints
+public static class SearchServiceConstraints
 {
-	/// <summary>Maximum query string length for DTO validation.</summary>
-	public const int QueryMaxLength = 100;
-
-	/// <summary>Minimum query string length.</summary>
-	public const int QueryMinLength = 1;
-
 	/// <summary>Maximum query length at service layer (truncation threshold).</summary>
 	public const int ServiceQueryMaxLength = 1000;
-
-	/// <summary>Maximum results that can be requested.</summary>
-	public const int MaxResultLimit = 100;
-
-	/// <summary>Default number of results returned.</summary>
-	public const int DefaultResultLimit = 10;
-}
-
-/// <summary>
-/// Pagination constraints for document listing.
-/// </summary>
-public static class PaginationConstraints
-{
-	/// <summary>Default page size when not specified.</summary>
-	public const int DefaultPageSize = 20;
-
-	/// <summary>Maximum page size allowed.</summary>
-	public const int MaxPageSize = 100;
-
-	/// <summary>Minimum page size allowed.</summary>
-	public const int MinPageSize = 1;
 }
 
 /// <summary>

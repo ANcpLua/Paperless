@@ -1,4 +1,7 @@
-namespace PaperlessREST.Features.BatchProcessing.Presentation.Dto;
+using System.Diagnostics.CodeAnalysis;
+using System.Xml.Serialization;
+
+namespace Paperless.Contracts.BatchProcessing;
 
 [XmlRoot("accessReport")]
 [ExcludeFromCodeCoverage(Justification = "DTO record - XML serialization tested via ReportProcessor tests")]

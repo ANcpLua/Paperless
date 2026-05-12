@@ -83,6 +83,11 @@ global using PaperlessREST.Features.DocumentManagement.Infrastructure.Storage;
 global using PaperlessREST.Features.DocumentManagement.Presentation.Dto;
 global using PaperlessREST.Features.DocumentManagement.Presentation.Endpoints;
 
+// Project namespaces - Paperless.Contracts (transport boundary)
+global using Paperless.Contracts.BatchProcessing;
+global using Paperless.Contracts.DocumentManagement;
+global using Paperless.Contracts.Validation;
+
 // ErrorOr for result pattern
 global using ErrorOr;
 
