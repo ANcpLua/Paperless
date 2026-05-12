@@ -1,15 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+<Project Sdk="ANcpLua.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
+		<OutputType>Exe</OutputType>
 		<UserSecretsId>paperless-services</UserSecretsId>
-		<EnablePreviewFeatures>true</EnablePreviewFeatures>
-		<LangVersion>preview</LangVersion>
+		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="PaperlessServices.Tests"/>
+	</ItemGroup>
+
+	<!-- Microsoft.NET.Sdk.Worker injected these as implicit usings; ANcpLua.NET.Sdk inherits
+	     Microsoft.NET.Sdk, so worker-host namespaces need to be opted in here. -->
+	<ItemGroup>
+		<Using Include="Microsoft.Extensions.Configuration"/>
+		<Using Include="Microsoft.Extensions.DependencyInjection"/>
+		<Using Include="Microsoft.Extensions.Hosting"/>
+		<Using Include="Microsoft.Extensions.Logging"/>
 	</ItemGroup>
 
 	<ItemGroup>

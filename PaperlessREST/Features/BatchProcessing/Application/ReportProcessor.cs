@@ -6,7 +6,7 @@ public sealed class ReportProcessor(
 	ILogger<ReportProcessor> logger) : IReportProcessor
 {
 	private const string SchemaFileName = "accessReport.xsd";
-	private static readonly XmlSerializer Serializer = new(typeof(AccessReportDto));
+	private static readonly XmlSerializer s_serializer = new(typeof(AccessReportDto));
 
 	private XmlSchemaSet Schemas => field ??= LoadSchemas();
 
@@ -89,7 +89,7 @@ public sealed class ReportProcessor(
 			};
 
 			using XmlReader reader = XmlReader.Create(stream, settings);
-			AccessReportDto dto = (AccessReportDto)Serializer.Deserialize(reader)!;
+			AccessReportDto dto = (AccessReportDto)s_serializer.Deserialize(reader)!;
 
 			if (validationErrors.Count > 0)
 			{

@@ -77,6 +77,7 @@ public sealed class Document
 	///     Creates a new <see cref="Document" /> instance from an uploaded file.
 	/// </summary>
 	/// <param name="fileName">The original filename of the uploaded PDF.</param>
+	/// <param name="timeProvider">Provides the UTC timestamp recorded on <see cref="CreatedAt" />; inject for testability.</param>
 	/// <returns>A new <see cref="Document" /> in <see cref="DocumentStatus.Pending" /> status.</returns>
 	/// <remarks>
 	///     This factory method initializes a document with:

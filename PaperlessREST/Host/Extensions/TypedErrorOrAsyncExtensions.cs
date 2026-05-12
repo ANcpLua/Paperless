@@ -5,9 +5,6 @@ namespace PaperlessREST.Host.Extensions;
 /// </summary>
 public static class TypedErrorOrAsyncExtensions
 {
-	private static readonly NotFound NotFound = TypedResults.NotFound();
-	private static readonly NoContent NoContent = TypedResults.NoContent();
-
 	private static ValidationProblem CreateValidationProblem(IReadOnlyList<Error> errors) =>
 		TypedResults.ValidationProblem(
 			errors.Where(e => e.Type == ErrorType.Validation)
@@ -79,7 +76,7 @@ public static class TypedErrorOrAsyncExtensions
 			}
 
 			return result.FirstError.Type == ErrorType.NotFound
-				? NotFound
+				? TypedResults.NotFound()
 				: throw ContractViolationException.ForNotFoundOnly(result.FirstError, result.Errors, callerName);
 		}
 
@@ -126,11 +123,11 @@ public static class TypedErrorOrAsyncExtensions
 
 			if (!result.IsError)
 			{
-				return NoContent;
+				return TypedResults.NoContent();
 			}
 
 			return result.FirstError.Type == ErrorType.NotFound
-				? NotFound
+				? TypedResults.NotFound()
 				: throw ContractViolationException.ForNotFoundOnly(result.FirstError, result.Errors, callerName);
 		}
 	}
