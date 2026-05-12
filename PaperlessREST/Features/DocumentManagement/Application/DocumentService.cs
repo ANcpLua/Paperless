@@ -245,6 +245,6 @@ public sealed class DocumentService(
 				"Document.StorageConnectionFailed",
 				$"Cannot connect to storage service for {storagePath}"),
 
-		_ => null!
+		_ => null
 	};
 }

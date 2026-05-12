@@ -1,30 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="ANcpLua.NET.Sdk.Web">
 	<!--
 	IMPORTANT: Web SDK is required for WebApplicationFactory + MTP self-hosted tests.
-	Do NOT switch back to Microsoft.NET.Sdk - integration tests will break.
-	See: https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests
+	IsTestProject=true opts this Web-SDK project into ANcpLua.NET.Sdk's Tests.targets
+	(MTP detection, AwesomeAssertions implicit, GitHub Actions test logger).
 	-->
 
 	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<LangVersion>preview</LangVersion>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<OutputType>Exe</OutputType>
-		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+		<!-- ANcpLua.NET.Sdk's Tests.targets sets these at BeforeBuild; declare here too so the
+		     property graph is correct at restore/eval time (Web SDK ships OutputType=Exe but is
+		     conservative about MTP detection). -->
+		<UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
 		<RootNamespace>PaperlessREST.Tests</RootNamespace>
 		<NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
-		<EnablePreviewFeatures>true</EnablePreviewFeatures>
-		<!-- Enable new dotnet test experience for .NET 10 + MTP v2 -->
-		<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AwesomeAssertions"/>
-		<PackageReference Include="AwesomeAssertions.Analyzers">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
+		<!-- AwesomeAssertions + AwesomeAssertions.Analyzers are injected by ANcpLua.NET.Sdk.Test (IsTestProject=true). -->
 		<PackageReference Include="Testably.Abstractions"/>
 		<PackageReference Include="Testably.Abstractions.FileSystem.Interface"/>
 		<PackageReference Include="Testably.Abstractions.Testing"/>

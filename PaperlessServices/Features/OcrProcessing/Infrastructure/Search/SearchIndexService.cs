@@ -17,8 +17,8 @@ public class SearchIndexService(
 	ILogger<SearchIndexService> logger)
 	: ISearchIndexService
 {
-	private static readonly SemaphoreSlim SInitLock = new(1, 1);
-	private static readonly ConcurrentDictionary<string, bool> SInitializedIndices = new();
+	private static readonly SemaphoreSlim s_initLock = new(1, 1);
+	private static readonly ConcurrentDictionary<string, bool> s_initializedIndices = new();
 
 	/// <summary>
 	///     Indexes a document in Elasticsearch after OCR processing completes.
@@ -77,16 +77,16 @@ public class SearchIndexService(
 		string indexName = options.Value.DefaultIndex;
 
 		// Fast path: index already initialized
-		if (SInitializedIndices.ContainsKey(indexName))
+		if (s_initializedIndices.ContainsKey(indexName))
 		{
 			return;
 		}
 
-		await SInitLock.WaitAsync(cancellationToken);
+		await s_initLock.WaitAsync(cancellationToken);
 		try
 		{
 			// Double-check after acquiring lock
-			if (SInitializedIndices.ContainsKey(indexName))
+			if (s_initializedIndices.ContainsKey(indexName))
 			{
 				return;
 			}
@@ -94,7 +94,7 @@ public class SearchIndexService(
 			ExistsResponse existsResponse = await elastic.Indices.ExistsAsync(indexName, cancellationToken);
 			if (existsResponse.Exists)
 			{
-				SInitializedIndices.TryAdd(indexName, true);
+				s_initializedIndices.TryAdd(indexName, true);
 				return;
 			}
 
@@ -113,11 +113,11 @@ public class SearchIndexService(
 				logger.LogInformation("Created Elasticsearch index: {IndexName}", indexName);
 			}
 
-			SInitializedIndices.TryAdd(indexName, true);
+			s_initializedIndices.TryAdd(indexName, true);
 		}
 		finally
 		{
-			SInitLock.Release();
+			s_initLock.Release();
 		}
 	}
 }

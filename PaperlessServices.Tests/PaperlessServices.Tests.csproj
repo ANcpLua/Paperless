@@ -1,23 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="ANcpLua.NET.Sdk.Test">
 
 	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<LangVersion>preview</LangVersion>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
+		<!-- ANcpLua.NET.Sdk.Test sets these at target-eval (BeforeBuild), but NUKE / dotnet test
+		     queries the static property graph at restore time and needs OutputType=Exe up front. -->
+		<UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
 		<OutputType>Exe</OutputType>
-		<IsPackable>false</IsPackable>
-		<EnablePreviewFeatures>true</EnablePreviewFeatures>
-		<!-- Enable new dotnet test experience for .NET 10 + MTP v2 -->
-		<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AwesomeAssertions"/>
-		<PackageReference Include="AwesomeAssertions.Analyzers">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
+		<!-- AwesomeAssertions + AwesomeAssertions.Analyzers are injected by ANcpLua.NET.Sdk.Test. -->
 		<PackageReference Include="CreatePdf.NET"/>
 		<PackageReference Include="DotNetEnv"/>
 		<PackageReference Include="MartinCostello.Logging.XUnit.v3"/>

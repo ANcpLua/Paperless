@@ -46,7 +46,8 @@
         "Restore",
         "SetupTestcontainers",
         "Test",
-        "UnitTests"
+        "UnitTests",
+        "Verify"
       ]
     },
     "Verbosity": {

@@ -220,7 +220,7 @@ public static class ServiceCollectionExtensions
 
 		private IServiceCollection AddPostgres(IConfiguration config)
 		{
-			NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(config.GetConnectionString("PaperlessDb")!)
+			NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(config.GetConnectionString("PaperlessDb"))
 				.MapEnum<DocumentStatus>("document_status")
 				.Build();
 

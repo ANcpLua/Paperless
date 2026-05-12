@@ -37,7 +37,7 @@ public sealed class DocumentServiceErrorMappingTests
 		DocumentService sut = CreateSut();
 
 		// Act
-		ErrorOr<Document> result = await sut.UploadDocumentAsync(request);
+		ErrorOr<Document> result = await sut.UploadDocumentAsync(request, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeTrue();
@@ -57,7 +57,7 @@ public sealed class DocumentServiceErrorMappingTests
 		DocumentService sut = CreateSut();
 
 		// Act
-		ErrorOr<Document> result = await sut.UploadDocumentAsync(request);
+		ErrorOr<Document> result = await sut.UploadDocumentAsync(request, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeTrue();
@@ -80,7 +80,7 @@ public sealed class DocumentServiceErrorMappingTests
 		DocumentService sut = CreateSut();
 
 		// Act
-		ErrorOr<Document> result = await sut.UploadDocumentAsync(request);
+		ErrorOr<Document> result = await sut.UploadDocumentAsync(request, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeTrue();

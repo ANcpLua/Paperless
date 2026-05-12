@@ -312,11 +312,11 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		// Add documents with slight delays to ensure distinct GUIDv7s
 		Document oldest = new DocumentBuilder().WithFileName($"{testPrefix}-old.pdf").Build();
 		await _repository.AddAsync(oldest, TestContext.Current.CancellationToken);
-		await Task.Delay(10);
+		await Task.Delay(10, TestContext.Current.CancellationToken);
 
 		Document middle = new DocumentBuilder().WithFileName($"{testPrefix}-mid.pdf").Build();
 		await _repository.AddAsync(middle, TestContext.Current.CancellationToken);
-		await Task.Delay(10);
+		await Task.Delay(10, TestContext.Current.CancellationToken);
 
 		Document newest = new DocumentBuilder().WithFileName($"{testPrefix}-new.pdf").Build();
 		await _repository.AddAsync(newest, TestContext.Current.CancellationToken);
@@ -345,7 +345,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 			await _repository.AddAsync(
 				new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build(),
 				TestContext.Current.CancellationToken);
-			await Task.Delay(5); // Ensure distinct GUIDv7s
+			await Task.Delay(5, TestContext.Current.CancellationToken); // Ensure distinct GUIDv7s
 		}
 
 		// Act
@@ -369,7 +369,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 			Document doc = new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build();
 			Document added = await _repository.AddAsync(doc, TestContext.Current.CancellationToken);
 			addedDocs.Add(added);
-			await Task.Delay(5);
+			await Task.Delay(5, TestContext.Current.CancellationToken);
 		}
 
 		// Act - Get first page
@@ -400,7 +400,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 			await _repository.AddAsync(
 				new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build(),
 				TestContext.Current.CancellationToken);
-			await Task.Delay(5);
+			await Task.Delay(5, TestContext.Current.CancellationToken);
 		}
 
 		// Act - Request more than available
