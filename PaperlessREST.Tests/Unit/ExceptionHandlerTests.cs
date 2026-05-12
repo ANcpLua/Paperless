@@ -27,7 +27,7 @@ public sealed class ExceptionHandlerSetup
 
 	public Mock<IProblemDetailsService> ProblemDetails { get; } = new();
 	public FakeLogger<GlobalExceptionHandler> Logger { get; }
-	public FakeLogCollector Collector { get; }
+	private FakeLogCollector Collector { get; }
 
 	public GlobalExceptionHandler CreateHandler() => new(ProblemDetails.Object, Logger);
 
