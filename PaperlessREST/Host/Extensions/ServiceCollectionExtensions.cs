@@ -240,9 +240,15 @@ public static class ServiceCollectionExtensions
 				.BindConfiguration(MinioOptions.SectionName)
 				.ValidateDataAnnotations();
 
-			// Use extension method from MinioOptionsExtensions
 			services.AddSingleton<IMinioClient>(sp =>
-				sp.GetRequiredService<IOptions<MinioOptions>>().Value.CreateClient());
+			{
+				MinioOptions opts = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
+				return new MinioClient()
+					.WithEndpoint(opts.EndpointUri.Host, opts.EndpointUri.Port)
+					.WithCredentials(opts.AccessKey, opts.SecretKey)
+					.WithSSL(opts.UseSsl)
+					.Build();
+			});
 
 			return services;
 		}
@@ -254,7 +260,13 @@ public static class ServiceCollectionExtensions
 				.ValidateDataAnnotations();
 
 			services.AddSingleton(sp =>
-				sp.GetRequiredService<IOptions<ElasticsearchOptions>>().Value.CreateClient());
+			{
+				ElasticsearchOptions opts = sp.GetRequiredService<IOptions<ElasticsearchOptions>>().Value;
+				return new ElasticsearchClient(
+					new ElasticsearchClientSettings(opts.Uri)
+						.DefaultIndex(opts.DefaultIndex)
+						.ThrowExceptions());
+			});
 
 			return services;
 		}

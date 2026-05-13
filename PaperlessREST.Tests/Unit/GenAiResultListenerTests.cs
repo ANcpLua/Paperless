@@ -69,7 +69,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 		string? summary = ValidSummary,
 		DateTimeOffset? generatedAt = null,
 		string? errorMessage = null) =>
-		new(documentId ?? Guid.CreateVersion7(), summary, generatedAt ?? DateTimeOffset.UtcNow, errorMessage);
+		new(documentId ?? Guid.CreateVersion7(), summary, generatedAt ?? TimeProvider.System.GetUtcNow(), errorMessage);
 
 	// ═══════════════════════════════════════════════════════════════
 	// TESTS: ProcessGenAiEventAsync - Success Path (With Summary)
@@ -91,7 +91,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(genAiEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -116,7 +116,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(genAiEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -147,7 +147,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -174,7 +174,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -196,7 +196,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(genAiEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -218,7 +218,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(genAiEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -240,7 +240,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(genAiEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -262,7 +262,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(genAiEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -283,7 +283,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(genAiEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -315,7 +315,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.NackAsync(It.IsAny<bool>())).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -339,7 +339,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.NackAsync(It.IsAny<bool>())).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -363,7 +363,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.NackAsync(It.IsAny<bool>())).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -396,7 +396,7 @@ public sealed class GenAiResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(genAiEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		GenAiResultListener sut = CreateSut();
+		using GenAiResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);

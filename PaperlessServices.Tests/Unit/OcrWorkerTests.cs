@@ -74,7 +74,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 		}
@@ -96,7 +96,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -123,7 +123,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -148,7 +148,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 		}
@@ -168,7 +168,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -193,7 +193,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -215,7 +215,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.NackAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 		}
@@ -232,7 +232,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.NackAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -251,7 +251,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.NackAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -273,7 +273,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.NackAsync()).Returns(Task.CompletedTask);
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -367,7 +367,7 @@ public static class OcrWorkerTests
 			_consumer.Setup(c => c.ConsumeAsync(It.IsAny<CancellationToken>()))
 				.Returns(CreateAsyncEnumerable());
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.StartAsync(cts.Token);
 
@@ -406,7 +406,7 @@ public static class OcrWorkerTests
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command2, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(CreateSuccessEvent(jobId2));
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.StartAsync(cts.Token);
 
@@ -445,7 +445,7 @@ public static class OcrWorkerTests
 					return CreateSuccessEvent(cmd.JobId);
 				});
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.StartAsync(cts.Token);
 
@@ -489,7 +489,7 @@ public static class OcrWorkerTests
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command3, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(CreateSuccessEvent(jobId3));
 
-			OcrWorker sut = CreateSut();
+			using OcrWorker sut = CreateSut();
 
 			await sut.StartAsync(cts.Token);
 
@@ -527,10 +527,10 @@ public static class OcrWorkerTests
 		string fileName = ValidFileName,
 		string storagePath = ValidStoragePath,
 		DateTimeOffset? createdAt = null) =>
-		new(jobId ?? Guid.CreateVersion7(), fileName, storagePath, createdAt ?? DateTimeOffset.UtcNow.AddMinutes(-5));
+		new(jobId ?? Guid.CreateVersion7(), fileName, storagePath, createdAt ?? TimeProvider.System.GetUtcNow().AddMinutes(-5));
 
 	private static OcrEvent CreateSuccessEvent(Guid jobId) =>
-		new(jobId, "Completed", ExtractedOcrText, DateTimeOffset.UtcNow);
+		new(jobId, "Completed", ExtractedOcrText, TimeProvider.System.GetUtcNow());
 
 	private static async IAsyncEnumerable<OcrCommand> CreateAsyncEnumerable(params OcrCommand[] commands)
 	{

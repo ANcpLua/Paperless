@@ -68,7 +68,8 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 	private readonly PostgreSqlContainer _postgres;
 	private readonly RabbitMqContainer _rabbit;
 
-	private WebApplicationFactory<Program> _factory = null!;
+	private WebApplicationFactory<Program>? _factory;
+	private WebApplicationFactory<Program> Factory => _factory ?? throw new InvalidOperationException("Factory not initialized.");
 
 	#endregion
 
@@ -103,37 +104,17 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 		Environment.SetEnvironmentVariable("ELASTICSEARCH__URI",
 			$"http://{_elastic.Hostname}:{_elastic.GetMappedPublicPort(9200)}");
 
-		IMinioClient? minioClient = new MinioClient()
+		using MinioClient minioClient = new();
+		minioClient
 			.WithEndpoint(minioEndpoint)
 			.WithCredentials(_minio.GetAccessKey(), _minio.GetSecretKey())
 			.Build();
 		await minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_bucketName));
 
-		_factory = new WebApplicationFactory<Program>()
-			.WithWebHostBuilder(builder =>
-			{
-				builder.ConfigureTestServices(services =>
-				{
-					services.RemoveAll<IHostedService>();
+		_factory = new ConfiguredWebApplicationFactory(_postgres.GetConnectionString());
 
-					services.RemoveAll<IDbContextFactory<DocumentPersistence>>();
-
-					NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(_postgres.GetConnectionString())
-						.MapEnum<DocumentStatus>("document_status")
-						.Build();
-
-					services.AddPooledDbContextFactory<DocumentPersistence>(opts =>
-						opts.UseNpgsql(dataSource));
-
-					services.RemoveAll<JobStorage>();
-					services.AddSingleton<JobStorage>(new MemoryStorage());
-
-					services.AddFakeLogging();
-				});
-			});
-
-		Client = _factory.CreateClient();
-		Services = _factory.Services;
+		Client = Factory.CreateClient();
+		Services = Factory.Services;
 		DbFactory = Services.GetRequiredService<IDbContextFactory<DocumentPersistence>>();
 
 		await using DocumentPersistence db = await DbFactory.CreateDbContextAsync();
@@ -142,7 +123,8 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 
 	public async ValueTask DisposeAsync()
 	{
-		await _factory.DisposeAsync();
+		if (_factory is not null)
+			await _factory.DisposeAsync();
 		await Task.WhenAll(
 			_postgres.DisposeAsync().AsTask(),
 			_rabbit.DisposeAsync().AsTask(),
@@ -152,4 +134,30 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 	}
 
 	#endregion
+
+	private sealed class ConfiguredWebApplicationFactory(string postgresConnectionString)
+		: WebApplicationFactory<Program>
+	{
+		protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+		{
+			builder.ConfigureTestServices(services =>
+			{
+				services.RemoveAll<IHostedService>();
+
+				services.RemoveAll<IDbContextFactory<DocumentPersistence>>();
+
+				NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(postgresConnectionString)
+					.MapEnum<DocumentStatus>("document_status")
+					.Build();
+
+				services.AddPooledDbContextFactory<DocumentPersistence>(opts =>
+					opts.UseNpgsql(dataSource));
+
+				services.RemoveAll<JobStorage>();
+				services.AddSingleton<JobStorage>(new MemoryStorage());
+
+				services.AddFakeLogging();
+			});
+		}
+	}
 }

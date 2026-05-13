@@ -1,5 +1,6 @@
 // System namespaces
 
+global using System.Diagnostics.CodeAnalysis;
 global using System.Text.Json;
 
 // Microsoft namespaces

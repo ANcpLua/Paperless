@@ -6,7 +6,6 @@ internal sealed class FakeTextSummarizer : ITextSummarizer
 
 	public Task<string?> SummarizeAsync(string text, CancellationToken cancellationToken = default)
 	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(text);
 		cancellationToken.ThrowIfCancellationRequested();
 
 		string preview = text.Length <= 64 ? text : text[..64] + "…";

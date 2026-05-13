@@ -6,7 +6,7 @@ public sealed class DocumentBuilder
 	private const string DefaultStoragePathFormat = "documents/{0:yyyy-MM}/{1}.pdf";
 	private const string DefaultExtractedContent = "Extracted content";
 	private string? _content;
-	private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
+	private DateTimeOffset _createdAt = TimeProvider.System.GetUtcNow();
 	private string _fileName = DefaultFileName;
 
 	private Guid _id = Guid.CreateVersion7();
@@ -68,7 +68,7 @@ public sealed class DocumentBuilder
 	public DocumentBuilder WithSummary(string? summary, DateTimeOffset? generatedAt = null)
 	{
 		_summary = summary;
-		_summaryGeneratedAt = generatedAt ?? (_summary is not null ? DateTimeOffset.UtcNow : null);
+		_summaryGeneratedAt = generatedAt ?? (_summary is not null ? TimeProvider.System.GetUtcNow() : null);
 		return this;
 	}
 
@@ -84,7 +84,7 @@ public sealed class DocumentBuilder
 	{
 		_status = DocumentStatus.Completed;
 		_content = content;
-		_processedAt = DateTimeOffset.UtcNow;
+		_processedAt = TimeProvider.System.GetUtcNow();
 		return this;
 	}
 
@@ -92,7 +92,7 @@ public sealed class DocumentBuilder
 	{
 		_status = DocumentStatus.Failed;
 		_content = null;
-		_processedAt = DateTimeOffset.UtcNow;
+		_processedAt = TimeProvider.System.GetUtcNow();
 		return this;
 	}
 

@@ -9,7 +9,7 @@ public sealed class OcrProcessorTests : IDisposable
 	private const string ValidFileName = "document.pdf";
 	private const string ValidStoragePath = "documents/2024-01/abc123.pdf";
 	private const string ExtractedOcrText = "This is the extracted text from the PDF document.";
-	private static readonly Guid TestJobId = Guid.Parse("12345678-1234-1234-1234-123456789abc");
+	private static readonly Guid s_testJobId = Guid.Parse("12345678-1234-1234-1234-123456789abc");
 	private readonly FakeLogCollector _logCollector = new();
 	private readonly FakeLogger<OcrProcessor> _logger;
 
@@ -50,7 +50,7 @@ public sealed class OcrProcessorTests : IDisposable
 		string fileName = ValidFileName,
 		string storagePath = ValidStoragePath,
 		DateTimeOffset? createdAt = null) =>
-		new(jobId ?? TestJobId, fileName, storagePath, createdAt ?? DateTimeOffset.UtcNow.AddMinutes(-5));
+		new(jobId ?? s_testJobId, fileName, storagePath, createdAt ?? TimeProvider.System.GetUtcNow().AddMinutes(-5));
 
 	private static MemoryStream CreateValidPdfStream() => new([0x25, 0x50, 0x44, 0x46]); // %PDF header
 
@@ -69,7 +69,7 @@ public sealed class OcrProcessorTests : IDisposable
 		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
-				TestJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
+				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
 		OcrProcessor sut = CreateSut();
@@ -91,7 +91,7 @@ public sealed class OcrProcessorTests : IDisposable
 		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
-				TestJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
+				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
 		OcrProcessor sut = CreateSut();
@@ -113,7 +113,7 @@ public sealed class OcrProcessorTests : IDisposable
 		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
-				TestJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
+				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
 		OcrProcessor sut = CreateSut();
@@ -135,7 +135,7 @@ public sealed class OcrProcessorTests : IDisposable
 		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
-				TestJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
+				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
 		OcrProcessor sut = CreateSut();
@@ -146,7 +146,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		// Assert
 		result.IsError.Should().BeFalse();
-		result.Value.JobId.Should().Be(TestJobId);
+		result.Value.JobId.Should().Be(s_testJobId);
 		result.Value.Status.Should().Be("Completed");
 		result.Value.Text.Should().Be(ExtractedOcrText);
 	}
@@ -166,7 +166,7 @@ public sealed class OcrProcessorTests : IDisposable
 		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
-				TestJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
+				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
 		OcrProcessor sut = CreateSut();
@@ -333,7 +333,7 @@ public sealed class OcrProcessorTests : IDisposable
 		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
 			.ReturnsAsync(string.Empty);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
-				TestJobId, ValidFileName, string.Empty, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
+				s_testJobId, ValidFileName, string.Empty, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
 		OcrProcessor sut = CreateSut();
@@ -360,7 +360,7 @@ public sealed class OcrProcessorTests : IDisposable
 		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
 			.ReturnsAsync(largeText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
-				TestJobId, ValidFileName, largeText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
+				s_testJobId, ValidFileName, largeText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
 		OcrProcessor sut = CreateSut();

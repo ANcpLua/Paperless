@@ -21,28 +21,31 @@ public sealed class SearchIndexServiceTests : IDisposable
 	private const string TestIndexName = "test-documents";
 	private const string TestFileName = "document.pdf";
 	private const string TestContent = "This is the extracted OCR content from the document.";
-	private static readonly Guid TestDocumentId = Guid.Parse("12345678-1234-1234-1234-123456789abc");
+	private static readonly Guid s_testDocumentId = Guid.Parse("12345678-1234-1234-1234-123456789abc");
 
 	// ═══════════════════════════════════════════════════════════════
 	// CONSTRUCTION
 	// ═══════════════════════════════════════════════════════════════
 
 	private readonly FakeLogCollector _logCollector = new();
+	private readonly ElasticsearchClientSettings _settings;
 	private readonly SearchIndexService _sut;
 	private readonly FakeTimeProvider _timeProvider = new();
 
+	[SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
+		Justification = "_settings is stored as a field and disposed in Dispose() via the IDisposable cast; "
+		                + "the analyzer can't follow disposal through the cast.")]
 	public SearchIndexServiceTests()
 	{
 		FakeLogger<SearchIndexService> logger = new(_logCollector);
 
 		// Configure client to fail fast - unreachable endpoint tests resilience
-		ElasticsearchClientSettings settings = new ElasticsearchClientSettings(new Uri(UnreachableHost))
+		_settings = new ElasticsearchClientSettings(new Uri(UnreachableHost))
 			.DefaultIndex(TestIndexName)
 			.DisableDirectStreaming()
 			.RequestTimeout(TimeSpan.FromMilliseconds(100))
 			.ThrowExceptions(false);
-
-		ElasticsearchClient client = new(settings);
+		ElasticsearchClient client = new(_settings);
 
 		IOptions<ElasticsearchOptions> options = Options.Create(new ElasticsearchOptions
 		{
@@ -56,8 +59,11 @@ public sealed class SearchIndexServiceTests : IDisposable
 	// DISPOSAL
 	// ═══════════════════════════════════════════════════════════════
 
-	public void Dispose() =>
+	public void Dispose()
+	{
 		TestContext.Current.SendDiagnosticMessage("Full logs:\n{0}", _logCollector.GetFullLoggerText());
+		(_settings as IDisposable)?.Dispose();
+	}
 
 	// ═══════════════════════════════════════════════════════════════
 	// TESTS: IndexDocumentAsync - Resilience (Elasticsearch Unavailable)
@@ -68,10 +74,10 @@ public sealed class SearchIndexServiceTests : IDisposable
 	{
 		// Arrange & Act
 		Func<Task> act = () => _sut.IndexDocumentAsync(
-			TestDocumentId,
+			s_testDocumentId,
 			TestFileName,
 			TestContent,
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert - Service is resilient to ES failures, never blocks OCR
@@ -83,10 +89,10 @@ public sealed class SearchIndexServiceTests : IDisposable
 	{
 		// Act
 		await _sut.IndexDocumentAsync(
-			TestDocumentId,
+			s_testDocumentId,
 			TestFileName,
 			TestContent,
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert - Warning logged for observability
@@ -99,16 +105,16 @@ public sealed class SearchIndexServiceTests : IDisposable
 	{
 		// Act
 		await _sut.IndexDocumentAsync(
-			TestDocumentId,
+			s_testDocumentId,
 			TestFileName,
 			TestContent,
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert - Document ID in log for troubleshooting
 		IReadOnlyList<FakeLogRecord> logs = _logCollector.GetSnapshot();
 		logs.Select(r => r.Message)
-			.Should().Contain(m => m.Contains(TestDocumentId.ToString(), StringComparison.OrdinalIgnoreCase));
+			.Should().Contain(m => m.Contains(s_testDocumentId.ToString(), StringComparison.OrdinalIgnoreCase));
 	}
 
 	// ═══════════════════════════════════════════════════════════════
@@ -120,10 +126,10 @@ public sealed class SearchIndexServiceTests : IDisposable
 	{
 		// Act
 		Func<Task> act = () => _sut.IndexDocumentAsync(
-			TestDocumentId,
+			s_testDocumentId,
 			null!,
 			TestContent,
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert - Service handles null gracefully
@@ -135,10 +141,10 @@ public sealed class SearchIndexServiceTests : IDisposable
 	{
 		// Act - OCR might extract no text from some PDFs
 		Func<Task> act = () => _sut.IndexDocumentAsync(
-			TestDocumentId,
+			s_testDocumentId,
 			TestFileName,
 			string.Empty,
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert - Empty content is valid
@@ -153,7 +159,7 @@ public sealed class SearchIndexServiceTests : IDisposable
 			Guid.Empty,
 			TestFileName,
 			TestContent,
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert - Invalid IDs shouldn't crash the service
@@ -173,10 +179,10 @@ public sealed class SearchIndexServiceTests : IDisposable
 
 		// Act
 		Func<Task> act = () => _sut.IndexDocumentAsync(
-			TestDocumentId,
+			s_testDocumentId,
 			TestFileName,
 			TestContent,
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			cts.Token);
 
 		// Assert - Cancelled operations handled gracefully
@@ -208,7 +214,7 @@ public sealed class SearchIndexServiceTests : IDisposable
 			Guid.CreateVersion7(),
 			TestFileName,
 			content,
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert
@@ -226,7 +232,7 @@ public sealed class SearchIndexServiceTests : IDisposable
 			Guid.CreateVersion7(),
 			TestFileName,
 			longContent,
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert
@@ -241,7 +247,7 @@ public sealed class SearchIndexServiceTests : IDisposable
 	public async Task IndexDocumentAsync_ConcurrentCalls_DoNotThrow()
 	{
 		// Arrange - Multiple documents indexed concurrently
-		DateTimeOffset createdAt = DateTimeOffset.UtcNow.AddMinutes(-5);
+		DateTimeOffset createdAt = TimeProvider.System.GetUtcNow().AddMinutes(-5);
 		Task[] tasks =
 		[
 			_sut.IndexDocumentAsync(Guid.CreateVersion7(), "doc1.pdf", "Content 1", createdAt, CancellationToken.None),
@@ -264,25 +270,25 @@ public sealed class SearchIndexServiceTests : IDisposable
 	public void LogIndexResult_WhenValid_LogsInformation()
 	{
 		// Act
-		_sut.LogIndexResult(TestDocumentId, true);
+		_sut.LogIndexResult(s_testDocumentId, true);
 
 		// Assert
 		IReadOnlyList<FakeLogRecord> logs = _logCollector.GetSnapshot();
 		logs.Should().ContainSingle(r =>
 			r.Level == LogLevel.Information &&
-			r.Message.Contains(TestDocumentId.ToString(), StringComparison.OrdinalIgnoreCase));
+			r.Message.Contains(s_testDocumentId.ToString(), StringComparison.OrdinalIgnoreCase));
 	}
 
 	[Fact]
 	public void LogIndexResult_WhenInvalid_LogsWarning()
 	{
 		// Act
-		_sut.LogIndexResult(TestDocumentId, false);
+		_sut.LogIndexResult(s_testDocumentId, false);
 
 		// Assert
 		IReadOnlyList<FakeLogRecord> logs = _logCollector.GetSnapshot();
 		logs.Should().ContainSingle(r =>
 			r.Level == LogLevel.Warning &&
-			r.Message.Contains(TestDocumentId.ToString(), StringComparison.OrdinalIgnoreCase));
+			r.Message.Contains(s_testDocumentId.ToString(), StringComparison.OrdinalIgnoreCase));
 	}
 }

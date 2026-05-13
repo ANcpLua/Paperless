@@ -10,7 +10,7 @@ public class OcrIntegrationTests(SharedContainerFixture fixture)
 	{
 		// Arrange
 		string storagePath = await fixture.UploadPdfAsync("INV-2024-001");
-		OcrCommand command = new(Guid.NewGuid(), "invoice.pdf", storagePath, DateTimeOffset.UtcNow.AddMinutes(-5));
+		OcrCommand command = new(Guid.NewGuid(), "invoice.pdf", storagePath, TimeProvider.System.GetUtcNow().AddMinutes(-5));
 
 		// Act
 		ErrorOr<OcrEvent> errorOrResult =
@@ -32,7 +32,7 @@ public class OcrIntegrationTests(SharedContainerFixture fixture)
 		IEnumerable<Task<ErrorOr<OcrEvent>>> tasks = Enumerable.Range(1, 3).Select(async i =>
 		{
 			string path = await fixture.UploadPdfAsync($"Document {i} content. Amount: ${i * 1000:N2}");
-			OcrCommand command = new(Guid.NewGuid(), $"doc-{i}.pdf", path, DateTimeOffset.UtcNow.AddMinutes(-5));
+			OcrCommand command = new(Guid.NewGuid(), $"doc-{i}.pdf", path, TimeProvider.System.GetUtcNow().AddMinutes(-5));
 			return await OcrProcessor.ProcessDocumentAsync(command, TestContext.Current.CancellationToken);
 		});
 
@@ -55,10 +55,10 @@ public class GenAiIntegrationTests(SharedContainerFixture fixture, ITestOutputHe
 	[Fact]
 	public async Task SummarizesFinancialReport()
 	{
-		const string report = "Q3 2024 Report: Revenue $4.2M (+28% YoY), Expenses $2.1M (+12%)";
+		const string Report = "Q3 2024 Report: Revenue $4.2M (+28% YoY), Expenses $2.1M (+12%)";
 
 		string? summary = await TextSummarizer.SummarizeAsync(
-			report,
+			Report,
 			TestContext.Current.CancellationToken);
 
 		summary.Should().NotBeNullOrWhiteSpace();
