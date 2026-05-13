@@ -231,7 +231,7 @@ public sealed class ExceptionHandlerTests
 	{
 		// Arrange
 		HttpContext context = _setup.CreateHttpContext();
-		Exception exception = new(ExceptionHandlerConstants.TestExceptionMessage);
+		InvalidOperationException exception = new(ExceptionHandlerConstants.TestExceptionMessage);
 		ProblemDetailsContext? capturedContext = null;
 
 		_setup.ProblemDetails.Setup(p => p.TryWriteAsync(It.IsAny<ProblemDetailsContext>()))

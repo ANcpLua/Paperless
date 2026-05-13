@@ -10,8 +10,8 @@ public sealed class DocumentTests
 	private const string TestContent = "content";
 	private const string TestSummary = "S";
 
-	private static readonly DateTimeOffset FixedTime = new(2025, 6, 15, 10, 30, 0, TimeSpan.Zero);
-	private readonly FakeTimeProvider _timeProvider = new(FixedTime);
+	private static readonly DateTimeOffset s_fixedTime = new(2025, 6, 15, 10, 30, 0, TimeSpan.Zero);
+	private readonly FakeTimeProvider _timeProvider = new(s_fixedTime);
 
 	public static IEnumerable<TheoryDataRow<DocumentStatus, string>> CompleteNotPending()
 	{
@@ -39,8 +39,8 @@ public sealed class DocumentTests
 		document.Id.Should().NotBeEmpty();
 		document.FileName.Should().Be(TestFileName);
 		document.Status.Should().Be(DocumentStatus.Pending);
-		document.CreatedAt.Should().Be(FixedTime);
-		document.StoragePath.Should().Match($"documents/{FixedTime.UtcDateTime:yyyy-MM}/{document.Id}.pdf");
+		document.CreatedAt.Should().Be(s_fixedTime);
+		document.StoragePath.Should().Match($"documents/{s_fixedTime.UtcDateTime:yyyy-MM}/{document.Id}.pdf");
 		document.Content.Should().BeNull();
 		document.ProcessedAt.Should().BeNull();
 	}
@@ -73,7 +73,7 @@ public sealed class DocumentTests
 		result.IsError.Should().BeFalse();
 		document.Status.Should().Be(DocumentStatus.Completed);
 		document.Content.Should().Be(TestContent);
-		document.ProcessedAt.Should().Be(FixedTime);
+		document.ProcessedAt.Should().Be(s_fixedTime);
 	}
 
 	[Theory]
@@ -104,7 +104,7 @@ public sealed class DocumentTests
 		result.IsError.Should().BeFalse();
 		document.Status.Should().Be(DocumentStatus.Failed);
 		document.Content.Should().BeNull();
-		document.ProcessedAt.Should().Be(FixedTime);
+		document.ProcessedAt.Should().Be(s_fixedTime);
 	}
 
 	[Theory]
@@ -115,7 +115,7 @@ public sealed class DocumentTests
 	{
 		// Arrange
 		Document document = new DocumentBuilder().WithStatus(status).Build();
-		DateTimeOffset at = DateTimeOffset.UtcNow;
+		DateTimeOffset at = TimeProvider.System.GetUtcNow();
 
 		// Act
 		document.UpdateSummary(TestSummary, at);

@@ -70,7 +70,8 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 	private readonly DatabaseFixture _fixture;
 	private readonly List<Guid> _createdDocIds = [];
 	private AsyncServiceScope _scope;
-	private IDocumentAccessRepository _repository = null!;
+	private IDocumentAccessRepository? _repository;
+	private IDocumentAccessRepository Repository => _repository ?? throw new InvalidOperationException("Repository not initialized.");
 
 	#endregion
 
@@ -122,7 +123,7 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 		Guid nonExistingId = Guid.CreateVersion7();
 
 		// Act
-		Guid[] result = await _repository.GetExistingDocumentIdsAsync(
+		Guid[] result = await Repository.GetExistingDocumentIdsAsync(
 			[existingId, nonExistingId],
 			TestContext.Current.CancellationToken);
 
@@ -137,7 +138,7 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 		Guid[] emptyIds = [];
 
 		// Act
-		Guid[] result = await _repository.GetExistingDocumentIdsAsync(
+		Guid[] result = await Repository.GetExistingDocumentIdsAsync(
 			emptyIds,
 			TestContext.Current.CancellationToken);
 
@@ -154,7 +155,7 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 		Guid id3 = await SeedDocumentAsync($"{TestFilePrefix}-all3-{Guid.NewGuid():N}.pdf");
 
 		// Act
-		Guid[] result = await _repository.GetExistingDocumentIdsAsync(
+		Guid[] result = await Repository.GetExistingDocumentIdsAsync(
 			[id1, id2, id3],
 			TestContext.Current.CancellationToken);
 
@@ -173,7 +174,7 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 		Guid nonExisting2 = Guid.CreateVersion7();
 
 		// Act
-		Guid[] result = await _repository.GetExistingDocumentIdsAsync(
+		Guid[] result = await Repository.GetExistingDocumentIdsAsync(
 			[nonExisting1, nonExisting2],
 			TestContext.Current.CancellationToken);
 
@@ -189,11 +190,11 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 	public async Task UpsertDailyAccessAsync_EmptyItems_DoesNothing()
 	{
 		// Arrange
-		DateOnly date = DateOnly.FromDateTime(DateTime.UtcNow);
+		DateOnly date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
 		(Guid DocumentId, long AccessCount)[] emptyItems = [];
 
 		// Act - should return without error
-		await _repository.UpsertDailyAccessAsync(date, emptyItems, TestContext.Current.CancellationToken);
+		await Repository.UpsertDailyAccessAsync(date, emptyItems, TestContext.Current.CancellationToken);
 
 		// Assert - no exception thrown, method returns early
 	}
@@ -203,21 +204,21 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 	{
 		// Arrange
 		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-upsert-insert-{Guid.NewGuid():N}.pdf");
-		DateOnly date = DateOnly.FromDateTime(DateTime.UtcNow);
-		const long accessCount = 42;
+		DateOnly date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
+		const long AccessCount = 42;
 
 		try
 		{
 			// Act
-			await _repository.UpsertDailyAccessAsync(
+			await Repository.UpsertDailyAccessAsync(
 				date,
-				[(docId, accessCount)],
+				[(docId, AccessCount)],
 				TestContext.Current.CancellationToken);
 
 			// Assert
 			DailyDocumentAccess? record = await GetDailyAccessAsync(docId, date);
 			record.Should().NotBeNull();
-			record!.AccessCount.Should().Be(accessCount);
+			record!.AccessCount.Should().Be(AccessCount);
 			record.DocumentId.Should().Be(docId);
 			record.LogDate.Should().Be(date);
 		}
@@ -232,29 +233,29 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 	{
 		// Arrange
 		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-upsert-update-{Guid.NewGuid():N}.pdf");
-		DateOnly date = DateOnly.FromDateTime(DateTime.UtcNow);
-		const long initialCount = 10;
-		const long additionalCount = 25;
-		const long expectedTotal = initialCount + additionalCount;
+		DateOnly date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
+		const long InitialCount = 10;
+		const long AdditionalCount = 25;
+		const long ExpectedTotal = InitialCount + AdditionalCount;
 
 		try
 		{
 			// Insert initial record
-			await _repository.UpsertDailyAccessAsync(
+			await Repository.UpsertDailyAccessAsync(
 				date,
-				[(docId, initialCount)],
+				[(docId, InitialCount)],
 				TestContext.Current.CancellationToken);
 
 			// Act - upsert again with additional count
-			await _repository.UpsertDailyAccessAsync(
+			await Repository.UpsertDailyAccessAsync(
 				date,
-				[(docId, additionalCount)],
+				[(docId, AdditionalCount)],
 				TestContext.Current.CancellationToken);
 
 			// Assert - count should be incremented
 			DailyDocumentAccess? record = await GetDailyAccessAsync(docId, date);
 			record.Should().NotBeNull();
-			record!.AccessCount.Should().Be(expectedTotal);
+			record!.AccessCount.Should().Be(ExpectedTotal);
 		}
 		finally
 		{
@@ -268,16 +269,16 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 		// Arrange
 		Guid docId1 = await SeedDocumentAsync($"{TestFilePrefix}-upsert-multi1-{Guid.NewGuid():N}.pdf");
 		Guid docId2 = await SeedDocumentAsync($"{TestFilePrefix}-upsert-multi2-{Guid.NewGuid():N}.pdf");
-		DateOnly date = DateOnly.FromDateTime(DateTime.UtcNow);
-		const long count1 = 100;
-		const long count2 = 200;
+		DateOnly date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
+		const long Count1 = 100;
+		const long Count2 = 200;
 
 		try
 		{
 			// Act
-			await _repository.UpsertDailyAccessAsync(
+			await Repository.UpsertDailyAccessAsync(
 				date,
-				[(docId1, count1), (docId2, count2)],
+				[(docId1, Count1), (docId2, Count2)],
 				TestContext.Current.CancellationToken);
 
 			// Assert
@@ -285,10 +286,10 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 			DailyDocumentAccess? record2 = await GetDailyAccessAsync(docId2, date);
 
 			record1.Should().NotBeNull();
-			record1!.AccessCount.Should().Be(count1);
+			record1!.AccessCount.Should().Be(Count1);
 
 			record2.Should().NotBeNull();
-			record2!.AccessCount.Should().Be(count2);
+			record2!.AccessCount.Should().Be(Count2);
 		}
 		finally
 		{
@@ -302,22 +303,22 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 	{
 		// Arrange
 		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-upsert-dates-{Guid.NewGuid():N}.pdf");
-		DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+		DateOnly today = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
 		DateOnly yesterday = today.AddDays(-1);
-		const long todayCount = 50;
-		const long yesterdayCount = 30;
+		const long TodayCount = 50;
+		const long YesterdayCount = 30;
 
 		try
 		{
 			// Act
-			await _repository.UpsertDailyAccessAsync(
+			await Repository.UpsertDailyAccessAsync(
 				today,
-				[(docId, todayCount)],
+				[(docId, TodayCount)],
 				TestContext.Current.CancellationToken);
 
-			await _repository.UpsertDailyAccessAsync(
+			await Repository.UpsertDailyAccessAsync(
 				yesterday,
-				[(docId, yesterdayCount)],
+				[(docId, YesterdayCount)],
 				TestContext.Current.CancellationToken);
 
 			// Assert - should have two separate records
@@ -325,10 +326,10 @@ public sealed class DocumentAccessRepositoryIntegrationTests : IClassFixture<Dat
 			DailyDocumentAccess? yesterdayRecord = await GetDailyAccessAsync(docId, yesterday);
 
 			todayRecord.Should().NotBeNull();
-			todayRecord!.AccessCount.Should().Be(todayCount);
+			todayRecord!.AccessCount.Should().Be(TodayCount);
 
 			yesterdayRecord.Should().NotBeNull();
-			yesterdayRecord!.AccessCount.Should().Be(yesterdayCount);
+			yesterdayRecord!.AccessCount.Should().Be(YesterdayCount);
 		}
 		finally
 		{

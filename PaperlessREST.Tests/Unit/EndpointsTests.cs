@@ -150,7 +150,7 @@ public sealed class DocumentEndpointsTests : IDisposable
 				Id = PairA.Doc.Id,
 				FileName = PairA.Doc.FileName,
 				Status = StatusCompleted,
-				CreatedAt = DateTimeOffset.UtcNow,
+				CreatedAt = TimeProvider.System.GetUtcNow(),
 				Content = ContentA
 			},
 			new()
@@ -158,7 +158,7 @@ public sealed class DocumentEndpointsTests : IDisposable
 				Id = PairB.Doc.Id,
 				FileName = PairB.Doc.FileName,
 				Status = StatusPending,
-				CreatedAt = DateTimeOffset.UtcNow
+				CreatedAt = TimeProvider.System.GetUtcNow()
 			}
 		];
 		_service.Setup(s => s.SearchDocumentsAsync(query.Query, query.Limit, TestContext.Current.CancellationToken))
@@ -299,22 +299,22 @@ public sealed class DocumentEndpointsTests : IDisposable
 
 	private static class PairA
 	{
-		private static readonly DocumentBuilder Builder = new DocumentBuilder()
+		private static readonly DocumentBuilder s_builder = new DocumentBuilder()
 			.WithFileName(FileA)
 			.WithStatus(DocumentStatus.Completed)
 			.WithContent(ContentA);
 
-		public static readonly Document Doc = Builder.Build();
-		public static readonly DocumentDto Dto = Builder.BuildDto();
+		public static readonly Document Doc = s_builder.Build();
+		public static readonly DocumentDto Dto = s_builder.BuildDto();
 	}
 
 	private static class PairB
 	{
-		private static readonly DocumentBuilder Builder = new DocumentBuilder()
+		private static readonly DocumentBuilder s_builder = new DocumentBuilder()
 			.WithFileName(FileB)
 			.WithStatus(DocumentStatus.Pending);
 
-		public static readonly Document Doc = Builder.Build();
-		public static readonly DocumentDto Dto = Builder.BuildDto();
+		public static readonly Document Doc = s_builder.Build();
+		public static readonly DocumentDto Dto = s_builder.BuildDto();
 	}
 }

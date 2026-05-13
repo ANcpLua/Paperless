@@ -13,12 +13,12 @@ public class SearchIndexIntegrationTests(SharedContainerFixture fixture)
 	{
 		// Arrange
 		Guid id = Guid.NewGuid();
-		const string fileName = "test.pdf";
-		const string content = "Test content";
-		await fixture.UploadPdfAsync(content);
+		const string FileName = "test.pdf";
+		const string Content = "Test content";
+		await fixture.UploadPdfAsync(Content);
 
 		// Act
-		await SearchIndex.IndexDocumentAsync(id, fileName, content, DateTimeOffset.UtcNow.AddMinutes(-5),
+		await SearchIndex.IndexDocumentAsync(id, FileName, Content, TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert - poll until indexed
@@ -27,8 +27,8 @@ public class SearchIndexIntegrationTests(SharedContainerFixture fixture)
 			TestContext.Current.CancellationToken);
 
 		response.IsSuccess().Should().BeTrue();
-		response.Source.GetProperty("fileName").GetString().Should().Be(fileName);
-		response.Source.GetProperty("content").GetString().Should().Be(content);
+		response.Source.GetProperty("fileName").GetString().Should().Be(FileName);
+		response.Source.GetProperty("content").GetString().Should().Be(Content);
 	}
 
 	[Fact]
@@ -39,7 +39,7 @@ public class SearchIndexIntegrationTests(SharedContainerFixture fixture)
 		await fixture.UploadPdfAsync("Hello World!");
 
 		// Act
-		await SearchIndex.IndexDocumentAsync(id, "HelloWorld.pdf", "Hello World!", DateTimeOffset.UtcNow.AddMinutes(-5),
+		await SearchIndex.IndexDocumentAsync(id, "HelloWorld.pdf", "Hello World!", TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert - poll until searchable
@@ -58,7 +58,7 @@ public class SearchIndexIntegrationTests(SharedContainerFixture fixture)
 		// Arrange
 		Guid jobId = Guid.NewGuid();
 		string storagePath = await fixture.UploadPdfAsync("Hello World!");
-		OcrCommand command = new(jobId, "HelloWorld.pdf", storagePath, DateTimeOffset.UtcNow.AddMinutes(-5));
+		OcrCommand command = new(jobId, "HelloWorld.pdf", storagePath, TimeProvider.System.GetUtcNow().AddMinutes(-5));
 
 		// Act
 		ErrorOr<OcrEvent> errorOrResult = await OcrProcessor.ProcessDocumentAsync(command,
@@ -95,11 +95,11 @@ public class SearchIndexIntegrationTests(SharedContainerFixture fixture)
 		Guid testId = Guid.NewGuid();
 
 		await SearchIndex.IndexDocumentAsync(helloId, "HelloWorld.pdf", "Hello World",
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		await SearchIndex.IndexDocumentAsync(testId, "TestDoc.pdf", "Test document",
-			DateTimeOffset.UtcNow.AddMinutes(-5),
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Act & Assert - Hello document
@@ -135,7 +135,7 @@ public class SearchIndexIntegrationTests(SharedContainerFixture fixture)
 		await fixture.UploadPdfAsync("Test");
 
 		// Act
-		await SearchIndex.IndexDocumentAsync(id, "test.pdf", "Test", DateTimeOffset.UtcNow.AddMinutes(-5),
+		await SearchIndex.IndexDocumentAsync(id, "test.pdf", "Test", TimeProvider.System.GetUtcNow().AddMinutes(-5),
 			TestContext.Current.CancellationToken);
 
 		// Assert

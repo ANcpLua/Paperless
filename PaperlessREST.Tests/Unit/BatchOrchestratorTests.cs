@@ -40,7 +40,7 @@ public static class BatchOrchestratorTests
 			_logger = new FakeLogger<BatchOrchestrator>(_logCollector);
 
 			// Setup default time provider behavior - loose mock, not verified
-			_timeProvider.Setup(t => t.GetUtcNow()).Returns(DateTimeOffset.UtcNow);
+			_timeProvider.Setup(t => t.GetUtcNow()).Returns(TimeProvider.System.GetUtcNow());
 
 			// Initialize directory structure
 			_fileSystem.Directory.CreateDirectory(InputPath);
@@ -653,7 +653,7 @@ public static class BatchOrchestratorTests
 
 		private BatchOrchestrator CreateSut()
 		{
-			_time.Setup(t => t.GetUtcNow()).Returns(DateTimeOffset.UtcNow);
+			_time.Setup(t => t.GetUtcNow()).Returns(TimeProvider.System.GetUtcNow());
 			return new BatchOrchestrator(
 				Options.Create(CreateOptions()),
 				_fs.Object,

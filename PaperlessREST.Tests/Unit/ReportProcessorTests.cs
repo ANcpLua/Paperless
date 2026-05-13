@@ -49,7 +49,7 @@ public sealed class ReportProcessorTests : IDisposable
 	                                     </xs:schema>
 	                                     """;
 
-	private static readonly DateOnly ValidDateOnly = new(2024, 1, 15);
+	private static readonly DateOnly s_validDateOnly = new(2024, 1, 15);
 	private readonly MockFileSystem _fileSystem = new();
 	private readonly FakeLogCollector _logCollector = new();
 	private readonly FakeLogger<ReportProcessor> _logger;
@@ -446,7 +446,7 @@ public sealed class ReportProcessorTests : IDisposable
 			.ReturnsAsync([docId]);
 
 		_repo.Setup(r => r.UpsertDailyAccessAsync(
-				ValidDateOnly,
+				s_validDateOnly,
 				It.IsAny<(Guid DocumentId, long AccessCount)[]>(),
 				It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
@@ -459,7 +459,7 @@ public sealed class ReportProcessorTests : IDisposable
 		// Assert
 		_repo.Verify(
 			r => r.UpsertDailyAccessAsync(
-				ValidDateOnly,
+				s_validDateOnly,
 				It.IsAny<(Guid, long)[]>(),
 				It.IsAny<CancellationToken>()),
 			Times.Once);

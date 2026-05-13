@@ -317,7 +317,8 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	public async Task TryHandleAsync_UsesActivityIdWhenAvailable()
 	{
 		// Arrange
-		using Activity activity = new Activity(TestActivityName).Start();
+		using var activity = new Activity(TestActivityName);
+		activity.Start();
 		DefaultHttpContext httpContext = CreateHttpContext();
 		SetupProblemDetailsService();
 		GlobalExceptionHandler sut = CreateSut();
@@ -405,7 +406,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	private const string ExpectedTimestamp = "2024-11-29T12:00:00.0000000+00:00";
 	private const string GenericInternalErrorSubstring = "internal error";
 
-	private static readonly DateTimeOffset FixedTime = new(2024, 11, 29, 12, 0, 0, TimeSpan.Zero);
+	private static readonly DateTimeOffset s_fixedTime = new(2024, 11, 29, 12, 0, 0, TimeSpan.Zero);
 	private readonly Mock<IHostEnvironment> _hostEnvironment;
 
 	private readonly MockRepository _mocks = new(MockBehavior.Strict) { DefaultValue = DefaultValue.Empty };
@@ -415,7 +416,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	{
 		_hostEnvironment = _mocks.Create<IHostEnvironment>();
 		_timeProvider = _mocks.Create<TimeProvider>();
-		_timeProvider.Setup(t => t.GetUtcNow()).Returns(FixedTime);
+		_timeProvider.Setup(t => t.GetUtcNow()).Returns(s_fixedTime);
 		// Default environment - tests override when needed
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
 	}
@@ -430,7 +431,8 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	public void Enrich_WithActivity_UsesActivityId()
 	{
 		// Arrange
-		using Activity activity = new Activity(TestActivityName).Start();
+		using var activity = new Activity(TestActivityName);
+		activity.Start();
 		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext();
 
 		// Act

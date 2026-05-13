@@ -57,7 +57,8 @@ public sealed class ReportProcessor(
 		string schemaPath = fs.Path.Combine(AppContext.BaseDirectory, "Schemas", SchemaFileName);
 
 		using Stream schemaStream = fs.FileStream.New(schemaPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-		schemas.Add("", XmlReader.Create(schemaStream));
+		using XmlReader schemaReader = XmlReader.Create(schemaStream);
+		schemas.Add("", schemaReader);
 		schemas.Compile();
 		return schemas;
 	}

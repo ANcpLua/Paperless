@@ -174,7 +174,11 @@ public static class ErrorMetadataExtensions
 	/// </summary>
 	public static Error DocumentNotFound(Guid id, string? suggestion = null)
 	{
-		Dictionary<string, object> metadata = new() { ["DocumentId"] = id, ["SearchedAt"] = DateTimeOffset.UtcNow };
+		Dictionary<string, object> metadata = new()
+		{
+			["DocumentId"] = id,
+			["SearchedAt"] = TimeProvider.System.GetUtcNow()
+		};
 
 		if (suggestion is not null)
 		{

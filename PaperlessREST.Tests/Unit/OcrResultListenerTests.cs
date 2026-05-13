@@ -69,7 +69,7 @@ public sealed class OcrResultListenerTests : IDisposable
 		Guid? jobId = null,
 		string status = CompletedStatus,
 		string? text = ExtractedContent) =>
-		new(jobId ?? Guid.CreateVersion7(), status, text, DateTimeOffset.UtcNow);
+		new(jobId ?? Guid.CreateVersion7(), status, text, TimeProvider.System.GetUtcNow());
 
 	// ═══════════════════════════════════════════════════════════════
 	// TESTS: ProcessMessage - Completed Status Success Path
@@ -91,7 +91,7 @@ public sealed class OcrResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(ocrEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -115,7 +115,7 @@ public sealed class OcrResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(ocrEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -147,7 +147,7 @@ public sealed class OcrResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(ocrEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -184,7 +184,7 @@ public sealed class OcrResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(ocrEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -208,7 +208,7 @@ public sealed class OcrResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(ocrEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -235,7 +235,7 @@ public sealed class OcrResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.NackAsync(false)).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -258,7 +258,7 @@ public sealed class OcrResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.NackAsync(false)).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -287,7 +287,7 @@ public sealed class OcrResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.NackAsync(It.IsAny<bool>())).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -312,7 +312,7 @@ public sealed class OcrResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.NackAsync(It.IsAny<bool>())).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -339,7 +339,7 @@ public sealed class OcrResultListenerTests : IDisposable
 
 		_consumer.Setup(c => c.NackAsync(It.IsAny<bool>())).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);
@@ -369,7 +369,7 @@ public sealed class OcrResultListenerTests : IDisposable
 		_sseStream.Setup(s => s.Publish(ocrEvent));
 		_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		OcrResultListener sut = CreateSut();
+		using OcrResultListener sut = CreateSut();
 
 		// Act
 		await sut.ProcessMessage(ocrEvent, _consumer.Object, TestContext.Current.CancellationToken);

@@ -28,7 +28,8 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 
 	private readonly DatabaseFixture _fixture;
 	private AsyncServiceScope _scope;
-	private IDocumentRepository _repository = null!;
+	private IDocumentRepository? _repository;
+	private IDocumentRepository Repository => _repository ?? throw new InvalidOperationException("Repository not initialized.");
 
 	#endregion
 
@@ -56,7 +57,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 			.Build();
 
 		// Act
-		Document saved = await _repository.AddAsync(document, TestContext.Current.CancellationToken);
+		Document saved = await Repository.AddAsync(document, TestContext.Current.CancellationToken);
 
 		// Assert
 		saved.Id.Should().Be(document.Id);
@@ -84,7 +85,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 			.Build();
 
 		// Act
-		Document saved = await _repository.AddAsync(document, TestContext.Current.CancellationToken);
+		Document saved = await Repository.AddAsync(document, TestContext.Current.CancellationToken);
 
 		// Assert
 		saved.StoragePath.Should().Be(StoragePath);
@@ -111,10 +112,10 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 			.WithSummary(AiSummary)
 			.AsCompleted(OcrContent)
 			.Build();
-		await _repository.AddAsync(original, TestContext.Current.CancellationToken);
+		await Repository.AddAsync(original, TestContext.Current.CancellationToken);
 
 		// Act
-		Document? found = await _repository.GetByIdAsync(original.Id, TestContext.Current.CancellationToken);
+		Document? found = await Repository.GetByIdAsync(original.Id, TestContext.Current.CancellationToken);
 
 		// Assert
 		found.Should().NotBeNull();
@@ -130,7 +131,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		Guid nonExistentId = Guid.CreateVersion7();
 
 		// Act
-		Document? result = await _repository.GetByIdAsync(nonExistentId, TestContext.Current.CancellationToken);
+		Document? result = await Repository.GetByIdAsync(nonExistentId, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.Should().BeNull();
@@ -147,12 +148,12 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		Document original = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-update-{Guid.NewGuid():N}.pdf")
 			.Build();
-		Document saved = await _repository.AddAsync(original, TestContext.Current.CancellationToken);
+		Document saved = await Repository.AddAsync(original, TestContext.Current.CancellationToken);
 
 		saved.MarkAsCompleted(OcrContent, TimeProvider.System);
 
 		// Act
-		bool updated = await _repository.UpdateAsync(saved, TestContext.Current.CancellationToken);
+		bool updated = await Repository.UpdateAsync(saved, TestContext.Current.CancellationToken);
 
 		// Assert
 		updated.Should().BeTrue();
@@ -175,12 +176,12 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		Document original = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-fail-{Guid.NewGuid():N}.pdf")
 			.Build();
-		Document saved = await _repository.AddAsync(original, TestContext.Current.CancellationToken);
+		Document saved = await Repository.AddAsync(original, TestContext.Current.CancellationToken);
 
 		saved.MarkAsFailed(TimeProvider.System);
 
 		// Act
-		bool updated = await _repository.UpdateAsync(saved, TestContext.Current.CancellationToken);
+		bool updated = await Repository.UpdateAsync(saved, TestContext.Current.CancellationToken);
 
 		// Assert
 		updated.Should().BeTrue();
@@ -205,7 +206,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 			.Build();
 
 		// Act
-		bool result = await _repository.UpdateAsync(document, TestContext.Current.CancellationToken);
+		bool result = await Repository.UpdateAsync(document, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.Should().BeFalse();
@@ -222,15 +223,15 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		Document document = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-delete-{Guid.NewGuid():N}.pdf")
 			.Build();
-		await _repository.AddAsync(document, TestContext.Current.CancellationToken);
+		await Repository.AddAsync(document, TestContext.Current.CancellationToken);
 
 		// Act
-		bool deleted = await _repository.DeleteAsync(document.Id, TestContext.Current.CancellationToken);
+		bool deleted = await Repository.DeleteAsync(document.Id, TestContext.Current.CancellationToken);
 
 		// Assert
 		deleted.Should().BeTrue();
 
-		Document? found = await _repository.GetByIdAsync(document.Id, TestContext.Current.CancellationToken);
+		Document? found = await Repository.GetByIdAsync(document.Id, TestContext.Current.CancellationToken);
 		found.Should().BeNull();
 	}
 
@@ -241,7 +242,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		Guid nonExistentId = Guid.CreateVersion7();
 
 		// Act
-		bool deleted = await _repository.DeleteAsync(nonExistentId, TestContext.Current.CancellationToken);
+		bool deleted = await Repository.DeleteAsync(nonExistentId, TestContext.Current.CancellationToken);
 
 		// Assert
 		deleted.Should().BeFalse();
@@ -259,12 +260,12 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 			.WithFileName($"{TestFilePrefix}-summary-{Guid.NewGuid():N}.pdf")
 			.AsCompleted(OcrContent)
 			.Build();
-		await _repository.AddAsync(document, TestContext.Current.CancellationToken);
+		await Repository.AddAsync(document, TestContext.Current.CancellationToken);
 
-		DateTimeOffset generatedAt = DateTimeOffset.UtcNow;
+		DateTimeOffset generatedAt = TimeProvider.System.GetUtcNow();
 
 		// Act
-		bool updated = await _repository.UpdateSummaryAsync(
+		bool updated = await Repository.UpdateSummaryAsync(
 			document.Id,
 			AiSummary,
 			generatedAt,
@@ -273,7 +274,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		// Assert
 		updated.Should().BeTrue();
 
-		Document? found = await _repository.GetByIdAsync(document.Id, TestContext.Current.CancellationToken);
+		Document? found = await Repository.GetByIdAsync(document.Id, TestContext.Current.CancellationToken);
 		found.Should().NotBeNull();
 		found!.Summary.Should().Be(AiSummary);
 		found.SummaryGeneratedAt.Should().BeCloseTo(generatedAt, TimeSpan.FromSeconds(1));
@@ -289,10 +290,10 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		Guid nonExistentId = Guid.CreateVersion7();
 
 		// Act
-		bool updated = await _repository.UpdateSummaryAsync(
+		bool updated = await Repository.UpdateSummaryAsync(
 			nonExistentId,
 			AiSummary,
-			DateTimeOffset.UtcNow,
+			TimeProvider.System.GetUtcNow(),
 			TestContext.Current.CancellationToken);
 
 		// Assert
@@ -311,18 +312,18 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 
 		// Add documents with slight delays to ensure distinct GUIDv7s
 		Document oldest = new DocumentBuilder().WithFileName($"{testPrefix}-old.pdf").Build();
-		await _repository.AddAsync(oldest, TestContext.Current.CancellationToken);
+		await Repository.AddAsync(oldest, TestContext.Current.CancellationToken);
 		await Task.Delay(10, TestContext.Current.CancellationToken);
 
 		Document middle = new DocumentBuilder().WithFileName($"{testPrefix}-mid.pdf").Build();
-		await _repository.AddAsync(middle, TestContext.Current.CancellationToken);
+		await Repository.AddAsync(middle, TestContext.Current.CancellationToken);
 		await Task.Delay(10, TestContext.Current.CancellationToken);
 
 		Document newest = new DocumentBuilder().WithFileName($"{testPrefix}-new.pdf").Build();
-		await _repository.AddAsync(newest, TestContext.Current.CancellationToken);
+		await Repository.AddAsync(newest, TestContext.Current.CancellationToken);
 
 		// Act
-		(List<Document> results, bool hasMore) = await _repository
+		(List<Document> results, bool hasMore) = await Repository
 			.GetDocumentsPagedAsync(50, null, TestContext.Current.CancellationToken);
 
 		List<Document> filtered = results.Where(d => d.FileName.StartsWith(testPrefix, StringComparison.Ordinal)).ToList();
@@ -342,14 +343,14 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 
 		for (int i = 0; i < 5; i++)
 		{
-			await _repository.AddAsync(
+			await Repository.AddAsync(
 				new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build(),
 				TestContext.Current.CancellationToken);
 			await Task.Delay(5, TestContext.Current.CancellationToken); // Ensure distinct GUIDv7s
 		}
 
 		// Act
-		(List<Document> results, bool hasMore) = await _repository
+		(List<Document> results, bool hasMore) = await Repository
 			.GetDocumentsPagedAsync(3, null, TestContext.Current.CancellationToken);
 
 		// Assert
@@ -367,18 +368,18 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		for (int i = 0; i < 5; i++)
 		{
 			Document doc = new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build();
-			Document added = await _repository.AddAsync(doc, TestContext.Current.CancellationToken);
+			Document added = await Repository.AddAsync(doc, TestContext.Current.CancellationToken);
 			addedDocs.Add(added);
 			await Task.Delay(5, TestContext.Current.CancellationToken);
 		}
 
 		// Act - Get first page
-		(List<Document> firstPage, bool hasMoreFirst) = await _repository
+		(List<Document> firstPage, bool hasMoreFirst) = await Repository
 			.GetDocumentsPagedAsync(2, null, TestContext.Current.CancellationToken);
 
 		// Get second page using cursor from first page
 		Guid cursor = firstPage[^1].Id;
-		(List<Document> secondPage, bool hasMoreSecond) = await _repository
+		(List<Document> secondPage, bool hasMoreSecond) = await Repository
 			.GetDocumentsPagedAsync(2, cursor, TestContext.Current.CancellationToken);
 
 		// Assert
@@ -397,14 +398,14 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 
 		for (int i = 0; i < 3; i++)
 		{
-			await _repository.AddAsync(
+			await Repository.AddAsync(
 				new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build(),
 				TestContext.Current.CancellationToken);
 			await Task.Delay(5, TestContext.Current.CancellationToken);
 		}
 
 		// Act - Request more than available
-		(List<Document> results, bool hasMore) = await _repository
+		(List<Document> results, bool hasMore) = await Repository
 			.GetDocumentsPagedAsync(100, null, TestContext.Current.CancellationToken);
 
 		// Assert

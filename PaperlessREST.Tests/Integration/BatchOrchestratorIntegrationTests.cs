@@ -31,7 +31,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 			TestContext.Current.CancellationToken);
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Archive).Should().ContainSingle();
@@ -57,7 +57,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 
 	#region Fields
 
-	private static readonly IJobCancellationToken TestToken = new TestJobCancellationToken();
+	private static readonly IJobCancellationToken s_testToken = new TestJobCancellationToken();
 
 	private readonly IDbContextFactory<DocumentPersistence> _dbFactory;
 	private readonly IFileSystem _fileSystem;
@@ -97,7 +97,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 			TestContext.Current.CancellationToken);
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Archive)
@@ -111,7 +111,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	{
 		// Arrange
 		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-orphan.pdf");
-		string xmlContent = CreateXmlContent(DateOnly.FromDateTime(DateTime.UtcNow), (docId, 25));
+		string xmlContent = CreateXmlContent(DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime), (docId, 25));
 
 		string claimedPath = _fileSystem.Path.Combine(_paths.Input, "orphan.xml.processing");
 		await _fileSystem.File.WriteAllTextAsync(
@@ -120,7 +120,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 			TestContext.Current.CancellationToken);
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Input).Should().BeEmpty("orphan should be processed");
@@ -140,7 +140,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 			TestContext.Current.CancellationToken);
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Input)
@@ -157,7 +157,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		_fileSystem.Directory.Exists(_paths.Input).Should().BeFalse("precondition: input dir should be deleted");
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.Exists(_paths.Input).Should().BeTrue("orchestrator should create input dir if missing");
@@ -171,7 +171,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		await CreateXmlFileAsync("daily-report.xml", (docId, 15));
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Input).Should().BeEmpty("file should be moved out of input");
@@ -194,7 +194,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		await CreateXmlFileAsync("multi-doc.xml", (doc1, 10), (doc2, 20));
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Archive).Should().ContainSingle();
@@ -210,7 +210,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		await CreateXmlFileAsync("duplicates.xml", (docId, 5), (docId, 8));
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Archive).Should().ContainSingle();
@@ -224,10 +224,10 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-monthly.pdf");
 
 		await CreateXmlFileAsync("morning.xml", (docId, 5));
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		await CreateXmlFileAsync("afternoon.xml", (docId, 8));
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		await VerifyAccessRecordAsync(docId, 13, "should accumulate 5 + 8");
@@ -248,7 +248,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		await CreateXmlFileAsync("mixed.xml", (knownId, 10), (unknownId, 99));
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Archive).Should().ContainSingle("file should still archive");
@@ -270,7 +270,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		await CreateXmlFileAsync("all-unknown.xml", (unknownId1, 10), (unknownId2, 20));
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Archive).Should().ContainSingle("file should archive");
@@ -296,7 +296,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 			TestContext.Current.CancellationToken);
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Error).Should().ContainSingle("malformed XML should go to error");
@@ -313,7 +313,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 			TestContext.Current.CancellationToken);
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Error).Should().ContainSingle();
@@ -338,7 +338,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 			TestContext.Current.CancellationToken);
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Error).Should().ContainSingle();
@@ -362,7 +362,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 			TestContext.Current.CancellationToken);
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Error).Should().ContainSingle();
@@ -386,7 +386,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 			TestContext.Current.CancellationToken);
 
 		// Act
-		await _orchestrator.ProcessAsync(TestToken);
+		await _orchestrator.ProcessAsync(s_testToken);
 
 		// Assert
 		_fileSystem.Directory.GetFiles(_paths.Error).Should().ContainSingle();
@@ -413,7 +413,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 
 	private async Task CreateXmlFileAsync(string fileName, params (Guid id, int count)[] documents)
 	{
-		DateOnly date = DateOnly.FromDateTime(DateTime.UtcNow);
+		DateOnly date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
 		string xmlContent = CreateXmlContent(date, documents);
 		await _fileSystem.File.WriteAllTextAsync(
 			_fileSystem.Path.Combine(_paths.Input, fileName),
@@ -438,7 +438,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	{
 		await using DocumentPersistence db = await _dbFactory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
-		DateOnly date = DateOnly.FromDateTime(DateTime.UtcNow);
+		DateOnly date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
 
 		DailyDocumentAccess? access = await db.DailyDocumentAccesses
 			.FirstOrDefaultAsync(
@@ -446,7 +446,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 				TestContext.Current.CancellationToken);
 
 		access.Should().NotBeNull(because ?? "record should exist");
-		access!.AccessCount.Should().Be(expectedCount, because ?? "access count should match");
+		access.AccessCount.Should().Be(expectedCount, because ?? "access count should match");
 	}
 
 	private void EnsureCleanDirectories()

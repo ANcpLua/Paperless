@@ -162,12 +162,14 @@ public static class DocumentEndpoints
 	///     Document with the specified ID does not exist.
 	///     Domain error: <c>DocumentErrors.NotFound</c>
 	/// </response>
-	public static Task<Results<Ok<DocumentDto>, NotFound>> GetDocumentById(
+	public static async Task<Results<Ok<DocumentDto>, NotFound>> GetDocumentById(
 		Guid id,
 		IDocumentService documentService,
-		CancellationToken cancellationToken) =>
-		documentService.GetDocumentByIdAsync(id, cancellationToken)
-			.ToOkOr404(doc => doc.ToDocumentDto());
+		CancellationToken cancellationToken)
+	{
+		ErrorOr<Document> result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
+		return result.ToOkOr404(doc => doc.ToDocumentDto());
+	}
 
 	/// <summary>
 	///     Retrieves the AI-generated summary for a document.
@@ -185,12 +187,14 @@ public static class DocumentEndpoints
 	///     Document with the specified ID does not exist.
 	///     Domain error: <c>DocumentErrors.NotFound</c>
 	/// </response>
-	public static Task<Results<Ok<SummaryDto>, NotFound>> GetSummary(
+	public static async Task<Results<Ok<SummaryDto>, NotFound>> GetSummary(
 		Guid id,
 		IDocumentService documentService,
-		CancellationToken cancellationToken) =>
-		documentService.GetDocumentByIdAsync(id, cancellationToken)
-			.ToOkOr404(doc => new SummaryDto { Summary = doc.Summary });
+		CancellationToken cancellationToken)
+	{
+		ErrorOr<Document> result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
+		return result.ToOkOr404(doc => new SummaryDto { Summary = doc.Summary });
+	}
 
 	// ═══════════════════════════════════════════════════════════════════════════
 	// Commands - use ToAcceptedAtRouteOrProblem / ToNoContentOr404

@@ -31,7 +31,7 @@ public sealed class MappingTests
 		// Arrange
 		DocumentEntity entity = DocumentBuilder.Completed(TestOcrContent).WithId(Guid.CreateVersion7())
 			.WithFileName(TestFileName)
-			.WithSummary(TestSummary, DateTimeOffset.UtcNow.AddHours(-1)).BuildEntity();
+			.WithSummary(TestSummary, TimeProvider.System.GetUtcNow().AddHours(-1)).BuildEntity();
 
 		// Act
 		Document document = entity.ToDocument();

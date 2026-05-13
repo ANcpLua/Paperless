@@ -58,6 +58,46 @@ public static class TypedErrorOrAsyncExtensions
 	// ValueTask<ErrorOr<T>> Extensions
 	// ═══════════════════════════════════════════════════════════════════════════
 
+	extension<T>(ErrorOr<T> result)
+	{
+		/// <summary>
+		///     Converts to <see cref="Ok{TResult}" /> (200) or <see cref="NotFound" /> (404).
+		/// </summary>
+		[MustUseReturnValue]
+		public Results<Ok<TResult>, NotFound> ToOkOr404<TResult>(
+			[InstantHandle] Func<T, TResult> mapper,
+			[CallerMemberName] string callerName = "")
+		{
+			if (!result.IsError)
+			{
+				return TypedResults.Ok(mapper(result.Value));
+			}
+
+			return result.FirstError.Type == ErrorType.NotFound
+				? TypedResults.NotFound()
+				: throw ContractViolationException.ForNotFoundOnly(result.FirstError, result.Errors, callerName);
+		}
+	}
+
+	extension(ErrorOr<Deleted> result)
+	{
+		/// <summary>
+		///     Converts to <see cref="NoContent" /> (204) or <see cref="NotFound" /> (404).
+		/// </summary>
+		[MustUseReturnValue]
+		public Results<NoContent, NotFound> ToNoContentOr404([CallerMemberName] string callerName = "")
+		{
+			if (!result.IsError)
+			{
+				return TypedResults.NoContent();
+			}
+
+			return result.FirstError.Type == ErrorType.NotFound
+				? TypedResults.NotFound()
+				: throw ContractViolationException.ForNotFoundOnly(result.FirstError, result.Errors, callerName);
+		}
+	}
+
 	extension<T>(ValueTask<ErrorOr<T>> task)
 	{
 		/// <summary>
@@ -69,15 +109,7 @@ public static class TypedErrorOrAsyncExtensions
 			[CallerMemberName] string callerName = "")
 		{
 			ErrorOr<T> result = await task.ConfigureAwait(false);
-
-			if (!result.IsError)
-			{
-				return TypedResults.Ok(mapper(result.Value));
-			}
-
-			return result.FirstError.Type == ErrorType.NotFound
-				? TypedResults.NotFound()
-				: throw ContractViolationException.ForNotFoundOnly(result.FirstError, result.Errors, callerName);
+			return result.ToOkOr404(mapper, callerName);
 		}
 
 		/// <summary>
@@ -120,15 +152,7 @@ public static class TypedErrorOrAsyncExtensions
 		public async Task<Results<NoContent, NotFound>> ToNoContentOr404([CallerMemberName] string callerName = "")
 		{
 			ErrorOr<Deleted> result = await task.ConfigureAwait(false);
-
-			if (!result.IsError)
-			{
-				return TypedResults.NoContent();
-			}
-
-			return result.FirstError.Type == ErrorType.NotFound
-				? TypedResults.NotFound()
-				: throw ContractViolationException.ForNotFoundOnly(result.FirstError, result.Errors, callerName);
+			return result.ToNoContentOr404(callerName);
 		}
 	}
 

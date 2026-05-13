@@ -67,11 +67,11 @@ public class SharedContainerFixture : IAsyncLifetime
 
 		string minioEndpoint = $"{_minio.Hostname}:{_minio.GetMappedPublicPort(MinioPort)}";
 
-		IMinioClient minioClient = new MinioClient()
+		using MinioClient minioClient = new();
+		minioClient
 			.WithEndpoint(minioEndpoint)
 			.WithCredentials(_minio.GetAccessKey(), _minio.GetSecretKey())
 			.Build();
-
 		await minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_bucketName));
 
 		HostApplicationBuilder builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
@@ -125,7 +125,7 @@ public class SharedContainerFixture : IAsyncLifetime
 		string fileName = $"test-{Guid.NewGuid():N}.pdf";
 		string pdfPath = await Pdf.Create(Dye.White).AddText(content).SaveAsync(fileName);
 
-		string storageKey = $"documents/{DateTime.UtcNow:yyyy-MM}/{Guid.NewGuid():N}/{fileName}";
+		string storageKey = $"documents/{TimeProvider.System.GetUtcNow():yyyy-MM}/{Guid.NewGuid():N}/{fileName}";
 		IMinioClient client = Services.GetRequiredService<IMinioClient>();
 
 		await using FileStream stream = File.OpenRead(pdfPath);

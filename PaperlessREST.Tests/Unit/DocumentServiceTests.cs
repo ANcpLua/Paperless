@@ -240,7 +240,7 @@ public sealed class DocumentServiceTests : IDisposable
 	{
 		// Arrange
 		Document doc = new DocumentBuilder().AsCompleted().Build();
-		DateTimeOffset generatedAt = DateTimeOffset.UtcNow;
+		DateTimeOffset generatedAt = TimeProvider.System.GetUtcNow();
 
 		_repository.Setup(r => r.UpdateSummaryAsync(doc.Id, GenAiSummary, generatedAt,
 				It.IsAny<CancellationToken>()))
@@ -262,7 +262,7 @@ public sealed class DocumentServiceTests : IDisposable
 	{
 		// Arrange
 		Document doc = new DocumentBuilder().AsCompleted().Build();
-		DateTimeOffset generatedAt = DateTimeOffset.UtcNow;
+		DateTimeOffset generatedAt = TimeProvider.System.GetUtcNow();
 
 		_repository.Setup(r => r.UpdateSummaryAsync(doc.Id, GenAiSummary, generatedAt,
 				It.IsAny<CancellationToken>()))
@@ -290,7 +290,7 @@ public sealed class DocumentServiceTests : IDisposable
 	{
 		// Arrange
 		Guid missingId = Guid.CreateVersion7();
-		DateTimeOffset generatedAt = DateTimeOffset.UtcNow;
+		DateTimeOffset generatedAt = TimeProvider.System.GetUtcNow();
 
 		_repository.Setup(r => r.UpdateSummaryAsync(missingId, GenAiSummary, generatedAt,
 				It.IsAny<CancellationToken>()))
@@ -312,7 +312,7 @@ public sealed class DocumentServiceTests : IDisposable
 	{
 		// Arrange
 		Guid missingId = Guid.CreateVersion7();
-		DateTimeOffset generatedAt = DateTimeOffset.UtcNow;
+		DateTimeOffset generatedAt = TimeProvider.System.GetUtcNow();
 
 		_repository.Setup(r => r.UpdateSummaryAsync(missingId, GenAiSummary, generatedAt,
 				It.IsAny<CancellationToken>()))
@@ -394,7 +394,7 @@ public sealed class DocumentServiceTests : IDisposable
 				Id = Guid.CreateVersion7(),
 				FileName = "result1.pdf",
 				Status = "Completed",
-				CreatedAt = DateTimeOffset.UtcNow,
+				CreatedAt = TimeProvider.System.GetUtcNow(),
 				Content = "Content 1"
 			},
 			new DocumentSearchResult
@@ -402,7 +402,7 @@ public sealed class DocumentServiceTests : IDisposable
 				Id = Guid.CreateVersion7(),
 				FileName = "result2.pdf",
 				Status = "Completed",
-				CreatedAt = DateTimeOffset.UtcNow,
+				CreatedAt = TimeProvider.System.GetUtcNow(),
 				Content = "Content 2"
 			}
 		];

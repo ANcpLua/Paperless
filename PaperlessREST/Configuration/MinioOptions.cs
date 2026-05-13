@@ -25,27 +25,17 @@ public static class MinioOptionsExtensions
 	extension(MinioOptions opts)
 	{
 		/// <summary>
-		/// Parses the Endpoint string into a Uri, adding http(s):// scheme if missing.
+		///     Parses the Endpoint string into a Uri, adding http(s):// scheme if missing.
 		/// </summary>
 		public Uri EndpointUri
 		{
 			get
 			{
-				var endpoint = opts.Endpoint.Contains("://")
+				string endpoint = opts.Endpoint.Contains("://", StringComparison.Ordinal)
 					? opts.Endpoint
 					: $"{(opts.UseSsl ? "https" : "http")}://{opts.Endpoint}";
 				return new Uri(endpoint);
 			}
 		}
-
-		/// <summary>
-		/// Creates a configured MinioClient instance.
-		/// </summary>
-		public IMinioClient CreateClient() =>
-			new MinioClient()
-				.WithEndpoint(opts.EndpointUri.Host, opts.EndpointUri.Port)
-				.WithCredentials(opts.AccessKey, opts.SecretKey)
-				.WithSSL(opts.UseSsl)
-				.Build();
 	}
 }
