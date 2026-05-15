@@ -116,4 +116,39 @@ public sealed class DocumentServiceStorageMappingTests : IDisposable
 		(await act.Should().ThrowAsync<InvalidOperationException>())
 			.Which.Should().BeSameAs(boom);
 	}
+
+	// ─── ProcessOcrResultAsync state-transition-failure branch ──────────────
+
+	[Fact]
+	public async Task ProcessOcrResultAsync_AlreadyCompleted_ReturnsCannotCompleteError()
+	{
+		// Already-completed documents can't be re-completed (MarkAsCompleted rejects
+		// non-Pending status). Exercises the `transitionResult.IsError` arm in
+		// ProcessOcrResultAsync that the existing Pending-state tests never hit.
+		Document doc = new DocumentBuilder().AsCompleted().Build();
+
+		_repository.Setup(r => r.GetByIdAsync(doc.Id, It.IsAny<CancellationToken>())).ReturnsAsync(doc);
+
+		ErrorOr<Updated> result = await CreateSut().ProcessOcrResultAsync(
+			doc.Id, "Completed", "ocr content",
+			TestContext.Current.CancellationToken);
+
+		result.IsError.Should().BeTrue();
+		_logCollector.GetSnapshot().Should().Contain(l =>
+			l.Level == LogLevel.Warning && l.Message.Contains("state transition failed", StringComparison.OrdinalIgnoreCase));
+	}
+
+	[Fact]
+	public async Task ProcessOcrResultAsync_AlreadyFailed_CannotBeFailedAgain()
+	{
+		Document doc = new DocumentBuilder().AsFailed().Build();
+
+		_repository.Setup(r => r.GetByIdAsync(doc.Id, It.IsAny<CancellationToken>())).ReturnsAsync(doc);
+
+		ErrorOr<Updated> result = await CreateSut().ProcessOcrResultAsync(
+			doc.Id, "Failed", null,
+			TestContext.Current.CancellationToken);
+
+		result.IsError.Should().BeTrue();
+	}
 }
