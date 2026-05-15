@@ -1,4 +1,6 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using RabbitMQ.Client.Exceptions;
 
 namespace PaperlessREST.Tests.Unit;
 
@@ -89,6 +91,48 @@ public sealed class GenAiResultListenerExecuteAsyncTests : IDisposable
 			l.Level == LogLevel.Information && l.Message.Contains("GenAI Result Listener started"));
 		_logCollector.GetSnapshot().Should().Contain(l =>
 			l.Level == LogLevel.Information && l.Message.Contains("GenAI Result Listener stopped"));
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_NoQueueOperationInterrupted_LogsWarningAndAwaitsCancellation()
+	{
+		// Constructing OperationInterruptedException through its real ctor requires RabbitMQ-
+		// internal ShutdownEventArgs types not in the test surface. To exercise the listener's
+		// "no queue" catch arm, we sidestep the ctor with GetUninitializedObject and inject the
+		// Message field via reflection — the catch's `when (ex.Message.Contains("no queue"))`
+		// matches purely on text, so a bare exception with the right message is sufficient.
+		OperationInterruptedException ex =
+			(OperationInterruptedException)RuntimeHelpers.GetUninitializedObject(typeof(OperationInterruptedException));
+		FieldInfo? messageField = typeof(Exception).GetField("_message", BindingFlags.Instance | BindingFlags.NonPublic);
+		messageField!.SetValue(ex, "NOT_FOUND - no queue 'GenAI'");
+
+		_consumerFactory.Setup(f => f.CreateConsumerAsync<GenAIEvent>()).ThrowsAsync(ex);
+
+		using GenAiResultListener sut = CreateSut();
+		using CancellationTokenSource cts = new();
+
+		await sut.StartAsync(cts.Token);
+
+		// The listener should now be sleeping in Task.Delay(Timeout.Infinite, stoppingToken)
+		// inside the catch arm. Wait for the warning, then cancel to unblock.
+		TimeSpan timeout = TimeSpan.FromSeconds(5);
+		using CancellationTokenSource waitCts = new(timeout);
+		while (!waitCts.IsCancellationRequested &&
+		       !_logCollector.GetSnapshot().Any(l =>
+			       l.Level == LogLevel.Warning &&
+			       l.Message.Contains("GenAI Result Listener disabled", StringComparison.OrdinalIgnoreCase)))
+		{
+			await Task.Delay(20, TestContext.Current.CancellationToken);
+		}
+
+		await cts.CancelAsync();
+
+		Func<Task> awaitExecute = async () => await sut.ExecuteTask!;
+		await awaitExecute.Should().ThrowAsync<OperationCanceledException>();
+
+		_logCollector.GetSnapshot().Should().Contain(l =>
+			l.Level == LogLevel.Warning &&
+			l.Message.Contains("GenAI Result Listener disabled", StringComparison.OrdinalIgnoreCase));
 	}
 
 	[Fact]
