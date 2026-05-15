@@ -1,5 +1,14 @@
+using System.Diagnostics;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
+using Asp.Versioning.ApiExplorer;
 using Hangfire.Common;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi;
+using PaperlessREST.API;
 using PaperlessREST.Host.Extensions;
+using Scalar.AspNetCore;
 
 namespace PaperlessREST.Tests.Unit;
 
@@ -230,5 +239,330 @@ public sealed class ServiceCollectionExtensionsTests
 		WebApplication app = builder.Build();
 
 		app.IsDev.Should().BeFalse();
+	}
+
+	// ──────────────────────────────────────────────────────────────────
+	// AddDependencies-backed lambdas (ProblemDetails, Hangfire, OpenApi, ApiExplorer)
+	// and MapEndpoints in Development environment.
+	// ──────────────────────────────────────────────────────────────────
+
+	private static WebApplicationBuilder CreateWiredBuilder(string environment)
+	{
+		WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
+		{
+			EnvironmentName = environment
+		});
+		builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+		{
+			["ConnectionStrings:PaperlessDb"] = "Host=localhost;Database=test;Username=u;Password=p",
+			["ConnectionStrings:Hangfire"] = "Host=localhost;Database=hf;Username=u;Password=p",
+			["RabbitMQ:Uri"] = "amqp://guest:guest@localhost:5672/",
+			["Storage:Minio:Endpoint"] = "localhost:9000",
+			["Storage:Minio:AccessKey"] = "k",
+			["Storage:Minio:SecretKey"] = "s",
+			["Storage:Minio:BucketName"] = "b",
+			["Elasticsearch:Uri"] = "http://localhost:9200",
+			["Elasticsearch:DefaultIndex"] = "docs",
+			["BatchProcessing:InputPath"] = "/in",
+			["BatchProcessing:ArchivePath"] = "/arch",
+			["BatchProcessing:ErrorPath"] = "/err",
+			["BatchProcessing:FilePattern"] = "*.xml",
+			["BatchProcessing:CronExpression"] = "0 0 * * *",
+			["BatchProcessing:TimeZoneId"] = "UTC"
+		});
+		builder.AddDependencies();
+
+		// Swap PostgreSQL JobStorage for in-memory so resolving IHostedService doesn't
+		// require a running database. The production lambdas under test live in
+		// AddHangfireServer's opts callback — JobStorage choice is orthogonal.
+		builder.Services.RemoveAll<JobStorage>();
+		builder.Services.AddSingleton<JobStorage>(new MemoryStorage());
+		return builder;
+	}
+
+	private static HashSet<string> CollectMappedPatterns(WebApplication app) =>
+		((IEndpointRouteBuilder)app).DataSources
+			.SelectMany(s => s.Endpoints)
+			.OfType<RouteEndpoint>()
+			.Select(e => e.RoutePattern.RawText ?? string.Empty)
+			.ToHashSet(StringComparer.Ordinal);
+
+	[Fact]
+	public void MapEndpoints_WhenIsDev_RegistersDevelopmentOnlyRoutes()
+	{
+		WebApplicationBuilder builder = CreateWiredBuilder("Development");
+		WebApplication app = builder.Build();
+
+		app.MapEndpoints();
+
+		HashSet<string> patterns = CollectMappedPatterns(app);
+
+		// Dev-only routes from the IsDev=true branch
+		patterns.Should().Contain(p => p.StartsWith("/openapi/", StringComparison.Ordinal));
+		patterns.Should().Contain(p => p.StartsWith("/docs/", StringComparison.Ordinal) || p == "/docs");
+		patterns.Should().Contain(p => p.StartsWith("/hangfire", StringComparison.Ordinal));
+		// Always-mapped routes prove MapEndpoints completed past the IsDev block
+		patterns.Should().Contain("/health");
+		// And the SSE / document endpoints are always mapped too
+		patterns.Should().Contain(p => p.Contains("/documents", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void MapEndpoints_WhenNotDev_OmitsDevelopmentOnlyRoutes()
+	{
+		WebApplicationBuilder builder = CreateWiredBuilder("Production");
+		WebApplication app = builder.Build();
+
+		app.MapEndpoints();
+
+		HashSet<string> patterns = CollectMappedPatterns(app);
+
+		patterns.Should().NotContain(p => p.StartsWith("/docs", StringComparison.Ordinal));
+		patterns.Should().NotContain(p => p.StartsWith("/hangfire", StringComparison.Ordinal));
+		patterns.Should().NotContain(p => p.StartsWith("/openapi/", StringComparison.Ordinal));
+		patterns.Should().Contain("/health");
+	}
+
+	[Fact]
+	public void MapEndpoints_WhenIsDev_ScalarConfigureCallback_SetsTitleServersAndTheme()
+	{
+		WebApplicationBuilder builder = CreateWiredBuilder("Development");
+		WebApplication app = builder.Build();
+
+		app.MapEndpoints();
+
+		// Scalar's MapScalarApiReference captures the options Action inside the request delegate
+		// (it runs lazily on HTTP request, not at map time). Extract it via the documented
+		// internal field path and invoke it manually to verify the production lambda body.
+		RouteEndpoint scalarEndpoint = ((IEndpointRouteBuilder)app).DataSources
+			.SelectMany(s => s.Endpoints)
+			.OfType<RouteEndpoint>()
+			.Single(e => e.RoutePattern.RawText == "/docs/{documentName?}");
+
+		RequestDelegate requestDelegate = scalarEndpoint.RequestDelegate!;
+		object generatedTarget = requestDelegate.Target!;
+		FieldInfo handlerField = generatedTarget.GetType()
+			.GetField("handler", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
+		Delegate handlerDelegate = (Delegate)handlerField.GetValue(generatedTarget)!;
+		object scalarClosure = handlerDelegate.Target!;
+		FieldInfo configureField = scalarClosure.GetType()
+			.GetField("configureOptions", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
+		Action<ScalarOptions, HttpContext> productionConfigure =
+			(Action<ScalarOptions, HttpContext>)configureField.GetValue(scalarClosure)!;
+
+		ScalarOptions scalarOpts = new();
+		DefaultHttpContext http = new();
+
+		productionConfigure(scalarOpts, http);
+
+		scalarOpts.Title.Should().Be("Paperless OCR API");
+		scalarOpts.Servers.Should().NotBeNull();
+		scalarOpts.Servers!.Single().Url.Should().Be("http://localhost/");
+		scalarOpts.Theme.Should().Be(ScalarTheme.Kepler);
+	}
+
+	private static Action<ProblemDetailsOptions> GetInlineProblemDetailsConfigure(IServiceCollection services)
+	{
+		// AddProblemDetails(opts => ...) registers a ConfigureNamedOptions<ProblemDetailsOptions>
+		// whose Action is the production lambda at L141-146. Find it (ImplementationInstance, NOT
+		// the ProblemDetailsEnricher transient).
+		foreach (ServiceDescriptor d in services)
+		{
+			if (d.ServiceType != typeof(IConfigureOptions<ProblemDetailsOptions>) ||
+			    d.ImplementationInstance is not ConfigureNamedOptions<ProblemDetailsOptions> named ||
+			    named.Action is null)
+			{
+				continue;
+			}
+
+			return named.Action;
+		}
+
+		throw new InvalidOperationException("Inline ProblemDetails configure action not found.");
+	}
+
+	[Fact]
+	public void AddDependencies_ProblemDetailsCustomization_PopulatesTraceIdAndInstanceFromHttpContextWhenNoActivity()
+	{
+		WebApplicationBuilder builder = CreateWiredBuilder("Production");
+		Action<ProblemDetailsOptions> configure = GetInlineProblemDetailsConfigure(builder.Services);
+
+		ProblemDetailsOptions opts = new();
+		configure(opts);
+		opts.CustomizeProblemDetails.Should().NotBeNull();
+
+		Activity? saved = Activity.Current;
+		Activity.Current = null;
+		try
+		{
+			DefaultHttpContext http = new();
+			http.Request.Method = "POST";
+			http.Request.Path = "/api/v1/documents";
+			http.TraceIdentifier = "trace-from-context-42";
+			ProblemDetailsContext ctx = new()
+			{
+				HttpContext = http,
+				ProblemDetails = new ProblemDetails()
+			};
+
+			opts.CustomizeProblemDetails!(ctx);
+
+			ctx.ProblemDetails.Extensions.Should().ContainKey("trace_id")
+				.WhoseValue.Should().Be("trace-from-context-42");
+			ctx.ProblemDetails.Extensions.Should().ContainKey("instance")
+				.WhoseValue.Should().Be("POST /api/v1/documents");
+		}
+		finally
+		{
+			Activity.Current = saved;
+		}
+	}
+
+	[Fact]
+	public void AddDependencies_ProblemDetailsCustomization_UsesActivityIdWhenAvailable()
+	{
+		WebApplicationBuilder builder = CreateWiredBuilder("Production");
+		Action<ProblemDetailsOptions> configure = GetInlineProblemDetailsConfigure(builder.Services);
+
+		ProblemDetailsOptions opts = new();
+		configure(opts);
+		opts.CustomizeProblemDetails.Should().NotBeNull();
+
+		using Activity activity = new("unit-test-span");
+		activity.Start();
+		string expectedTrace = activity.Id!;
+
+		DefaultHttpContext http = new();
+		http.Request.Method = "DELETE";
+		http.Request.Path = "/api/v1/documents/abc";
+		http.TraceIdentifier = "would-be-fallback";
+		ProblemDetailsContext ctx = new()
+		{
+			HttpContext = http,
+			ProblemDetails = new ProblemDetails()
+		};
+
+		opts.CustomizeProblemDetails!(ctx);
+
+		ctx.ProblemDetails.Extensions["trace_id"].Should().Be(expectedTrace);
+		ctx.ProblemDetails.Extensions["instance"].Should().Be("DELETE /api/v1/documents/abc");
+	}
+
+	[Fact]
+	public void AddDependencies_HangfireServerOptions_SetWorkerCountAndServerName()
+	{
+		WebApplicationBuilder builder = CreateWiredBuilder("Production");
+
+		// Find only the BackgroundJobServerHostedService factory and invoke it directly,
+		// avoiding resolution of other IHostedService entries (RabbitMQ listeners would
+		// try to dial 127.0.0.1:5672 and fail).
+		ServiceDescriptor jobServerDescriptor = builder.Services.Single(d =>
+			d.ServiceType == typeof(IHostedService) &&
+			d.ImplementationFactory is not null &&
+			d.ImplementationFactory.GetType().GenericTypeArguments[1].FullName == "Hangfire.BackgroundJobServerHostedService");
+
+		WebApplication app = builder.Build();
+		object jobServer = jobServerDescriptor.ImplementationFactory!(app.Services);
+		FieldInfo optionsField = jobServer.GetType().GetField("_options",
+			BindingFlags.NonPublic | BindingFlags.Instance)!;
+		BackgroundJobServerOptions opts = (BackgroundJobServerOptions)optionsField.GetValue(jobServer)!;
+
+		opts.WorkerCount.Should().Be(Environment.ProcessorCount);
+		opts.ServerName.Should().StartWith(Environment.MachineName + "-");
+		// Trailing token must be a 32-char "N"-format GUID with no dashes.
+		string suffix = opts.ServerName![(Environment.MachineName.Length + 1)..];
+		suffix.Should().HaveLength(32);
+		suffix.Should().MatchRegex("^[0-9a-f]{32}$");
+	}
+
+	private static Action<OpenApiOptions> GetOpenApiConfigure(IServiceCollection services)
+	{
+		// AddOpenApi(Action) registers Configure<OpenApiOptions>("v1", action). Find the
+		// ConfigureNamedOptions<OpenApiOptions> whose Name == "v1".
+		foreach (ServiceDescriptor d in services)
+		{
+			if (d.ServiceType != typeof(IConfigureOptions<OpenApiOptions>) ||
+			    d.ImplementationInstance is not ConfigureNamedOptions<OpenApiOptions> named ||
+			    named.Action is null)
+			{
+				continue;
+			}
+
+			return named.Action;
+		}
+
+		throw new InvalidOperationException("OpenApi configure action not found.");
+	}
+
+	[Fact]
+	public void AddDependencies_OpenApiCreateSchemaReferenceId_ReturnsNullForEnumAndDefaultForOther()
+	{
+		WebApplicationBuilder builder = CreateWiredBuilder("Production");
+		Action<OpenApiOptions> configure = GetOpenApiConfigure(builder.Services);
+
+		OpenApiOptions opts = new();
+		configure(opts);
+		opts.CreateSchemaReferenceId.Should().NotBeNull();
+
+		JsonSerializerOptions jsonOpts = new();
+		JsonTypeInfo enumInfo = JsonTypeInfo.CreateJsonTypeInfo(typeof(DayOfWeek), jsonOpts);
+		JsonTypeInfo dtoInfo = JsonTypeInfo.CreateJsonTypeInfo(typeof(DocumentDto), jsonOpts);
+
+		string? enumId = opts.CreateSchemaReferenceId!(enumInfo);
+		string? dtoId = opts.CreateSchemaReferenceId!(dtoInfo);
+
+		enumId.Should().BeNull();
+		dtoId.Should().Be(OpenApiOptions.CreateDefaultSchemaReferenceId(dtoInfo));
+		dtoId.Should().Be(nameof(DocumentDto));
+	}
+
+	[Fact]
+	public async Task AddDependencies_OpenApiDocumentTransformer_SetsTitleVersionAndDescription()
+	{
+		WebApplicationBuilder builder = CreateWiredBuilder("Production");
+		Action<OpenApiOptions> configure = GetOpenApiConfigure(builder.Services);
+
+		OpenApiOptions opts = new();
+		configure(opts);
+
+		FieldInfo transformersField = typeof(OpenApiOptions).GetField("DocumentTransformers",
+			BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
+		System.Collections.IList transformers = (System.Collections.IList)transformersField.GetValue(opts)!;
+		transformers.Count.Should().Be(1);
+
+		object delegateTransformer = transformers[0]!;
+		// DelegateOpenApiDocumentTransformer wraps the user Func in _documentTransformer.
+		FieldInfo delegateField = delegateTransformer.GetType().GetField("_documentTransformer",
+			BindingFlags.NonPublic | BindingFlags.Instance)!;
+		Func<OpenApiDocument, OpenApiDocumentTransformerContext, CancellationToken, Task> productionDelegate =
+			(Func<OpenApiDocument, OpenApiDocumentTransformerContext, CancellationToken, Task>)
+			delegateField.GetValue(delegateTransformer)!;
+
+		OpenApiDocument doc = new();
+		OpenApiDocumentTransformerContext ctx = new()
+		{
+			DocumentName = "v1",
+			DescriptionGroups = Array.Empty<Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescriptionGroup>(),
+			ApplicationServices = new ServiceCollection().BuildServiceProvider()
+		};
+
+		await productionDelegate(doc, ctx, TestContext.Current.CancellationToken);
+
+		doc.Info.Should().NotBeNull();
+		doc.Info!.Title.Should().Be("Paperless OCR API");
+		doc.Info!.Version.Should().Be("v1");
+		doc.Info!.Description.Should().Be("API for uploading and processing PDF documents with OCR");
+	}
+
+	[Fact]
+	public void AddDependencies_ApiExplorerOptions_SetsGroupNameFormatAndSubstituteApiVersionInUrl()
+	{
+		WebApplicationBuilder builder = CreateWiredBuilder("Production");
+		WebApplication app = builder.Build();
+
+		ApiExplorerOptions opts = app.Services.GetRequiredService<IOptions<ApiExplorerOptions>>().Value;
+
+		opts.GroupNameFormat.Should().Be("'v'VVV");
+		opts.SubstituteApiVersionInUrl.Should().BeTrue();
 	}
 }
