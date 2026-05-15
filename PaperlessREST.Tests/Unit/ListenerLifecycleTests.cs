@@ -242,6 +242,65 @@ public sealed class ListenerLifecycleTests
 		h.Consumer.Verify(c => c.AckAsync(), Times.Once);
 	}
 
+	[Fact]
+	public async Task GenAi_ExecuteAsync_TokenCancelledBetweenYields_BodyBreakCheckFires()
+	{
+		// Arrange — iterator deliberately does NOT honor the [EnumeratorCancellation] token, so
+		// after the test cancels the stoppingToken the iterator still yields the next event.
+		// That is what trips the `if (stoppingToken.IsCancellationRequested) { break; }` block
+		// inside the foreach body (lines 20-22 of GenAiResultListener.cs) — coverage that the
+		// gated/throwing iterators cannot reach because they all surface OCE before re-entering
+		// the body. The clean "stopped" log proves the loop exited via `break`, not via throw.
+		GenAiHarness h = new();
+		Guid id1 = Guid.CreateVersion7();
+		Guid id2 = Guid.CreateVersion7();
+		GenAIEvent e1 = new(id1, "first", TimeProvider.System.GetUtcNow(), null);
+		GenAIEvent e2 = new(id2, "second", TimeProvider.System.GetUtcNow(), null);
+
+		TaskCompletionSource firstAckObserved = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		TaskCompletionSource disposed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		using CancellationTokenSource cts = new();
+
+		h.Consumer.As<IAsyncDisposable>().Setup(d => d.DisposeAsync())
+			.Returns(() => { disposed.TrySetResult(); return ValueTask.CompletedTask; });
+
+		h.ConsumerFactory.Setup(f => f.CreateConsumerAsync<GenAIEvent>())
+			.ReturnsAsync(h.Consumer.Object);
+
+		h.Consumer.Setup(c => c.ConsumeAsync(It.IsAny<CancellationToken>()))
+			.Returns(YieldAfterCancel(e1, e2, firstAckObserved, cts));
+
+		h.DocumentService.Setup(s => s.UpdateDocumentSummaryAsync(
+				id1, "first", e1.GeneratedAt, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(Result.Updated);
+
+		h.SseStream.Setup(s => s.Publish(e1));
+		h.Consumer.Setup(c => c.AckAsync())
+			.Returns(() => { firstAckObserved.TrySetResult(); return Task.CompletedTask; });
+
+		using GenAiResultListener sut = h.CreateSut();
+
+		// Act
+		await sut.StartAsync(cts.Token);
+		await disposed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+		await sut.StopAsync(CancellationToken.None);
+
+		// Assert — e1 processed exactly once; e2 yielded but tripped the body's break before any
+		// downstream call. The "stopped" log proves the foreach exited cleanly via break (no throw).
+		h.DocumentService.Verify(s => s.UpdateDocumentSummaryAsync(
+			id1, "first", e1.GeneratedAt, It.IsAny<CancellationToken>()), Times.Once);
+		h.DocumentService.Verify(s => s.UpdateDocumentSummaryAsync(
+			id2, It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Never);
+		h.Consumer.Verify(c => c.AckAsync(), Times.Once);
+		h.SseStream.Verify(s => s.Publish(e2), Times.Never);
+
+		IReadOnlyList<FakeLogRecord> logs = h.LogCollector.GetSnapshot();
+		logs.Should().Contain(l =>
+			l.Level == LogLevel.Information &&
+			l.Message.Contains("GenAI Result Listener stopped", StringComparison.OrdinalIgnoreCase));
+		logs.Should().NotContain(l => l.Level == LogLevel.Error);
+	}
+
 	// ═══════════════════════════════════════════════════════════════
 	// OcrResultListener — ExecuteAsync branches
 	// ═══════════════════════════════════════════════════════════════
@@ -391,6 +450,26 @@ public sealed class ListenerLifecycleTests
 			ct.ThrowIfCancellationRequested();
 			yield return items[i];
 		}
+	}
+
+	// Deliberately non-cooperative iterator: yields the second event AFTER the stoppingToken is
+	// cancelled, without honoring the [EnumeratorCancellation] token. Required to exercise the
+	// body-internal `if (stoppingToken.IsCancellationRequested) break;` check, which only fires
+	// when the iterator hands a yielded value back into a cancelled foreach body.
+	private static async IAsyncEnumerable<T> YieldAfterCancel<T>(
+		T first,
+		T second,
+		TaskCompletionSource firstAckObserved,
+		CancellationTokenSource cts)
+	{
+		yield return first;
+		// Wait until the body has acked the first event — without forwarding the token, since
+		// honoring it would short-circuit the iterator and skip the second yield entirely.
+		await firstAckObserved.Task.ConfigureAwait(false);
+		await cts.CancelAsync().ConfigureAwait(false);
+		// At this point the next MoveNextAsync hands `second` back to the foreach body, which
+		// must observe the cancellation and break.
+		yield return second;
 	}
 
 	// Local poll-and-wait for a log predicate — small, self-contained, no Task.Delay loops
