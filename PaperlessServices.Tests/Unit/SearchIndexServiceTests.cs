@@ -291,4 +291,59 @@ public sealed class SearchIndexServiceTests : IDisposable
 			r.Level == LogLevel.Warning &&
 			r.Message.Contains(s_testDocumentId.ToString(), StringComparison.OrdinalIgnoreCase));
 	}
+
+	// ═══════════════════════════════════════════════════════════════
+	// TESTS: IndexDocumentAsync - Catch Block (Exception Path)
+	//
+	// The default `_sut` uses ThrowExceptions(false), so transport failures
+	// return IsValidResponse=false and take the LogIndexResult-warning path
+	// rather than the catch. Production wires the client with
+	// `.ThrowExceptions()` (true), so the catch IS exercised in production.
+	// These tests pin that path with a dedicated client.
+	// ═══════════════════════════════════════════════════════════════
+
+	[Fact]
+	[SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
+		Justification = "ElasticsearchClientSettings implements IDisposable only through an explicit interface; "
+		                + "the analyzer cannot follow disposal through the using statement when the variable "
+		                + "is initialized via a fluent chain.")]
+	public async Task IndexDocumentAsync_WhenClientThrows_LogsWarningAndSwallowsException()
+	{
+		// Arrange — match the production registration: ThrowExceptions(true)
+		using ElasticsearchClientSettings throwingSettings = new ElasticsearchClientSettings(new Uri(UnreachableHost))
+			.DefaultIndex(TestIndexName)
+			.DisableDirectStreaming()
+			.RequestTimeout(TimeSpan.FromMilliseconds(100))
+			.ThrowExceptions();
+		ElasticsearchClient throwingClient = new(throwingSettings);
+
+		FakeLogCollector collector = new();
+		FakeLogger<SearchIndexService> logger = new(collector);
+		SearchIndexService sut = new(
+			throwingClient,
+			Options.Create(new ElasticsearchOptions { Uri = UnreachableHost, DefaultIndex = TestIndexName }),
+			_timeProvider,
+			logger);
+
+		// Act — the unreachable endpoint throws under ThrowExceptions(true);
+		// production catches it and logs a warning so OCR processing continues.
+		Func<Task> act = () => sut.IndexDocumentAsync(
+			s_testDocumentId,
+			TestFileName,
+			TestContent,
+			TimeProvider.System.GetUtcNow().AddMinutes(-5),
+			TestContext.Current.CancellationToken);
+
+		await act.Should().NotThrowAsync(
+			"the catch block exists precisely so search-indexing failures do not break OCR");
+
+		// Assert — the catch-block log line fired (different message than LogIndexResult).
+		IReadOnlyList<FakeLogRecord> logs = collector.GetSnapshot();
+		logs.Should().Contain(r =>
+				r.Level == LogLevel.Warning &&
+				r.Exception != null &&
+				r.Message.Contains("Failed to index document", StringComparison.OrdinalIgnoreCase) &&
+				r.Message.Contains(s_testDocumentId.ToString(), StringComparison.OrdinalIgnoreCase),
+			"the catch block logs the standard failure message together with the underlying exception");
+	}
 }
