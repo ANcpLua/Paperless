@@ -2,139 +2,222 @@ using PaperlessREST.Host.Extensions;
 
 namespace PaperlessREST.Tests.Unit;
 
-/// <summary>
-///     Unit tests for <see cref="ContractViolationException" /> and the related diagnostic records.
-///     Covers each factory method, the <see cref="ContractViolationException.GetDiagnostics" /> projection,
-///     and the single-vs-multiple-errors branches of the internal message builder.
-/// </summary>
 public sealed class ContractViolationExceptionTests
 {
-	private static readonly Error s_actualError = Error.Conflict("Document.Locked", "locked for edit");
-	private static readonly Error s_secondError = Error.Validation("Document.BadField", "field x bad");
+	private const string Op = "GetById";
+	private const string Code = "Document.NotFound";
+	private const string Desc = "Document 42 not found";
+
+	private static Error MakeError(ErrorType type, string code = Code, string description = Desc,
+		Dictionary<string, object>? metadata = null) =>
+		type switch
+		{
+			ErrorType.NotFound => Error.NotFound(code, description, metadata),
+			ErrorType.Validation => Error.Validation(code, description, metadata),
+			ErrorType.Conflict => Error.Conflict(code, description, metadata),
+			ErrorType.Failure => Error.Failure(code, description, metadata),
+			ErrorType.Unexpected => Error.Unexpected(code, description, metadata),
+			ErrorType.Unauthorized => Error.Unauthorized(code, description, metadata),
+			ErrorType.Forbidden => Error.Forbidden(code, description, metadata),
+			_ => Error.Custom((int)type, code, description, metadata)
+		};
 
 	[Fact]
-	public void Constructor_OneError_BuildsMessageWithoutAggregateSuffix()
+	public void ForNotFoundOnly_PopulatesExpectedTypesAndMessage()
 	{
-		ContractViolationException ex = new(
-			"GetDocumentById", [ErrorType.NotFound], s_actualError, [s_actualError]);
+		Error err = MakeError(ErrorType.NotFound);
+		ContractViolationException ex = ContractViolationException.ForNotFoundOnly(err, [err], Op);
 
-		ex.EndpointOperation.Should().Be("GetDocumentById");
-		ex.ExpectedErrorTypes.Should().Equal(ErrorType.NotFound);
-		ex.ActualError.Should().Be(s_actualError);
-		ex.AllErrors.Should().HaveCount(1);
-		ex.Message.Should().Contain("Contract violation in GetDocumentById");
-		ex.Message.Should().Contain("Expected [NotFound]");
-		ex.Message.Should().Contain("but received Conflict");
-		ex.Message.Should().Contain("Document.Locked");
+		ex.EndpointOperation.Should().Be(Op);
+		ex.ExpectedErrorTypes.Should().ContainSingle().Which.Should().Be(ErrorType.NotFound);
+		ex.ActualError.Should().Be(err);
+		ex.AllErrors.Should().ContainSingle().Which.Should().Be(err);
+		ex.Message.Should().Contain("Contract violation in GetById")
+			.And.Contain("Expected [NotFound]")
+			.And.Contain($"Error: {Code} - {Desc}");
 		ex.Message.Should().NotContain("more error(s)");
 	}
 
 	[Fact]
-	public void Constructor_MultipleErrors_BuildsMessageWithAggregateSuffix()
+	public void ForValidationOnly_PopulatesExpectedTypes()
 	{
-		ContractViolationException ex = new(
-			"UpdateDocument",
-			[ErrorType.Validation, ErrorType.NotFound],
-			s_actualError,
-			[s_actualError, s_secondError]);
+		Error err = MakeError(ErrorType.Validation, "Validation.PageSize", "PageSize is required");
+		ContractViolationException ex = ContractViolationException.ForValidationOnly(err, [err], Op);
 
-		ex.AllErrors.Should().HaveCount(2);
-		ex.Message.Should().Contain("Expected [Validation, NotFound]");
-		ex.Message.Should().Contain("(+ 1 more error(s))");
+		ex.ExpectedErrorTypes.Should().ContainSingle().Which.Should().Be(ErrorType.Validation);
+		ex.Message.Should().Contain("Expected [Validation]");
 	}
 
 	[Fact]
-	public void GetDiagnostics_ReturnsStructuredProjection()
+	public void ForNotFoundOrConflict_ListsBothTypes()
 	{
-		Error withMetadata = Error.Custom(
-			(int)ErrorType.Conflict, "Document.Locked", "locked",
-			new Dictionary<string, object> { ["CurrentState"] = "Locked" });
+		Error err = MakeError(ErrorType.NotFound);
+		ContractViolationException ex = ContractViolationException.ForNotFoundOrConflict(err, [err], Op);
 
-		ContractViolationException ex = new(
-			"PUT /documents/{id}",
-			[ErrorType.NotFound, ErrorType.Conflict],
-			withMetadata,
-			[withMetadata, s_secondError]);
+		ex.ExpectedErrorTypes.Should().BeEquivalentTo(new[] { ErrorType.NotFound, ErrorType.Conflict },
+			opts => opts.WithStrictOrdering());
+		ex.Message.Should().Contain("Expected [NotFound, Conflict]");
+	}
+
+	[Fact]
+	public void ForCrudOperation_ListsThreeTypes()
+	{
+		Error err = MakeError(ErrorType.NotFound);
+		ContractViolationException ex = ContractViolationException.ForCrudOperation(err, [err], Op);
+
+		ex.ExpectedErrorTypes.Should().BeEquivalentTo(
+			new[] { ErrorType.Validation, ErrorType.NotFound, ErrorType.Conflict },
+			opts => opts.WithStrictOrdering());
+		ex.Message.Should().Contain("Expected [Validation, NotFound, Conflict]");
+	}
+
+	[Fact]
+	public void For_WithCustomTypes_RoundTripsParamsArray()
+	{
+		Error err = MakeError(ErrorType.Failure, "Document.StorageFailed", "Storage failed");
+		ContractViolationException ex = ContractViolationException.For(
+			err, [err], Op, ErrorType.Failure, ErrorType.Unexpected);
+
+		ex.ExpectedErrorTypes.Should().BeEquivalentTo(
+			new[] { ErrorType.Failure, ErrorType.Unexpected }, opts => opts.WithStrictOrdering());
+		ex.Message.Should().Contain("Expected [Failure, Unexpected]");
+	}
+
+	[Fact]
+	public void BuildMessage_SingleError_OmitsMoreErrorsSuffix()
+	{
+		Error err = MakeError(ErrorType.NotFound);
+		ContractViolationException ex = ContractViolationException.ForNotFoundOnly(err, [err], Op);
+
+		ex.Message.Should().NotContain("more error(s)");
+	}
+
+	[Fact]
+	public void BuildMessage_ThreeErrors_AppendsExactSuffix()
+	{
+		Error first = MakeError(ErrorType.Validation, "Validation.A", "A");
+		Error second = MakeError(ErrorType.Validation, "Validation.B", "B");
+		Error third = MakeError(ErrorType.Validation, "Validation.C", "C");
+
+		ContractViolationException ex = ContractViolationException.ForValidationOnly(
+			first, [first, second, third], Op);
+
+		ex.Message.Should().EndWith("(+ 2 more error(s))");
+	}
+
+	[Fact]
+	public void GetDiagnostics_AllErrorsMatchInputOrder()
+	{
+		Error first = MakeError(ErrorType.Validation, "Validation.A", "A");
+		Error second = MakeError(ErrorType.Validation, "Validation.B", "B");
+		ContractViolationException ex = ContractViolationException.ForValidationOnly(
+			first, [first, second], Op);
 
 		ContractViolationDiagnostics diag = ex.GetDiagnostics();
 
-		diag.Operation.Should().Be("PUT /documents/{id}");
-		diag.ExpectedErrorTypes.Should().Equal("NotFound", "Conflict");
-		diag.ActualErrorType.Should().Be("Conflict");
-		diag.ErrorCode.Should().Be("Document.Locked");
-		diag.ErrorDescription.Should().Be("locked");
+		diag.Operation.Should().Be(Op);
+		diag.ExpectedErrorTypes.Should().Equal("Validation");
+		diag.ActualErrorType.Should().Be("Validation");
+		diag.ErrorCode.Should().Be("Validation.A");
+		diag.ErrorDescription.Should().Be("A");
 		diag.AllErrors.Should().HaveCount(2);
-		diag.AllErrors[0].Should().Be(new ErrorDetail("Conflict", "Document.Locked", "locked"));
-		diag.AllErrors[1].Should().Be(new ErrorDetail("Validation", "Document.BadField", "field x bad"));
+		diag.AllErrors[0].Should().Be(new ErrorDetail("Validation", "Validation.A", "A"));
+		diag.AllErrors[1].Should().Be(new ErrorDetail("Validation", "Validation.B", "B"));
+	}
+
+	[Fact]
+	public void GetDiagnostics_WithMetadata_PopulatesMetadataDictionary()
+	{
+		Dictionary<string, object> meta = new() { ["RetryAfter"] = 30, ["AffectedResource"] = "x.pdf" };
+		Error err = MakeError(ErrorType.Unexpected, "Document.StorageUnavailable", "tmp", meta);
+		ContractViolationException ex = ContractViolationException.For(err, [err], Op, ErrorType.Unexpected);
+
+		ContractViolationDiagnostics diag = ex.GetDiagnostics();
+
 		diag.Metadata.Should().NotBeNull();
-		diag.Metadata!["CurrentState"].Should().Be("Locked");
+		diag.Metadata!["RetryAfter"].Should().Be(30);
+		diag.Metadata["AffectedResource"].Should().Be("x.pdf");
 	}
 
 	[Fact]
-	public void ForNotFoundOnly_BuildsWithCallerNameAndNotFoundExpectation()
+	public void GetDiagnostics_WithNullMetadata_LeavesMetadataNull()
 	{
-		ContractViolationException ex = ContractViolationException.ForNotFoundOnly(
-			s_actualError, [s_actualError], "GetById");
+		Error err = MakeError(ErrorType.NotFound);
+		ContractViolationException ex = ContractViolationException.ForNotFoundOnly(err, [err], Op);
 
-		ex.EndpointOperation.Should().Be("GetById");
-		ex.ExpectedErrorTypes.Should().Equal(ErrorType.NotFound);
+		ContractViolationDiagnostics diag = ex.GetDiagnostics();
+
+		diag.Metadata.Should().BeNull();
 	}
 
 	[Fact]
-	public void ForNotFoundOnly_DefaultCallerName_UsesCallingMember()
+	public void ContractViolationDiagnostics_RecordEquality_HoldsWhenReferenceArraysAreShared()
 	{
-		ContractViolationException ex = ForNotFoundOnly_DefaultCallerName_UsesCallingMember_Helper();
+		// Records compare arrays by reference (no value semantics on T[]).
+		// Share the same array instances so equality holds.
+		string[] expectedTypes = ["NotFound"];
+		ErrorDetail[] errs = [new("NotFound", "X", "Y")];
+		ContractViolationDiagnostics left = new("Op", expectedTypes, "NotFound", "X", "Y", errs, null);
+		ContractViolationDiagnostics right = new("Op", expectedTypes, "NotFound", "X", "Y", errs, null);
 
-		ex.EndpointOperation.Should().Be(nameof(ForNotFoundOnly_DefaultCallerName_UsesCallingMember_Helper));
-	}
-
-	private static ContractViolationException ForNotFoundOnly_DefaultCallerName_UsesCallingMember_Helper() =>
-		ContractViolationException.ForNotFoundOnly(s_actualError, [s_actualError]);
-
-	[Fact]
-	public void ForValidationOnly_BuildsWithValidationExpectation()
-	{
-		ContractViolationException ex = ContractViolationException.ForValidationOnly(
-			s_actualError, [s_actualError], "Validate");
-
-		ex.ExpectedErrorTypes.Should().Equal(ErrorType.Validation);
+		left.Should().Be(right);
+		(left == right).Should().BeTrue();
+		left.GetHashCode().Should().Be(right.GetHashCode());
 	}
 
 	[Fact]
-	public void ForNotFoundOrConflict_BuildsWithBothTypes()
+	public void ContractViolationDiagnostics_RecordEquality_FailsWhenArraysAreDifferentInstances()
 	{
-		ContractViolationException ex = ContractViolationException.ForNotFoundOrConflict(
-			s_actualError, [s_actualError], "UpdateOrCreate");
+		// Counterpart to the shared-reference case: documents that the synthesized
+		// equality uses reference equality on T[] members.
+		ContractViolationDiagnostics left = new(
+			"Op", ["NotFound"], "NotFound", "X", "Y", [new ErrorDetail("NotFound", "X", "Y")], null);
+		ContractViolationDiagnostics right = new(
+			"Op", ["NotFound"], "NotFound", "X", "Y", [new ErrorDetail("NotFound", "X", "Y")], null);
 
-		ex.ExpectedErrorTypes.Should().Equal(ErrorType.NotFound, ErrorType.Conflict);
+		left.Should().NotBe(right);
 	}
 
 	[Fact]
-	public void ForCrudOperation_BuildsWithValidationNotFoundConflict()
+	public void ContractViolationDiagnostics_WithExpression_ReturnsNewInstanceWithUpdatedProperty()
 	{
-		ContractViolationException ex = ContractViolationException.ForCrudOperation(
-			s_actualError, [s_actualError], "Crud");
+		ContractViolationDiagnostics original = new(
+			"Op", ["NotFound"], "NotFound", "X", "Y", [new ErrorDetail("NotFound", "X", "Y")], null);
+		ContractViolationDiagnostics mutated = original with { Operation = "Other" };
 
-		ex.ExpectedErrorTypes.Should()
-			.Equal(ErrorType.Validation, ErrorType.NotFound, ErrorType.Conflict);
+		mutated.Operation.Should().Be("Other");
+		mutated.Should().NotBe(original);
+		mutated.ErrorCode.Should().Be(original.ErrorCode);
 	}
 
 	[Fact]
-	public void For_BuildsWithCustomExpectedTypes()
+	public void ErrorDetail_RecordEquality_HoldsForSameValues()
 	{
-		ContractViolationException ex = ContractViolationException.For(
-			s_actualError, [s_actualError], "PostThing", ErrorType.Failure, ErrorType.Unexpected);
+		ErrorDetail left = new("NotFound", "X", "Y");
+		ErrorDetail right = new("NotFound", "X", "Y");
 
-		ex.ExpectedErrorTypes.Should().Equal(ErrorType.Failure, ErrorType.Unexpected);
-		ex.EndpointOperation.Should().Be("PostThing");
+		left.Should().Be(right);
+		(left == right).Should().BeTrue();
+		left.GetHashCode().Should().Be(right.GetHashCode());
 	}
 
 	[Fact]
-	public void Exception_IsInvalidOperationException()
+	public void ErrorDetail_WithExpression_ReturnsNewInstance()
 	{
-		ContractViolationException ex = ContractViolationException.ForNotFoundOnly(
-			s_actualError, [s_actualError], "GetById");
+		ErrorDetail original = new("NotFound", "X", "Y");
+		ErrorDetail mutated = original with { Code = "Z" };
 
-		ex.Should().BeAssignableTo<InvalidOperationException>();
+		mutated.Code.Should().Be("Z");
+		mutated.Should().NotBe(original);
+		mutated.Type.Should().Be(original.Type);
+	}
+
+	[Fact]
+	public void ForNotFoundOnly_DefaultsOperationToCallerMemberName()
+	{
+		Error err = MakeError(ErrorType.NotFound);
+		ContractViolationException ex = ContractViolationException.ForNotFoundOnly(err, [err]);
+
+		ex.EndpointOperation.Should().Be(nameof(ForNotFoundOnly_DefaultsOperationToCallerMemberName));
 	}
 }

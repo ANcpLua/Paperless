@@ -2,305 +2,396 @@ using PaperlessREST.Host.Extensions;
 
 namespace PaperlessREST.Tests.Unit;
 
-/// <summary>
-///     Unit tests for <see cref="TypedErrorOrAsyncExtensions" />, the bridge between
-///     <see cref="ErrorOr{T}" /> service results and ASP.NET typed <see cref="Results{TResult1,TResult2}" /> unions.
-///     Exercises every result-shape (Ok / Validation / Failure / Unexpected / NotFound / Deleted) plus
-///     the contract-violation throw paths for unexpected error types.
-/// </summary>
 public sealed class TypedErrorOrAsyncExtensionsTests
 {
-	private const string RouteName = "GetDocumentById";
+	private const string RouteName = "GetById";
 
-	private sealed record Doc(Guid Id, string FileName);
+	// Helpers return Task-wrapped ErrorOr; Task<T> doesn't trigger CA2012.
+	// Tests target the Task<ErrorOr<T>> overload, which internally delegates to
+	// the ValueTask<ErrorOr<T>> overload, exercising both layers.
+	private static Task<ErrorOr<T>> TaskValue<T>(T value) =>
+		Task.FromResult<ErrorOr<T>>(value);
 
-	private sealed record DocResponse(string Id, string FileName);
+	private static Task<ErrorOr<T>> TaskFromError<T>(Error err) =>
+		Task.FromResult<ErrorOr<T>>(err);
 
-	private static DocResponse Map(Doc d) => new(d.Id.ToString(), d.FileName);
+	private static Task<ErrorOr<T>> TaskFromErrors<T>(List<Error> errors) =>
+		Task.FromResult<ErrorOr<T>>(errors);
 
-	private static object RouteValues(Doc d) => new { id = d.Id };
-
-	// ─── ErrorOr<T>.ToOkOr404 (sync overload) ───────────────────────────────
+	// ─── ErrorOr<T>.ToOkOr404 (sync) ─────────────────────────────────────────
 
 	[Fact]
-	public void ToOkOr404_Sync_SuccessfulResult_ReturnsOk()
+	public void ToOkOr404_Sync_Success_ReturnsOkWithMappedValue()
 	{
-		Doc doc = new(Guid.CreateVersion7(), "f.pdf");
-		ErrorOr<Doc> result = doc;
+		ErrorOr<int> result = (ErrorOr<int>)7;
+		Results<Ok<string>, NotFound> typed = result.ToOkOr404(v => $"v={v}");
 
-		Results<Ok<DocResponse>, NotFound> output = result.ToOkOr404(Map);
-
-		output.Result.Should().BeOfType<Ok<DocResponse>>()
-			.Which.Value!.FileName.Should().Be("f.pdf");
+		Ok<string>? ok = typed.Result.Should().BeOfType<Ok<string>>().Subject;
+		ok.Value.Should().Be("v=7");
 	}
 
 	[Fact]
-	public void ToOkOr404_Sync_NotFound_ReturnsNotFound()
+	public void ToOkOr404_Sync_NotFound_ReturnsNotFoundResult()
 	{
-		ErrorOr<Doc> result = Error.NotFound("Doc.NotFound", "missing");
+		ErrorOr<int> result = (ErrorOr<int>)Error.NotFound("X", "missing");
+		Results<Ok<string>, NotFound> typed = result.ToOkOr404(v => v.ToString());
 
-		Results<Ok<DocResponse>, NotFound> output = result.ToOkOr404(Map);
-
-		output.Result.Should().BeOfType<NotFound>();
+		typed.Result.Should().BeOfType<NotFound>();
 	}
 
 	[Fact]
-	public void ToOkOr404_Sync_UnexpectedErrorType_ThrowsContractViolation()
+	public void ToOkOr404_Sync_NonNotFoundError_ThrowsContractViolation()
 	{
-		ErrorOr<Doc> result = Error.Conflict("Doc.Locked", "locked");
+		ErrorOr<int> result = (ErrorOr<int>)Error.Conflict("X", "conflict");
 
-		Action act = () => _ = result.ToOkOr404(Map, "GetDocumentById");
+		Action act = () => result.ToOkOr404(v => v.ToString());
 
-		act.Should().Throw<ContractViolationException>()
-			.Which.ExpectedErrorTypes.Should().Equal(ErrorType.NotFound);
+		ContractViolationException ex = act.Should().Throw<ContractViolationException>().Which;
+		ex.ExpectedErrorTypes.Should().ContainSingle().Which.Should().Be(ErrorType.NotFound);
+		ex.ActualError.Code.Should().Be("X");
 	}
 
-	// ─── ErrorOr<Deleted>.ToNoContentOr404 (sync overload) ───────────────────
+	// ─── ErrorOr<Deleted>.ToNoContentOr404 (sync) ────────────────────────────
 
 	[Fact]
 	public void ToNoContentOr404_Sync_Success_ReturnsNoContent()
 	{
-		ErrorOr<Deleted> result = Result.Deleted;
+		ErrorOr<Deleted> result = (ErrorOr<Deleted>)Result.Deleted;
+		Results<NoContent, NotFound> typed = result.ToNoContentOr404();
 
-		Results<NoContent, NotFound> output = result.ToNoContentOr404();
-
-		output.Result.Should().BeOfType<NoContent>();
+		typed.Result.Should().BeOfType<NoContent>();
 	}
 
 	[Fact]
-	public void ToNoContentOr404_Sync_NotFound_ReturnsNotFound()
+	public void ToNoContentOr404_Sync_NotFound_ReturnsNotFoundResult()
 	{
-		ErrorOr<Deleted> result = Error.NotFound("Doc.NotFound", "missing");
+		ErrorOr<Deleted> result = (ErrorOr<Deleted>)Error.NotFound("X", "missing");
+		Results<NoContent, NotFound> typed = result.ToNoContentOr404();
 
-		Results<NoContent, NotFound> output = result.ToNoContentOr404();
-
-		output.Result.Should().BeOfType<NotFound>();
+		typed.Result.Should().BeOfType<NotFound>();
 	}
 
 	[Fact]
-	public void ToNoContentOr404_Sync_UnexpectedErrorType_ThrowsContractViolation()
+	public void ToNoContentOr404_Sync_NonNotFoundError_ThrowsContractViolation()
 	{
-		ErrorOr<Deleted> result = Error.Conflict("Doc.Locked", "locked");
+		ErrorOr<Deleted> result = (ErrorOr<Deleted>)Error.Failure("X", "boom");
 
-		Action act = () => _ = result.ToNoContentOr404("Delete");
+		Action act = () => result.ToNoContentOr404();
 
-		act.Should().Throw<ContractViolationException>();
+		ContractViolationException ex = act.Should().Throw<ContractViolationException>().Which;
+		ex.ExpectedErrorTypes.Should().ContainSingle().Which.Should().Be(ErrorType.NotFound);
 	}
 
-	// ─── ValueTask<ErrorOr<T>>.ToOkOr404 (async overload) ────────────────────
+	// ─── ValueTask<ErrorOr<T>>.ToOkOr404 ──────────────────────────────────────
 
 	[Fact]
 	public async Task ToOkOr404_ValueTask_Success_ReturnsOk()
 	{
-		Doc doc = new(Guid.CreateVersion7(), "vf.pdf");
-		ValueTask<ErrorOr<Doc>> task = new(ErrorOrFactory.From(doc));
+		Results<Ok<string>, NotFound> typed = await TaskValue(42).ToOkOr404(v => v.ToString());
 
-		Results<Ok<DocResponse>, NotFound> output = await task.ToOkOr404(Map);
-
-		output.Result.Should().BeOfType<Ok<DocResponse>>()
-			.Which.Value!.FileName.Should().Be("vf.pdf");
+		Ok<string>? ok = typed.Result.Should().BeOfType<Ok<string>>().Subject;
+		ok.Value.Should().Be("42");
 	}
 
 	[Fact]
 	public async Task ToOkOr404_ValueTask_NotFound_ReturnsNotFound()
 	{
-		ValueTask<ErrorOr<Doc>> task = new(Error.NotFound("Doc.NotFound", "missing"));
+		Results<Ok<string>, NotFound> typed =
+			await TaskFromError<int>(Error.NotFound("X", "missing")).ToOkOr404(v => v.ToString());
 
-		Results<Ok<DocResponse>, NotFound> output = await task.ToOkOr404(Map);
-
-		output.Result.Should().BeOfType<NotFound>();
+		typed.Result.Should().BeOfType<NotFound>();
 	}
 
-	// ─── ValueTask<ErrorOr<Deleted>>.ToNoContentOr404 (async overload) ──────
+	[Fact]
+	public async Task ToOkOr404_ValueTask_NonNotFoundError_ThrowsContractViolation()
+	{
+		Func<Task> act = async () =>
+			await TaskFromError<int>(Error.Failure("X", "boom")).ToOkOr404(v => v.ToString());
+
+		ContractViolationException ex = (await act.Should().ThrowAsync<ContractViolationException>()).Which;
+		ex.ExpectedErrorTypes.Should().ContainSingle().Which.Should().Be(ErrorType.NotFound);
+	}
+
+	// ─── ValueTask<ErrorOr<Deleted>>.ToNoContentOr404 ────────────────────────
 
 	[Fact]
 	public async Task ToNoContentOr404_ValueTask_Success_ReturnsNoContent()
 	{
-		ValueTask<ErrorOr<Deleted>> task = new(ErrorOrFactory.From(Result.Deleted));
+		Results<NoContent, NotFound> typed = await TaskValue(Result.Deleted).ToNoContentOr404();
 
-		Results<NoContent, NotFound> output = await task.ToNoContentOr404();
-
-		output.Result.Should().BeOfType<NoContent>();
+		typed.Result.Should().BeOfType<NoContent>();
 	}
 
 	[Fact]
 	public async Task ToNoContentOr404_ValueTask_NotFound_ReturnsNotFound()
 	{
-		ValueTask<ErrorOr<Deleted>> task = new(Error.NotFound("Doc.NotFound", "missing"));
+		Results<NoContent, NotFound> typed =
+			await TaskFromError<Deleted>(Error.NotFound("X", "missing")).ToNoContentOr404();
 
-		Results<NoContent, NotFound> output = await task.ToNoContentOr404();
-
-		output.Result.Should().BeOfType<NotFound>();
+		typed.Result.Should().BeOfType<NotFound>();
 	}
 
-	// ─── Task<ErrorOr<T>>.ToOkOr404 (Task overload — delegates to ValueTask) ─
+	[Fact]
+	public async Task ToNoContentOr404_ValueTask_NonNotFoundError_ThrowsContractViolation()
+	{
+		Func<Task> act = async () =>
+			await TaskFromError<Deleted>(Error.Conflict("X", "conflict")).ToNoContentOr404();
+
+		await act.Should().ThrowAsync<ContractViolationException>();
+	}
+
+	// ─── Task<ErrorOr<T>>.ToOkOr404 (delegates to ValueTask) ─────────────────
 
 	[Fact]
 	public async Task ToOkOr404_Task_Success_ReturnsOk()
 	{
-		Doc doc = new(Guid.CreateVersion7(), "tf.pdf");
-		Task<ErrorOr<Doc>> task = Task.FromResult<ErrorOr<Doc>>(doc);
+		Results<Ok<string>, NotFound> typed = await TaskValue(99).ToOkOr404(v => $"#{v}");
 
-		Results<Ok<DocResponse>, NotFound> output = await task.ToOkOr404(Map);
-
-		output.Result.Should().BeOfType<Ok<DocResponse>>();
+		Ok<string>? ok = typed.Result.Should().BeOfType<Ok<string>>().Subject;
+		ok.Value.Should().Be("#99");
 	}
+
+	[Fact]
+	public async Task ToOkOr404_Task_NotFound_ReturnsNotFound()
+	{
+		Results<Ok<string>, NotFound> typed =
+			await TaskFromError<int>(Error.NotFound("X", "missing")).ToOkOr404(v => v.ToString());
+
+		typed.Result.Should().BeOfType<NotFound>();
+	}
+
+	// ─── Task<ErrorOr<Deleted>>.ToNoContentOr404 (delegates) ─────────────────
 
 	[Fact]
 	public async Task ToNoContentOr404_Task_Success_ReturnsNoContent()
 	{
-		Task<ErrorOr<Deleted>> task = Task.FromResult<ErrorOr<Deleted>>(Result.Deleted);
+		Results<NoContent, NotFound> typed = await TaskValue(Result.Deleted).ToNoContentOr404();
 
-		Results<NoContent, NotFound> output = await task.ToNoContentOr404();
-
-		output.Result.Should().BeOfType<NoContent>();
-	}
-
-	// ─── ToAcceptedAtRouteOrProblem ─────────────────────────────────────────
-
-	[Fact]
-	public async Task ToAcceptedAtRouteOrProblem_Success_ReturnsAcceptedAtRoute()
-	{
-		Doc doc = new(Guid.CreateVersion7(), "accepted.pdf");
-		ValueTask<ErrorOr<Doc>> task = new(ErrorOrFactory.From(doc));
-
-		Results<AcceptedAtRoute<DocResponse>, ValidationProblem, ProblemHttpResult> output =
-			await task.ToAcceptedAtRouteOrProblem(Map, RouteName, RouteValues);
-
-		AcceptedAtRoute<DocResponse>? accepted = output.Result as AcceptedAtRoute<DocResponse>;
-		accepted.Should().NotBeNull();
-		accepted!.RouteName.Should().Be(RouteName);
-		accepted.Value!.FileName.Should().Be("accepted.pdf");
+		typed.Result.Should().BeOfType<NoContent>();
 	}
 
 	[Fact]
-	public async Task ToAcceptedAtRouteOrProblem_ValidationError_Returns422WithGroupedErrors()
+	public async Task ToNoContentOr404_Task_NotFound_ReturnsNotFound()
 	{
-		Error[] errors =
+		Results<NoContent, NotFound> typed =
+			await TaskFromError<Deleted>(Error.NotFound("X", "missing")).ToNoContentOr404();
+
+		typed.Result.Should().BeOfType<NotFound>();
+	}
+
+	// ─── ToAcceptedAtRouteOrProblem — success ────────────────────────────────
+
+	[Fact]
+	public async Task ToAcceptedAtRouteOrProblem_ValueTask_Success_ReturnsAcceptedAtRouteWithMappedValueAndRouteValues()
+	{
+		Results<AcceptedAtRoute<string>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskValue(7).ToAcceptedAtRouteOrProblem(
+				v => $"v={v}",
+				RouteName,
+				v => new { id = v });
+
+		AcceptedAtRoute<string>? accepted = typed.Result.Should().BeOfType<AcceptedAtRoute<string>>().Subject;
+		accepted.RouteName.Should().Be(RouteName);
+		accepted.Value.Should().Be("v=7");
+		accepted.RouteValues["id"].Should().Be(7);
+	}
+
+	[Fact]
+	public async Task ToAcceptedAtRouteOrProblem_Task_Success_ReturnsAcceptedAtRoute()
+	{
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskValue(5).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
+
+		AcceptedAtRoute<int>? accepted = typed.Result.Should().BeOfType<AcceptedAtRoute<int>>().Subject;
+		accepted.Value.Should().Be(5);
+	}
+
+	// ─── Validation path ─────────────────────────────────────────────────────
+
+	[Fact]
+	public async Task ToAcceptedAtRouteOrProblem_Validation_GroupsErrorsByCode()
+	{
+		List<Error> errors =
 		[
-			Error.Validation("FileName", "is required"),
-			Error.Validation("FileName", "must be PDF"),
-			Error.Validation("FileSize", "too large")
+			Error.Validation("FileName", "FileName required"),
+			Error.Validation("FileName", "FileName must be PDF"),
+			Error.Validation("Size", "Size too large")
 		];
-		ValueTask<ErrorOr<Doc>> task = new(errors);
 
-		Results<AcceptedAtRoute<DocResponse>, ValidationProblem, ProblemHttpResult> output =
-			await task.ToAcceptedAtRouteOrProblem(Map, RouteName, RouteValues);
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromErrors<int>(errors).ToAcceptedAtRouteOrProblem(
+				v => v, RouteName, v => new { id = v });
 
-		ValidationProblem? vp = output.Result as ValidationProblem;
-		vp.Should().NotBeNull();
-		HttpValidationProblemDetails details = vp!.ProblemDetails;
+		ValidationProblem? vp = typed.Result.Should().BeOfType<ValidationProblem>().Subject;
+		HttpValidationProblemDetails details = vp.ProblemDetails;
 		details.Errors.Should().ContainKey("FileName");
-		details.Errors["FileName"].Should().BeEquivalentTo(["is required", "must be PDF"]);
-		details.Errors.Should().ContainKey("FileSize");
+		details.Errors["FileName"].Should().BeEquivalentTo("FileName required", "FileName must be PDF");
+		details.Errors.Should().ContainKey("Size");
+		details.Errors["Size"].Should().BeEquivalentTo("Size too large");
+		details.Errors.Should().HaveCount(2);
+	}
+
+	// ─── Failure → 500, kebab URN, camelCase extensions ──────────────────────
+
+	[Fact]
+	public async Task ToAcceptedAtRouteOrProblem_Failure_ReturnsServerErrorWithKebabUrnAndCamelCaseExtensions()
+	{
+		Dictionary<string, object> metadata = new()
+		{
+			["StoragePath"] = "documents/abc.pdf",
+			["AttemptCount"] = 3
+		};
+		Error err = Error.Failure("Document.StorageFailed", "Failed to store", metadata);
+
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
+
+		ProblemHttpResult? problem = typed.Result.Should().BeOfType<ProblemHttpResult>().Subject;
+		problem.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+		// ToKebabCase emits a dash before every internal uppercase char, including
+		// the one right after the dot in "Document.StorageFailed".
+		problem.ProblemDetails.Type.Should().Be("urn:paperless:error:document.-storage-failed");
+		problem.ProblemDetails.Title.Should().Be("Document.StorageFailed");
+		problem.ProblemDetails.Detail.Should().Be("Failed to store");
+		problem.ProblemDetails.Extensions["storagePath"].Should().Be("documents/abc.pdf");
+		problem.ProblemDetails.Extensions["attemptCount"].Should().Be(3);
 	}
 
 	[Fact]
-	public async Task ToAcceptedAtRouteOrProblem_Failure_Returns500WithKebabCaseUrn()
+	public async Task ToAcceptedAtRouteOrProblem_Failure_NullMetadata_OmitsExtensions()
 	{
-		Error failure = Error.Failure("Document.UploadFailed", "storage broke");
-		ValueTask<ErrorOr<Doc>> task = new(failure);
+		Error err = Error.Failure("Plain.Failure", "no metadata");
 
-		Results<AcceptedAtRoute<DocResponse>, ValidationProblem, ProblemHttpResult> output =
-			await task.ToAcceptedAtRouteOrProblem(Map, RouteName, RouteValues);
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
 
-		ProblemHttpResult? problem = output.Result as ProblemHttpResult;
-		problem.Should().NotBeNull();
-		problem!.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-		problem.ProblemDetails.Title.Should().Be("Document.UploadFailed");
-		problem.ProblemDetails.Type.Should().Be("urn:paperless:error:document.-upload-failed");
+		ProblemHttpResult? problem = typed.Result.Should().BeOfType<ProblemHttpResult>().Subject;
+		problem.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+		// "Plain.Failure" → 'P' becomes 'p' (i=0), '.' stays, 'F' becomes '-f'.
+		problem.ProblemDetails.Type.Should().Be("urn:paperless:error:plain.-failure");
+		problem.ProblemDetails.Extensions.Should().NotContainKey("storagePath");
 	}
 
 	[Fact]
-	public async Task ToAcceptedAtRouteOrProblem_FailureWithMetadata_PropagatesAsCamelCasedExtensions()
+	public async Task ToAcceptedAtRouteOrProblem_Failure_EmptyMetadata_OmitsExtensions()
 	{
-		Error failure = Error.Custom(
-			(int)ErrorType.Failure, "Document.UploadFailed", "storage broke",
-			new Dictionary<string, object> { ["AttemptCount"] = 3, ["LastTriedAt"] = "2026-05-15" });
-		ValueTask<ErrorOr<Doc>> task = new(failure);
+		Dictionary<string, object> emptyMeta = [];
+		Error err = Error.Failure("Plain.Failure", "empty meta", emptyMeta);
 
-		Results<AcceptedAtRoute<DocResponse>, ValidationProblem, ProblemHttpResult> output =
-			await task.ToAcceptedAtRouteOrProblem(Map, RouteName, RouteValues);
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
 
-		ProblemHttpResult problem = (ProblemHttpResult)output.Result!;
-		problem.ProblemDetails.Extensions.Should().ContainKey("attemptCount").WhoseValue.Should().Be(3);
-		problem.ProblemDetails.Extensions.Should().ContainKey("lastTriedAt").WhoseValue.Should().Be("2026-05-15");
+		ProblemHttpResult? problem = typed.Result.Should().BeOfType<ProblemHttpResult>().Subject;
+		problem.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+		problem.ProblemDetails.Extensions.Should().NotContainKey("retryAfter");
 	}
 
+	// ─── Unexpected → 503 retryAfter ─────────────────────────────────────────
+
 	[Fact]
-	public async Task ToAcceptedAtRouteOrProblem_Unexpected_Returns503WithRetryAfterFromMetadata()
+	public async Task ToAcceptedAtRouteOrProblem_Unexpected_WithRetryAfterMetadata_UsesProvidedValue()
 	{
-		Error unavailable = Error.Custom(
-			(int)ErrorType.Unexpected, "Document.StorageUnavailable", "down",
-			new Dictionary<string, object> { ["RetryAfter"] = 90, ["AffectedResource"] = "docs/x" });
-		ValueTask<ErrorOr<Doc>> task = new(unavailable);
+		Dictionary<string, object> metadata = new()
+		{
+			["RetryAfter"] = 120,
+			["AffectedResource"] = "documents/x.pdf"
+		};
+		Error err = Error.Unexpected("Document.StorageUnavailable", "tmp", metadata);
 
-		Results<AcceptedAtRoute<DocResponse>, ValidationProblem, ProblemHttpResult> output =
-			await task.ToAcceptedAtRouteOrProblem(Map, RouteName, RouteValues);
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
 
-		ProblemHttpResult problem = (ProblemHttpResult)output.Result!;
+		ProblemHttpResult? problem = typed.Result.Should().BeOfType<ProblemHttpResult>().Subject;
 		problem.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
-		problem.ProblemDetails.Extensions["retryAfter"].Should().Be(90);
-		problem.ProblemDetails.Extensions.Should().ContainKey("affectedResource");
-		problem.ProblemDetails.Extensions["affectedResource"].Should().Be("docs/x");
+		problem.ProblemDetails.Type.Should().Be("urn:paperless:error:document.-storage-unavailable");
+		problem.ProblemDetails.Extensions["retryAfter"].Should().Be(120);
+		problem.ProblemDetails.Extensions["affectedResource"].Should().Be("documents/x.pdf");
+		problem.ProblemDetails.Extensions.Should().NotContainKey("RetryAfter");
 	}
 
 	[Fact]
-	public async Task ToAcceptedAtRouteOrProblem_UnexpectedWithoutMetadata_DefaultsRetryAfterTo30()
+	public async Task ToAcceptedAtRouteOrProblem_Unexpected_WithoutRetryAfterMetadata_Defaults30()
 	{
-		Error unavailable = Error.Unexpected("Backend.Down", "no metadata");
-		ValueTask<ErrorOr<Doc>> task = new(unavailable);
+		Dictionary<string, object> metadata = new() { ["AffectedResource"] = "x.pdf" };
+		Error err = Error.Unexpected("Document.StorageUnavailable", "tmp", metadata);
 
-		Results<AcceptedAtRoute<DocResponse>, ValidationProblem, ProblemHttpResult> output =
-			await task.ToAcceptedAtRouteOrProblem(Map, RouteName, RouteValues);
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
 
-		ProblemHttpResult problem = (ProblemHttpResult)output.Result!;
+		ProblemHttpResult? problem = typed.Result.Should().BeOfType<ProblemHttpResult>().Subject;
+		problem.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+		problem.ProblemDetails.Extensions["retryAfter"].Should().Be(30);
+		problem.ProblemDetails.Extensions["affectedResource"].Should().Be("x.pdf");
+	}
+
+	[Fact]
+	public async Task ToAcceptedAtRouteOrProblem_Unexpected_NullMetadata_Defaults30AndEmpty()
+	{
+		Error err = Error.Unexpected("Document.SearchUnavailable", "Search down");
+
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
+
+		ProblemHttpResult? problem = typed.Result.Should().BeOfType<ProblemHttpResult>().Subject;
 		problem.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
 		problem.ProblemDetails.Extensions["retryAfter"].Should().Be(30);
 	}
 
 	[Fact]
-	public async Task ToAcceptedAtRouteOrProblem_UnexpectedRetryAfterOnly_OmitsOtherExtensions()
+	public async Task ToAcceptedAtRouteOrProblem_Unexpected_EmptyMetadata_Defaults30NoExtras()
 	{
-		// Exercises BuildServiceUnavailableExtensions early return when only RetryAfter is set
-		// (the "Where(kvp => kvp.Key != "RetryAfter")" filter yields nothing).
-		Error unavailable = Error.Custom(
-			(int)ErrorType.Unexpected, "Backend.Down", "only retry",
-			new Dictionary<string, object> { ["RetryAfter"] = 5 });
-		ValueTask<ErrorOr<Doc>> task = new(unavailable);
+		Dictionary<string, object> emptyMeta = [];
+		Error err = Error.Unexpected("Document.SearchUnavailable", "Search down", emptyMeta);
 
-		Results<AcceptedAtRoute<DocResponse>, ValidationProblem, ProblemHttpResult> output =
-			await task.ToAcceptedAtRouteOrProblem(Map, RouteName, RouteValues);
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
 
-		ProblemHttpResult problem = (ProblemHttpResult)output.Result!;
-		problem.ProblemDetails.Extensions.Should().ContainKey("retryAfter");
-		problem.ProblemDetails.Extensions.Should().NotContainKey("affectedResource");
+		ProblemHttpResult? problem = typed.Result.Should().BeOfType<ProblemHttpResult>().Subject;
+		problem.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+		problem.ProblemDetails.Extensions["retryAfter"].Should().Be(30);
+		problem.ProblemDetails.Extensions.Should().ContainSingle(kv => kv.Key == "retryAfter");
+	}
+
+	// ─── Unhandled error type → contract violation ──────────────────────────
+
+	[Fact]
+	public async Task ToAcceptedAtRouteOrProblem_UnhandledErrorType_ThrowsContractViolation()
+	{
+		Error err = Error.Conflict("Document.Locked", "locked");
+
+		Func<Task> act = async () =>
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
+
+		ContractViolationException ex = (await act.Should().ThrowAsync<ContractViolationException>()).Which;
+		ex.ExpectedErrorTypes.Should().BeEquivalentTo(
+			new[] { ErrorType.Validation, ErrorType.Failure, ErrorType.Unexpected },
+			opts => opts.WithStrictOrdering());
+		ex.ActualError.Code.Should().Be("Document.Locked");
+	}
+
+	// ─── ToKebabCase indirect coverage — mid-string uppercase forces dash ────
+
+	[Fact]
+	public async Task ToAcceptedAtRouteOrProblem_Failure_LowercaseStartCamelMid_DashesOnlyInternalUppercase()
+	{
+		Error err = Error.Failure("iPadOrNot", "x");
+
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
+
+		ProblemHttpResult? problem = typed.Result.Should().BeOfType<ProblemHttpResult>().Subject;
+		problem.ProblemDetails.Type.Should().Be("urn:paperless:error:i-pad-or-not");
 	}
 
 	[Fact]
-	public async Task ToAcceptedAtRouteOrProblem_UnsupportedErrorType_ThrowsContractViolation()
+	public async Task ToAcceptedAtRouteOrProblem_Failure_SingleLowercaseToken_NoDashes()
 	{
-		ValueTask<ErrorOr<Doc>> task = new(Error.NotFound("Doc.NotFound", "missing"));
+		Error err = Error.Failure("simple", "x");
 
-		Func<Task> act = async () => _ = await task.ToAcceptedAtRouteOrProblem(
-			Map, RouteName, RouteValues, "PostDocument");
+		Results<AcceptedAtRoute<int>, ValidationProblem, ProblemHttpResult> typed =
+			await TaskFromError<int>(err).ToAcceptedAtRouteOrProblem(v => v, RouteName, v => new { id = v });
 
-		(await act.Should().ThrowAsync<ContractViolationException>())
-			.Which.ExpectedErrorTypes.Should().Equal(
-				ErrorType.Validation, ErrorType.Failure, ErrorType.Unexpected);
-	}
-
-	// ─── Task overload also routes through the same internals ──────────────
-
-	[Fact]
-	public async Task ToAcceptedAtRouteOrProblem_Task_Success_ReturnsAcceptedAtRoute()
-	{
-		Doc doc = new(Guid.CreateVersion7(), "task-success.pdf");
-		Task<ErrorOr<Doc>> task = Task.FromResult<ErrorOr<Doc>>(doc);
-
-		Results<AcceptedAtRoute<DocResponse>, ValidationProblem, ProblemHttpResult> output =
-			await task.ToAcceptedAtRouteOrProblem(Map, RouteName, RouteValues);
-
-		output.Result.Should().BeOfType<AcceptedAtRoute<DocResponse>>();
+		ProblemHttpResult? problem = typed.Result.Should().BeOfType<ProblemHttpResult>().Subject;
+		problem.ProblemDetails.Type.Should().Be("urn:paperless:error:simple");
 	}
 }
