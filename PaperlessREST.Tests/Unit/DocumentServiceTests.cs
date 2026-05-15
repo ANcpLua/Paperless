@@ -598,4 +598,88 @@ public sealed class DocumentServiceTests : IDisposable
 				l.Level == LogLevel.Warning &&
 				l.Message.Contains("search index", StringComparison.OrdinalIgnoreCase));
 	}
+
+	// ═══════════════════════════════════════════════════════════════
+	// TESTS: UploadDocumentAsync - Unknown Storage Exception (rethrown)
+	// Covers DocumentService.cs lines 107-108 (TryMapStorageException returns null → throw)
+	// ═══════════════════════════════════════════════════════════════
+
+	[Fact]
+	public async Task UploadDocumentAsync_UnknownStorageException_PropagatesOriginalException()
+	{
+		// Arrange — an exception type not handled by TryMapStorageException
+		UploadDocumentRequest request = UploadDocumentRequestBuilder.ValidPdf().Build();
+		InvalidOperationException expected = new("Unknown infrastructure failure");
+
+		_storage.Setup(s => s.UploadAsync(
+				It.IsAny<Stream>(),
+				It.IsAny<string>(),
+				It.IsAny<long>(),
+				It.IsAny<CancellationToken>()))
+			.ThrowsAsync(expected);
+
+		DocumentService sut = CreateSut();
+
+		// Act
+		Func<Task> act = () => sut.UploadDocumentAsync(request, TestContext.Current.CancellationToken);
+
+		// Assert — original exception propagates to caller, not mapped to ErrorOr
+		InvalidOperationException thrown = (await act.Should().ThrowAsync<InvalidOperationException>()).Which;
+		thrown.Should().BeSameAs(expected);
+	}
+
+	// ═══════════════════════════════════════════════════════════════
+	// TESTS: ProcessOcrResultAsync - State Transition Failure
+	// Covers DocumentService.cs lines 148-151 (transitionResult.IsError branch)
+	// ═══════════════════════════════════════════════════════════════
+
+	[Fact]
+	public async Task ProcessOcrResultAsync_DocumentAlreadyCompleted_ReturnsCannotCompleteError()
+	{
+		// Arrange — document already in Completed state, OCR re-arrival
+		Document doc = new DocumentBuilder().AsCompleted().Build();
+
+		_repository.Setup(r => r.GetByIdAsync(doc.Id, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(doc);
+
+		DocumentService sut = CreateSut();
+
+		// Act
+		ErrorOr<Updated> result = await sut.ProcessOcrResultAsync(doc.Id, "Completed", ExtractedOcrContent,
+			TestContext.Current.CancellationToken);
+
+		// Assert — exact error code from DocumentErrors.CannotComplete
+		result.IsError.Should().BeTrue();
+		result.FirstError.Type.Should().Be(ErrorType.Validation);
+		result.FirstError.Code.Should().Be("Document.CannotComplete");
+		result.FirstError.Description.Should().Contain("Completed");
+	}
+
+	[Fact]
+	public async Task ProcessOcrResultAsync_TransitionFailure_LogsWarningAndDoesNotUpdateRepository()
+	{
+		// Arrange — document already in Failed state; MarkAsFailed should error
+		Document doc = new DocumentBuilder().AsFailed().Build();
+
+		_repository.Setup(r => r.GetByIdAsync(doc.Id, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(doc);
+
+		DocumentService sut = CreateSut();
+
+		// Act
+		ErrorOr<Updated> result = await sut.ProcessOcrResultAsync(doc.Id, "Failed", null,
+			TestContext.Current.CancellationToken);
+
+		// Assert
+		result.IsError.Should().BeTrue();
+		result.FirstError.Code.Should().Be("Document.CannotFail");
+
+		_logCollector.GetSnapshot()
+			.Should().Contain(l =>
+				l.Level == LogLevel.Warning &&
+				l.Message.Contains("state transition failed", StringComparison.OrdinalIgnoreCase));
+
+		// Repository.UpdateAsync is intentionally NOT set up; MockBehavior.Strict will fail
+		// the test in Dispose if it were called. This proves the short-circuit.
+	}
 }

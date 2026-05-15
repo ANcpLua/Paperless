@@ -539,6 +539,37 @@ public sealed class ReportProcessorTests : IDisposable
 		result.FirstError.Type.Should().Be(ErrorType.Validation);
 	}
 
+	// ═══════════════════════════════════════════════════════════════
+	// TESTS: ProcessAsync - InvalidDate path AFTER schema validation passes
+	// Covers ReportProcessor.cs lines 100-103: DateOnly.TryParseExact failure
+	// for a date string that survives xs:date schema validation but is not
+	// yyyy-MM-dd (e.g., timezone-suffixed date).
+	// ═══════════════════════════════════════════════════════════════
+
+	[Fact]
+	public async Task ProcessAsync_DateWithTimezone_FailsDateOnlyTryParseExact()
+	{
+		// Arrange — "2024-01-15+02:00" satisfies xs:date (which permits timezone suffix)
+		// but DateOnly.TryParseExact("yyyy-MM-dd", ...) rejects it.
+		const string xmlContent = """
+		                          <?xml version="1.0" encoding="UTF-8"?>
+		                          <accessReport date="2024-01-15+02:00">
+		                          </accessReport>
+		                          """;
+
+		string filePath = CreateTestFile("date-with-tz.xml", xmlContent);
+		ReportProcessor sut = CreateSut();
+
+		// Act
+		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+
+		// Assert — must be the InvalidDate factory, distinct from InvalidSchema
+		result.IsError.Should().BeTrue();
+		result.FirstError.Type.Should().Be(ErrorType.Validation);
+		result.FirstError.Code.Should().Be("Report.InvalidDate");
+		result.FirstError.Description.Should().Contain("2024-01-15+02:00");
+	}
+
 	private string CreateTestFile(string fileName, string content)
 	{
 		string baseDir = AppContext.BaseDirectory;

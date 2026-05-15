@@ -122,12 +122,11 @@ public sealed class ReportProcessor(
 		{
 			return ReportErrors.FileNotFound(path);
 		}
-		catch (XmlException ex)
-		{
-			return ReportErrors.InvalidXml(ex.Message);
-		}
 		catch (InvalidOperationException ex)
 		{
+			// XmlSerializer.Deserialize wraps both XmlException (well-formedness)
+			// and XmlSchemaException (validation) as InvalidOperationException, so a
+			// separate `catch (XmlException)` branch is unreachable.
 			return ReportErrors.InvalidSchema(ex.Message);
 		}
 		catch (XmlSchemaException ex)

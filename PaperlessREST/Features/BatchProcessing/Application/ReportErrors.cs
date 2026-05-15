@@ -6,10 +6,6 @@ public static class ReportErrors
 		"Report.FileNotFound",
 		$"File not found: {path}");
 
-	public static Error InvalidXml(string details) => Error.Validation(
-		"Report.InvalidXml",
-		$"File is not valid XML: {details}");
-
 	public static Error InvalidSchema(string details) => Error.Validation(
 		"Report.InvalidSchema",
 		$"XML does not match expected schema: {details}");
