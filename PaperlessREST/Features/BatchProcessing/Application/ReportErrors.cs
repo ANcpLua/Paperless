@@ -23,23 +23,3 @@ public static class ReportErrors
 		$"Document at index {index} has invalid or empty GUID");
 }
 
-
-
-public static class BatchErrors
-{
-    public static Error PathRequired(string property) => Error.Validation(
-        "Batch.PathRequired",
-        $"{BatchOptions.SectionName}:{property} is required");
-
-    public static Error InvalidPath(string property, string details) => Error.Validation(
-        "Batch.InvalidPath",
-        $"{BatchOptions.SectionName}:{property} is not a valid path: {details}");
-
-    public static Error PathsNotDistinct() => Error.Validation(
-        "Batch.PathsNotDistinct",
-        $"{BatchOptions.SectionName} paths (InputPath, ArchivePath, ErrorPath) must be distinct");
-
-    public static Error InvalidTimeZone(string timeZoneId) => Error.Validation(
-        "Batch.InvalidTimeZone",
-        $"{BatchOptions.SectionName}:TimeZoneId '{timeZoneId}' is not a valid system timezone");
-}
