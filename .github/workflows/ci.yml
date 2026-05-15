@@ -103,9 +103,10 @@ jobs:
                 working-directory: PaperlessUI.Angular
         steps:
             -   uses: actions/checkout@v4
-            -   uses: pnpm/action-setup@v4
-                with:
-                    version: 10
+            -   name: Activate pnpm via corepack
+                run: |
+                    corepack enable
+                    corepack prepare pnpm@10.30.2 --activate
             -   uses: actions/setup-node@v4
                 with:
                     node-version: 22
@@ -123,9 +124,10 @@ jobs:
                 working-directory: PaperlessUI.React
         steps:
             -   uses: actions/checkout@v4
-            -   uses: pnpm/action-setup@v4
-                with:
-                    version: 10
+            -   name: Activate pnpm via corepack
+                run: |
+                    corepack enable
+                    corepack prepare pnpm@10.30.2 --activate
             -   uses: actions/setup-node@v4
                 with:
                     node-version: 22
