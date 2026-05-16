@@ -499,13 +499,13 @@ reviews:
         repo uses one.'
     - mode: error
       name: CI Release Safety
-      instructions: 'Pass/fail criteria: if no workflow/build/release files changed,
-        pass. Fail when a changed workflow removes an existing validation job, removes
-        concurrency from push/PR workflows, adds --admin/force-push/bypass commands,
-        increases token permissions beyond contents:read without inline rationale,
-        exposes secrets in command arguments/logs, changes publish triggers to run
-        outside tags or approved environments, or allows a previously required failing
-        check to be ignored.'
+      instructions: 'Pass/fail criteria: pass only when no workflow/build/release
+        files changed. Fail when a changed workflow/build/release file removes an
+        existing validation job, removes concurrency from push/PR workflows, adds
+        --admin/force-push/bypass commands, increases token permissions beyond
+        contents:read without inline rationale, exposes secrets in command arguments/logs,
+        changes publish triggers to run outside tags or approved environments, or
+        allows a previously required failing check to be ignored.'
     - mode: warning
       name: Tests Match Risk
       instructions: 'Pass/fail criteria: warn when production behavior changes without
