@@ -203,6 +203,24 @@ public class SharedContainerFixture : IAsyncLifetime
 		using CancellationTokenSource overallLinked =
 			CancellationTokenSource.CreateLinkedTokenSource(overallCts.Token, cancellationToken);
 
+		// Force an index-level refresh up front. SearchIndexService writes documents
+		// with Refresh.True (`?refresh=true`), which is supposed to guarantee
+		// immediate searchability — but on slow CI disks the per-document refresh
+		// is observed to not always propagate before the first SearchAsync. The
+		// explicit Indices.RefreshAsync here is defensive and idempotent: locally
+		// it's a no-op (everything's already refreshed), on CI it converts an
+		// invisible flake into a passing search.
+		try
+		{
+			await client.Indices.RefreshAsync(
+				r => r.Indices(client.ElasticsearchClientSettings.DefaultIndex),
+				overallLinked.Token);
+		}
+		catch (OperationCanceledException) when (overallLinked.Token.IsCancellationRequested)
+		{
+			// Fall through to the final attempt below.
+		}
+
 		while (!overallLinked.Token.IsCancellationRequested)
 		{
 			try
