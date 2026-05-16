@@ -20,12 +20,12 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 
 	public SharedRestContainerFixture()
 	{
-		string postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:16-alpine";
-		string rabbitImage = Environment.GetEnvironmentVariable("RABBITMQ_IMAGE") ?? "rabbitmq:3.13-management-alpine";
+		string postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:17-alpine";
+		string rabbitImage = Environment.GetEnvironmentVariable("RABBITMQ_IMAGE") ?? "rabbitmq:4.3.0-management";
 		string minioImage = Environment.GetEnvironmentVariable("MINIO_IMAGE") ??
-		                    "minio/minio:RELEASE.2025-07-23T15-54-02Z";
+		                    "minio/minio:RELEASE.2025-09-07T16-13-09Z";
 		string elasticImage = Environment.GetEnvironmentVariable("ELASTIC_IMAGE") ??
-		                      "docker.elastic.co/elasticsearch/elasticsearch:9.1.3";
+		                      "docker.elastic.co/elasticsearch/elasticsearch:9.4.1";
 
 		_postgres = new PostgreSqlBuilder()
 			.WithImage(postgresImage)

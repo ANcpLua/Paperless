@@ -25,19 +25,20 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
     <PackageVersion Include="Npgsql" Version="$(NpgsqlVersion)" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(NpgsqlVersion)" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(NpgsqlEntityFrameworkCoreVersion)" />
 
     <!-- ASP.NET Core 10 -->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="$(MicrosoftAspNetCoreVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="$(MicrosoftAspNetCoreMvcTestingVersion)" />
 
-    <!-- Microsoft.Extensions.* -->
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="$(MicrosoftExtensionsVersion)" />
+    <!-- Microsoft.Extensions.* runtime line (10.0.x cadence) -->
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="$(MicrosoftExtensionsVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="$(MicrosoftExtensionsVersion)" />
+    <!-- Testing/telemetry extensions track a faster 10.6.x cadence -->
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="$(MicrosoftExtensionsTestingVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="$(MicrosoftExtensionsTestingVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="$(MicrosoftExtensionsTestingVersion)" />
 
     <!-- Test stack (AwesomeAssertions + AwesomeAssertions.Analyzers come from ANcpLua.NET.Sdk.Test). -->
     <PackageVersion Include="MartinCostello.Logging.XUnit.v3" Version="$(MartinCostelloLoggingXUnitV3Version)" />
@@ -79,8 +80,8 @@
          pulled by Nuke.Common) and GHSA-37gx-xxp4-5rgx / GHSA-w3x6-4m5h-cxqf
          (System.Security.Cryptography.Xml 9.0.0). Effective because the SDK turns on
          CentralPackageTransitivePinningEnabled. -->
-    <PackageVersion Include="NuGet.Packaging" Version="7.3.1" />
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.7" />
+    <PackageVersion Include="NuGet.Packaging" Version="7.6.0" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.8" />
   </ItemGroup>
 
 </Project>

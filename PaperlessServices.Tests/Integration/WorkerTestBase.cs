@@ -22,9 +22,9 @@ public class SharedContainerFixture : IAsyncLifetime
 	private const int MinioPort = 9000;
 
 	// Default image versions - override via environment variables for CI flexibility
-	private const string DefaultElasticsearchImage = "docker.elastic.co/elasticsearch/elasticsearch:9.1.3";
-	private const string DefaultMinioImage = "minio/minio:RELEASE.2024-11-07T00-52-20Z";
-	private const string DefaultRabbitmqImage = "rabbitmq:4.0-management-alpine";
+	private const string DefaultElasticsearchImage = "docker.elastic.co/elasticsearch/elasticsearch:9.4.1";
+	private const string DefaultMinioImage = "minio/minio:RELEASE.2025-09-07T16-13-09Z";
+	private const string DefaultRabbitmqImage = "rabbitmq:4.3.0-management";
 
 	private readonly string _bucketName = $"test-{Guid.NewGuid():N}";
 
