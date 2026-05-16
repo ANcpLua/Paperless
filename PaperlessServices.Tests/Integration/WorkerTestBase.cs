@@ -192,27 +192,45 @@ public class SharedContainerFixture : IAsyncLifetime
 		TimeSpan? timeout = null,
 		TimeSpan? pollInterval = null)
 	{
-		timeout ??= TimeSpan.FromSeconds(10);
+		// 30s overall budget: GitHub-hosted runners are markedly slower than local
+		// dev machines and the first SearchAsync after index creation can spend
+		// several seconds priming query caches even after Refresh.True returns.
+		timeout ??= TimeSpan.FromSeconds(30);
 		pollInterval ??= TimeSpan.FromMilliseconds(100);
 
 		ElasticsearchClient client = Services.GetRequiredService<ElasticsearchClient>();
-		using CancellationTokenSource cts = new(timeout.Value);
-		using CancellationTokenSource linked =
-			CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
+		using CancellationTokenSource overallCts = new(timeout.Value);
+		using CancellationTokenSource overallLinked =
+			CancellationTokenSource.CreateLinkedTokenSource(overallCts.Token, cancellationToken);
 
-		while (!linked.Token.IsCancellationRequested)
+		while (!overallLinked.Token.IsCancellationRequested)
 		{
-			SearchResponse<T> response = await client.SearchAsync<T>(configureSearch, linked.Token);
-
-			if (response.Documents.Count > 0)
+			try
 			{
-				return response;
+				SearchResponse<T> response = await client.SearchAsync<T>(configureSearch, overallLinked.Token);
+
+				if (response.Documents.Count > 0)
+				{
+					return response;
+				}
+			}
+			catch (OperationCanceledException) when (overallLinked.Token.IsCancellationRequested)
+			{
+				break;
 			}
 
-			await Task.Delay(pollInterval.Value, linked.Token);
+			try
+			{
+				await Task.Delay(pollInterval.Value, overallLinked.Token);
+			}
+			catch (OperationCanceledException)
+			{
+				break;
+			}
 		}
 
-		// Final attempt
+		// Final attempt with the caller's token only so the assertion sees real
+		// "found nothing" data rather than a TaskCanceledException at the wait boundary.
 		return await client.SearchAsync<T>(configureSearch, cancellationToken);
 	}
 
