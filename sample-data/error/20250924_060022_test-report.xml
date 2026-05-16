@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Documents>
+    <Document>
+        <DocumentId>doc001</DocumentId>
+        <Date>2025-09-24</Date>
+        <AccessCount>5</AccessCount>
+    </Document>
+    <Document>
+        <DocumentId>doc002</DocumentId>
+        <Date>2025-09-24</Date>
+        <AccessCount>3</AccessCount>
+    </Document>
+    <Document>
+        <DocumentId>doc003</DocumentId>
+        <Date>2025-09-24</Date>
+        <AccessCount>8</AccessCount>
+    </Document>
+</Documents>

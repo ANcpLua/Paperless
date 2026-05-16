@@ -1,0 +1,67 @@
+<Project Sdk="ANcpLua.NET.Sdk.Web">
+	<!--
+	IMPORTANT: Web SDK is required for WebApplicationFactory + MTP self-hosted tests.
+	IsTestProject=true opts this Web-SDK project into ANcpLua.NET.Sdk's Tests.targets
+	(MTP detection, AwesomeAssertions implicit, GitHub Actions test logger).
+	-->
+
+	<PropertyGroup>
+		<IsTestProject>true</IsTestProject>
+		<!-- ANcpLua.NET.Sdk's Tests.targets sets these at BeforeBuild; declare here too so the
+		     property graph is correct at restore/eval time (Web SDK ships OutputType=Exe but is
+		     conservative about MTP detection). -->
+		<UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
+		<RootNamespace>PaperlessREST.Tests</RootNamespace>
+		<NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- AwesomeAssertions + AwesomeAssertions.Analyzers are injected by ANcpLua.NET.Sdk.Test (IsTestProject=true). -->
+		<PackageReference Include="Testably.Abstractions"/>
+		<PackageReference Include="Testably.Abstractions.FileSystem.Interface"/>
+		<PackageReference Include="Testably.Abstractions.Testing"/>
+		<PackageReference Include="CreatePdf.NET"/>
+		<PackageReference Include="DotNetEnv"/>
+		<PackageReference Include="Hangfire.MemoryStorage"/>
+		<PackageReference Include="Newtonsoft.Json"/> <!-- Override transitive 11.0.1 (GHSA-5crp-9r3c-p9vr) -->
+		<PackageReference Include="MartinCostello.Logging.XUnit.v3"/>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory"/>
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.Testing"/>
+		<PackageReference Include="Microsoft.Extensions.TimeProvider.Testing"/>
+		<!-- Microsoft.Extensions.Hosting is transitively included by Web SDK -->
+		<PackageReference Include="Minio"/>
+		<PackageReference Include="Moq"/>
+		<PackageReference Include="SWEN3.Paperless.RabbitMq"/>
+		<PackageReference Include="Testcontainers.Elasticsearch"/>
+		<PackageReference Include="Testcontainers.Minio"/>
+		<PackageReference Include="Testcontainers.PostgreSql"/>
+		<PackageReference Include="Testcontainers.RabbitMq"/>
+		<!-- xUnit v3 with MTP v2 support (no VSTest packages needed) -->
+		<PackageReference Include="xunit.v3.mtp-v2"/>
+		<!-- MTP extensions for reporting and coverage -->
+		<PackageReference Include="Microsoft.Testing.Extensions.TrxReport"/>
+		<PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- xunit.runner.json is automatically included by Web SDK -->
+		<Content Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest"/>
+		<!-- .env.test is optional - only include if it exists (not in CI) -->
+		<Content Include="../.env.test" Condition="Exists('../.env.test')">
+			<Link>.env.test</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="Xunit"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\PaperlessREST\PaperlessREST.csproj"/>
+		<ProjectReference Include="..\Paperless.Contracts\Paperless.Contracts.csproj"/>
+	</ItemGroup>
+
+
+</Project>

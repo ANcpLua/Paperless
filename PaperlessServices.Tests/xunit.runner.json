@@ -1,0 +1,19 @@
+{
+	"$schema": "https://xunit.net/schema/current/xunit.runner.schema.json",
+	"diagnosticMessages": true,
+	"methodDisplay": "classAndMethod",
+	"methodDisplayOptions": "replaceUnderscoreWithSpace,useOperatorMonikers",
+	"parallelizeTestCollections": true,
+	"parallelAlgorithm": "aggressive",
+	"maxParallelThreads": "4x",
+	"stopOnFail": false,
+	"failSkips": false,
+	"failWarns": true,
+	"showLiveOutput": true,
+	"culture": "default",
+	"assertEquivalentMaxDepth": 50,
+	"printMaxEnumerableLength": 10,
+	"printMaxObjectDepth": 5,
+	"printMaxObjectMemberCount": 10,
+	"printMaxStringLength": 100
+}

@@ -1,0 +1,77 @@
+﻿# Git
+**/.git
+**/.gitignore
+**/.gitattributes
+
+# IDE
+**/.vs
+**/.vscode
+**/.idea
+**/.settings
+**/.project
+
+# Build output
+**/bin
+**/obj
+**/[Dd]ebug/
+**/[Rr]elease/
+**/[Bb]uild/
+**/[Oo]utput/
+
+# User files
+**/*.*proj.user
+**/*.dbmdl
+**/*.jfm
+
+# Docker files
+**/Dockerfile*
+**/docker-compose*
+**/.dockerignore
+
+# Test projects - exclude from production builds
+**/*.Tests/
+**/*.E2E.Tests/
+**/SampleIntegrationWorkerNOweb/
+**/TestResults/
+**/*.trx
+**/*.coverage
+
+# Package directories
+**/node_modules
+**/packages/
+**/.nuget/
+
+# Environment and config
+**/.env
+**/.env.*
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*tests.json
+**/secrets.dev.yaml
+**/values.dev.yaml
+
+# Documentation
+**/LICENSE
+**/README*
+**/*.md
+
+# Logs and temp files
+**/npm-debug.log
+**/*.log
+**/logs/
+**/*.swp
+**/*.swo
+**/*~
+**/.DS_Store
+**/Thumbs.db
+
+# Other unnecessary files
+**/azds.yaml
+**/charts
+**/nginx.conf
+**/compose.yaml
+**/*.sh
+**/test.txt
+**/test_*.cs
+**/data/
+**/schemas/

@@ -1,0 +1,8 @@
+<Project Sdk="ANcpLua.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

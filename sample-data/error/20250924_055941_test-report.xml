@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AccessReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <ReportDate>2025-09-24</ReportDate>
+    <DocumentAccess>
+        <DocumentId>doc001</DocumentId>
+        <AccessCount>5</AccessCount>
+    </DocumentAccess>
+    <DocumentAccess>
+        <DocumentId>doc002</DocumentId>
+        <AccessCount>3</AccessCount>
+    </DocumentAccess>
+    <DocumentAccess>
+        <DocumentId>doc003</DocumentId>
+        <AccessCount>8</AccessCount>
+    </DocumentAccess>
+</AccessReport>

@@ -1,0 +1,53 @@
+﻿<Project Sdk="ANcpLua.NET.Sdk.Test">
+
+	<PropertyGroup>
+		<!-- ANcpLua.NET.Sdk.Test sets these at target-eval (BeforeBuild), but NUKE / dotnet test
+		     queries the static property graph at restore time and needs OutputType=Exe up front. -->
+		<UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- AwesomeAssertions + AwesomeAssertions.Analyzers are injected by ANcpLua.NET.Sdk.Test. -->
+		<PackageReference Include="CreatePdf.NET"/>
+		<PackageReference Include="DotNetEnv"/>
+		<PackageReference Include="MartinCostello.Logging.XUnit.v3"/>
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.Testing"/>
+		<PackageReference Include="Microsoft.Extensions.TimeProvider.Testing"/>
+		<PackageReference Include="Minio"/>
+		<PackageReference Include="Moq"/>
+		<PackageReference Include="SWEN3.Paperless.RabbitMq"/>
+		<PackageReference Include="Testcontainers.Elasticsearch"/>
+		<PackageReference Include="Testcontainers.Minio"/>
+		<PackageReference Include="Testcontainers.PostgreSql"/>
+		<PackageReference Include="Testcontainers.RabbitMq"/>
+		<!-- xUnit v3 with MTP v2 support (no VSTest packages needed) -->
+		<PackageReference Include="xunit.v3.mtp-v2"/>
+		<!-- MTP extensions for reporting and coverage -->
+		<PackageReference Include="Microsoft.Testing.Extensions.TrxReport"/>
+		<PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest"/>
+		<!-- .env.test is optional - only include if it exists (not in CI) -->
+		<Content Include="../.env.test" Condition="Exists('../.env.test')">
+			<Link>.env.test</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="Xunit"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\PaperlessServices\PaperlessServices.csproj"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="output\"/>
+	</ItemGroup>
+
+
+</Project>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Configuration>
+  <!-- https://learn.microsoft.com/en-us/dotnet/core/additional-tools/dotnet-coverage#settings -->
+  <CodeCoverage>
+    <Attributes>
+      <Exclude>
+        <Attribute>^System\.ObsoleteAttribute$</Attribute>
+        <Attribute>^System\.Diagnostics\.DebuggerHiddenAttribute$</Attribute>
+        <Attribute>^System\.Diagnostics\.DebuggerNonUserCodeAttribute$</Attribute>
+        <Attribute>^System\.CodeDom\.Compiler\.GeneratedCodeAttribute$</Attribute>
+        <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+        <Attribute>^System\.Runtime\.CompilerServices\.CompilerGeneratedAttribute$</Attribute>
+      </Exclude>
+    </Attributes>
+    <Sources>
+      <Exclude>
+        <!-- Generated source files -->
+        <Source>.*[\\/]obj[\\/].*</Source>
+        <Source>.*\.generated\.cs$</Source>
+        <Source>.*\.g\.cs$</Source>
+        <!-- Program.cs (application entry point) -->
+        <Source>.*[\\/]Program\.cs$</Source>
+        <!-- Migrations and EF scaffolding -->
+        <Source>.*[\\/]Migrations[\\/].*</Source>
+      </Exclude>
+    </Sources>
+    <Functions>
+      <Exclude>
+        <!-- Exclude auto-generated property accessors -->
+        <Function>^.*get_.*$</Function>
+        <Function>^.*set_.*$</Function>
+      </Exclude>
+    </Functions>
+  </CodeCoverage>
+</Configuration>

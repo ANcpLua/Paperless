@@ -1,0 +1,63 @@
+<Project Sdk="ANcpLua.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Asp.Versioning.Http.Client"/>
+		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer"/>
+		<PackageReference Include="DotNetEnv"/>
+		<PackageReference Include="ErrorOr"/>
+		<PackageReference Include="ErrorOrAspNetCoreExtensions"/>
+		<PackageReference Include="Hangfire"/>
+		<PackageReference Include="Hangfire.AspNetCore"/>
+		<PackageReference Include="Hangfire.PostgreSql"/>
+		<PackageReference Include="Newtonsoft.Json"/> <!-- Override transitive 11.0.1 (GHSA-5crp-9r3c-p9vr) -->
+		<PackageReference Include="MapsterExtensions.Generator">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Elastic.Clients.Elasticsearch"/>
+		<PackageReference Include="JetBrains.Annotations"/>
+		<PackageReference Include="Mapster.DependencyInjection"/>
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+		<PackageReference Include="Minio"/>
+		<PackageReference Include="Npgsql"/>
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+		<PackageReference Include="Scalar.AspNetCore"/>
+		<PackageReference Include="SWEN3.Paperless.RabbitMq"/>
+		<PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
+		<PackageReference Include="AspNetCore.HealthChecks.Elasticsearch"/>
+		<PackageReference Include="Testably.Abstractions"/>
+		<PackageReference Include="Testably.Abstractions.FileSystem.Interface"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Paperless.Contracts\Paperless.Contracts.csproj"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="..\.dockerignore">
+			<Link>.dockerignore</Link>
+		</Content>
+		<Content Include="Properties\launchSettings.json"/>
+		<Content Include="..\.env" Condition="'$(DOCKER_BUILD)' != 'true' AND Exists('$(MSBuildThisFileDirectory)..\.env')">
+			<Link>.env</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Schemas\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+
+</Project>

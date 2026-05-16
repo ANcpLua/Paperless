@@ -1,0 +1,41 @@
+<Project Sdk="ANcpLua.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<UserSecretsId>paperless-services</UserSecretsId>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="PaperlessServices.Tests"/>
+	</ItemGroup>
+
+	<!-- Microsoft.NET.Sdk.Worker injected these as implicit usings; ANcpLua.NET.Sdk inherits
+	     Microsoft.NET.Sdk, so worker-host namespaces need to be opted in here. -->
+	<ItemGroup>
+		<Using Include="Microsoft.Extensions.Configuration"/>
+		<Using Include="Microsoft.Extensions.DependencyInjection"/>
+		<Using Include="Microsoft.Extensions.Hosting"/>
+		<Using Include="Microsoft.Extensions.Logging"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CreatePdf.NET"/>
+		<PackageReference Include="DotNetEnv"/>
+		<PackageReference Include="Elastic.Clients.Elasticsearch"/>
+		<PackageReference Include="ErrorOr"/>
+		<PackageReference Include="Microsoft.Extensions.Hosting"/>
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations"/>
+		<PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions"/>
+		<PackageReference Include="Minio"/>
+		<PackageReference Include="SWEN3.Paperless.RabbitMq"/>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(DOCKER_BUILD)' != 'true' AND Exists('$(MSBuildThisFileDirectory)..\.env')">
+		<Content Include="..\.env">
+			<Link>.env</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+</Project>

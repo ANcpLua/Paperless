@@ -1,0 +1,137 @@
+# ------------------------------------------------------------------------------
+# CI for Paperless (https://github.com/ANcpLua/Paperless)
+# Backend: NUKE + MTP v2 + xUnit v3, coverage via MTP CodeCoverage extension.
+# Frontends: PaperlessUI.Blazor (built via .NET), PaperlessUI.Angular + .React
+#            (built via pnpm; lint + build only — full E2E lives elsewhere).
+# ------------------------------------------------------------------------------
+
+name: ci
+
+on:
+    push:
+        branches:
+            - main
+            - develop
+            - 'feature/*'
+    pull_request:
+        branches:
+            - main
+            - develop
+
+env:
+    DOTNET_NOLOGO: true
+    DOTNET_CLI_TELEMETRY_OPTOUT: true
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+    DOCKER_HOST: unix:///var/run/docker.sock
+    TESTCONTAINERS_RYUK_DISABLED: false
+
+jobs:
+    backend:
+        name: Build & Test (backend)
+        runs-on: ubuntu-latest
+
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+                with:
+                    fetch-depth: 0
+
+            -   name: Setup .NET 10
+                uses: actions/setup-dotnet@v4
+                with:
+                    dotnet-version: 10.0.x
+
+            -   name: Cache NuGet packages
+                uses: actions/cache@v4
+                with:
+                    path: |
+                        .nuke/temp
+                        ~/.nuget/packages
+                    key: ${{ runner.os }}-nuget-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props') }}
+
+            -   name: Install OCR dependencies
+                run: |
+                    sudo apt-get update
+                    sudo apt-get install -y ghostscript tesseract-ocr tesseract-ocr-eng
+
+            -   name: Unit tests
+                run: ./build.sh UnitTests
+
+            -   name: Integration tests
+                run: ./build.sh IntegrationTests
+
+            -   name: Coverage (Cobertura via MTP)
+                run: ./build.sh Coverage
+
+            -   name: DotCov coverage gate (+ markdown summary)
+                run: ./build.sh ReportCoverage --coverage-min-line 30 --coverage-min-branch 0 --coverage-format markdown --coverage-exclude-generated-param true
+
+            -   name: Upload coverage artifacts
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: coverage
+                    path: Artifacts/coverage/
+                    if-no-files-found: warn
+
+            -   name: Upload coverage to Codecov
+                if: always()
+                uses: codecov/codecov-action@v5
+                with:
+                    files: ./Artifacts/coverage/PaperlessREST.Tests/coverage.cobertura.xml,./Artifacts/coverage/PaperlessServices.Tests/coverage.cobertura.xml
+                    flags: backend
+                    name: codecov-backend
+                    fail_ci_if_error: false
+                    verbose: true
+
+            -   name: Upload test results
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: test-results
+                    path: TestResults/
+                    if-no-files-found: warn
+
+            -   name: Build PaperlessUI.Blazor
+                run: dotnet build PaperlessUI.Blazor/PaperlessUI.Blazor.csproj -c Release --no-restore
+
+    frontend-angular:
+        name: Build (PaperlessUI.Angular)
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: PaperlessUI.Angular
+        steps:
+            -   uses: actions/checkout@v4
+            -   name: Activate pnpm via corepack
+                run: |
+                    corepack enable
+                    corepack prepare pnpm@10.30.2 --activate
+            -   uses: actions/setup-node@v4
+                with:
+                    node-version: 22
+                    cache: pnpm
+                    cache-dependency-path: PaperlessUI.Angular/pnpm-lock.yaml
+            -   run: pnpm install --frozen-lockfile=false
+            -   run: pnpm run build  # ng build defaults to production
+            # `ng test` needs a real browser; opt-in only — wire later via Playwright/Karma headless.
+
+    frontend-react:
+        name: Build (PaperlessUI.React)
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: PaperlessUI.React
+        steps:
+            -   uses: actions/checkout@v4
+            -   name: Activate pnpm via corepack
+                run: |
+                    corepack enable
+                    corepack prepare pnpm@10.30.2 --activate
+            -   uses: actions/setup-node@v4
+                with:
+                    node-version: 22
+                    cache: pnpm
+                    cache-dependency-path: PaperlessUI.React/pnpm-lock.yaml
+            -   run: pnpm install --frozen-lockfile=false
+            -   run: pnpm run build

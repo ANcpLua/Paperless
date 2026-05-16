@@ -1,0 +1,86 @@
+<Project>
+
+  <Import Project="Version.props" />
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Apply central versions to transitive deps too, so the GHSA pins below propagate
+         into Pipeline (which still runs on Microsoft.NET.Sdk for NUKE compatibility). -->
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- API versioning -->
+    <PackageVersion Include="Asp.Versioning.Http.Client" Version="$(AspVersioningHttpClientVersion)" />
+    <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="$(AspVersioningMvcApiExplorerVersion)" />
+
+    <!-- Health checks -->
+    <PackageVersion Include="AspNetCore.HealthChecks.Elasticsearch" Version="$(AspNetCoreHealthChecksVersion)" />
+    <PackageVersion Include="AspNetCore.HealthChecks.NpgSql" Version="$(AspNetCoreHealthChecksVersion)" />
+
+    <!-- EF Core 10 -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Abstractions" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Analyzers" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <PackageVersion Include="Npgsql" Version="$(NpgsqlVersion)" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(NpgsqlVersion)" />
+
+    <!-- ASP.NET Core 10 -->
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="$(MicrosoftAspNetCoreVersion)" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="$(MicrosoftAspNetCoreMvcTestingVersion)" />
+
+    <!-- Microsoft.Extensions.* -->
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="$(MicrosoftExtensionsVersion)" />
+
+    <!-- Test stack (AwesomeAssertions + AwesomeAssertions.Analyzers come from ANcpLua.NET.Sdk.Test). -->
+    <PackageVersion Include="MartinCostello.Logging.XUnit.v3" Version="$(MartinCostelloLoggingXUnitV3Version)" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="$(MicrosoftTestingExtensionsCodeCoverageVersion)" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="$(MicrosoftTestingExtensionsTrxReportVersion)" />
+    <PackageVersion Include="Moq" Version="$(MoqVersion)" />
+    <PackageVersion Include="xunit.v3.mtp-v2" Version="$(XunitV3MtpV2Version)" />
+
+    <!-- Testably (in-memory filesystem) -->
+    <PackageVersion Include="Testably.Abstractions" Version="$(TestablyAbstractionsVersion)" />
+    <PackageVersion Include="Testably.Abstractions.FileSystem.Interface" Version="$(TestablyAbstractionsVersion)" />
+    <PackageVersion Include="Testably.Abstractions.Testing" Version="$(TestablyAbstractionsTestingVersion)" />
+
+    <!-- Testcontainers -->
+    <PackageVersion Include="Testcontainers.Elasticsearch" Version="$(TestcontainersVersion)" />
+    <PackageVersion Include="Testcontainers.Minio" Version="$(TestcontainersVersion)" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="$(TestcontainersVersion)" />
+    <PackageVersion Include="Testcontainers.RabbitMq" Version="$(TestcontainersVersion)" />
+
+    <!-- Domain libraries -->
+    <PackageVersion Include="CreatePdf.NET" Version="$(CreatePdfNETVersion)" />
+    <PackageVersion Include="DotNetEnv" Version="$(DotNetEnvVersion)" />
+    <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="$(ElasticClientsElasticsearchVersion)" />
+    <PackageVersion Include="ErrorOr" Version="$(ErrorOrVersion)" />
+    <PackageVersion Include="ErrorOrAspNetCoreExtensions" Version="$(ErrorOrAspNetCoreExtensionsVersion)" />
+    <PackageVersion Include="Hangfire" Version="$(HangfireVersion)" />
+    <PackageVersion Include="Hangfire.AspNetCore" Version="$(HangfireVersion)" />
+    <PackageVersion Include="Hangfire.MemoryStorage" Version="$(HangfireMemoryStorageVersion)" />
+    <PackageVersion Include="Hangfire.PostgreSql" Version="$(HangfirePostgreSqlVersion)" />
+    <PackageVersion Include="JetBrains.Annotations" Version="$(JetBrainsAnnotationsVersion)" />
+    <PackageVersion Include="Mapster.DependencyInjection" Version="$(MapsterDependencyInjectionVersion)" />
+    <PackageVersion Include="MapsterExtensions.Generator" Version="$(MapsterExtensionsGeneratorVersion)" />
+    <PackageVersion Include="Minio" Version="$(MinioVersion)" />
+    <PackageVersion Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="$(ScalarAspNetCoreVersion)" />
+    <PackageVersion Include="SWEN3.Paperless.RabbitMq" Version="$(SwenPaperlessRabbitMqVersion)" />
+
+    <!-- Transitive security overrides: close GHSA-g4vj-cjjj-v7hg (NuGet.Packaging 6.12.1
+         pulled by Nuke.Common) and GHSA-37gx-xxp4-5rgx / GHSA-w3x6-4m5h-cxqf
+         (System.Security.Cryptography.Xml 9.0.0). Effective because the SDK turns on
+         CentralPackageTransitivePinningEnabled. -->
+    <PackageVersion Include="NuGet.Packaging" Version="7.3.1" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.7" />
+  </ItemGroup>
+
+</Project>

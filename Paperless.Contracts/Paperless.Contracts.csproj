@@ -1,0 +1,7 @@
+<Project Sdk="ANcpLua.NET.Sdk">
+
+	<PropertyGroup>
+		<RootNamespace>Paperless.Contracts</RootNamespace>
+	</PropertyGroup>
+
+</Project>
