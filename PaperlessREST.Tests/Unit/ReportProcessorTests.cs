@@ -551,13 +551,13 @@ public sealed class ReportProcessorTests : IDisposable
 	{
 		// Arrange — "2024-01-15+02:00" satisfies xs:date (which permits timezone suffix)
 		// but DateOnly.TryParseExact("yyyy-MM-dd", ...) rejects it.
-		const string xmlContent = """
+		const string XmlContent = """
 		                          <?xml version="1.0" encoding="UTF-8"?>
 		                          <accessReport date="2024-01-15+02:00">
 		                          </accessReport>
 		                          """;
 
-		string filePath = CreateTestFile("date-with-tz.xml", xmlContent);
+		string filePath = CreateTestFile("date-with-tz.xml", XmlContent);
 		ReportProcessor sut = CreateSut();
 
 		// Act
