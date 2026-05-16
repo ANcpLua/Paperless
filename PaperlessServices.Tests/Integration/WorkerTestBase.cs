@@ -32,6 +32,10 @@ public class SharedContainerFixture : IAsyncLifetime
 			Environment.GetEnvironmentVariable("ELASTIC_IMAGE") ?? DefaultElasticsearchImage)
 		.WithEnvironment("discovery.type", "single-node")
 		.WithEnvironment("xpack.security.enabled", "false")
+		// Required so Testcontainers' ElasticsearchConfiguration.TlsEnabled evaluates to false
+		// (it AND-s xpack.security.enabled with xpack.security.http.ssl.enabled). Without this,
+		// the built-in wait strategy probes HTTPS while ES listens on plain HTTP, and hangs.
+		.WithEnvironment("xpack.security.http.ssl.enabled", "false")
 		.WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
 		.Build();
 
