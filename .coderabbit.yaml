@@ -226,12 +226,10 @@ reviews:
       drift. Generated clients or schemas must be regenerated from the source contract;
       do not hand-edit generated output.
   - path: "**/*.json"
-    instructions: TypeScript/JavaScript review. Flag `any` without a narrow justification,
-      unsafe casts, stale hook dependencies, direct network calls that bypass shared
-      clients, client/server contract drift, swallowed promise rejections, accessibility
-      regressions, missing loading/error states, bundle-heavy dependencies, and package-script
-      drift. Generated clients or schemas must be regenerated from the source contract;
-      do not hand-edit generated output.
+    instructions: JSON review. Validate well-formed JSON, schema/manifest contract
+      drift, required fields, dependency version changes, package/tsconfig/tooling
+      semantics, and generated-output provenance. Do not apply TypeScript runtime
+      or hook guidance to plain JSON files.
   - path: "**/*.spec.ts"
     instructions: Frontend tests. Prefer user-visible assertions by role/text/state,
       not implementation selectors. Avoid fixed sleeps and brittle snapshots. Validate
@@ -309,6 +307,23 @@ reviews:
       runtime images, non-root execution where practical, healthchecks for long-running
       services, explicit versions for infrastructure images, no baked secrets, and
       alignment between compose ports, appsettings/env vars, and test infrastructure.
+  - path: "**/semantic-convention/model/**/*.yaml"
+    instructions: OpenTelemetry semantic-convention model review. Apply Weaver and
+      OpenTelemetry semantic-convention rules only here and in TypeSpec files; validate
+      attribute naming, requirement levels, stability, deprecation/migration notes,
+      schema-version drift, generated-output provenance, and cross-language model
+      projection consistency.
+  - path: "**/semantic-convention/model/**/*.yml"
+    instructions: OpenTelemetry semantic-convention model review. Apply Weaver and
+      OpenTelemetry semantic-convention rules only here and in TypeSpec files; validate
+      attribute naming, requirement levels, stability, deprecation/migration notes,
+      schema-version drift, generated-output provenance, and cross-language model
+      projection consistency.
+  - path: "**/*.tsp"
+    instructions: TypeSpec model review. Validate service/model contracts, decorators,
+      versioning, emitted OpenAPI/client drift, generated-output provenance, and
+      compatibility with REST consumers; apply OpenTelemetry semantic-convention checks
+      only when the TypeSpec file models telemetry or semantic-convention contracts.
   - path: "**/*.md"
     instructions: 'Documentation review. Treat docs as executable team memory: flag
       instructions that disagree with actual scripts, package versions, branch protection,
@@ -470,8 +485,11 @@ reviews:
       name: Async And Cancellation Safe
       instructions: 'Pass/fail criteria: fail C#/TS/Python changes that introduce
         sync-over-async, unobserved fire-and-forget work, missing CancellationToken/AbortSignal
-        propagation on public/internal async boundaries, sleeps for synchronization,
-        or resource disposal paths that can drop in-flight work.'
+        propagation on public/internal async boundaries when the callee exposes a token/signal
+        accepting overload, sleeps for synchronization, or resource disposal paths that can
+        drop in-flight work. Pass missing propagation when the available public dependency
+        API exposes no cancellation-capable overload; report that as dependency debt only
+        if the changed code owns that dependency contract.'
     - mode: error
       name: Public Contract Documented
       instructions: 'Pass/fail criteria: fail if public APIs, endpoint schemas, CLI
@@ -481,11 +499,13 @@ reviews:
         repo uses one.'
     - mode: error
       name: CI Release Safety
-      instructions: 'Pass/fail criteria: fail workflow/build/release changes that
-        reduce required validation, introduce admin bypasses, broaden token permissions
-        without justification, leak secrets, remove concurrency where needed, make
-        publish steps run on the wrong trigger, or allow failed required checks to
-        be ignored.'
+      instructions: 'Pass/fail criteria: pass only when no workflow/build/release
+        files changed. Fail when a changed workflow/build/release file removes an
+        existing validation job, removes concurrency from push/PR workflows, adds
+        --admin/force-push/bypass commands, increases token permissions beyond
+        contents:read without inline rationale, exposes secrets in command arguments/logs,
+        changes publish triggers to run outside tags or approved environments, or
+        allows a previously required failing check to be ignored.'
     - mode: warning
       name: Tests Match Risk
       instructions: 'Pass/fail criteria: warn when production behavior changes without
@@ -662,7 +682,7 @@ knowledge_base:
   pull_requests:
     scope: global
   mcp:
-    usage: enabled
+    usage: auto
   linked_repositories:
   - repository: ANcpLua/ANcpLua.Agents
     instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
