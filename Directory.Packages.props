@@ -24,6 +24,8 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Analyzers" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <!-- Transitive pin: Hangfire.PostgreSql 1.21.1 pulls EF Core Relational 10.0.4 — force-unify to 10.0.8 via CentralPackageTransitivePinningEnabled -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
     <PackageVersion Include="Npgsql" Version="$(NpgsqlVersion)" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(NpgsqlEntityFrameworkCoreVersion)" />
 
@@ -44,6 +46,8 @@
     <PackageVersion Include="MartinCostello.Logging.XUnit.v3" Version="$(MartinCostelloLoggingXUnitV3Version)" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="$(MicrosoftTestingExtensionsCodeCoverageVersion)" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="$(MicrosoftTestingExtensionsTrxReportVersion)" />
+    <!-- Transitive pin: TrxReport 2.2.3 needs Microsoft.Testing.Platform 2.2.3, but xunit.v3.mtp-v2 3.2.2 ships Platform 2.1.0 — force-unify -->
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="$(MicrosoftTestingExtensionsTrxReportVersion)" />
     <PackageVersion Include="Moq" Version="$(MoqVersion)" />
     <PackageVersion Include="xunit.v3.mtp-v2" Version="$(XunitV3MtpV2Version)" />
 

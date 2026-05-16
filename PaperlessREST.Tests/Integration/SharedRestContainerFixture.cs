@@ -27,22 +27,18 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 		string elasticImage = Environment.GetEnvironmentVariable("ELASTIC_IMAGE") ??
 		                      "docker.elastic.co/elasticsearch/elasticsearch:9.4.1";
 
-		_postgres = new PostgreSqlBuilder()
-			.WithImage(postgresImage)
+		_postgres = new PostgreSqlBuilder(postgresImage)
 			.WithWaitStrategy(Wait.ForUnixContainer()
 				.UntilMessageIsLogged("database system is ready to accept connections"))
 			.Build();
 
-		_rabbit = new RabbitMqBuilder()
-			.WithImage(rabbitImage)
+		_rabbit = new RabbitMqBuilder(rabbitImage)
 			.Build();
 
-		_minio = new MinioBuilder()
-			.WithImage(minioImage)
+		_minio = new MinioBuilder(minioImage)
 			.Build();
 
-		_elastic = new ElasticsearchBuilder()
-			.WithImage(elasticImage)
+		_elastic = new ElasticsearchBuilder(elasticImage)
 			.WithEnvironment("discovery.type", "single-node")
 			.WithEnvironment("xpack.security.enabled", "false")
 			.WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
