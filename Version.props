@@ -25,7 +25,8 @@
     <MoqVersion>4.20.72</MoqVersion>
     <XunitV3MtpV2Version>3.2.2</XunitV3MtpV2Version>
     <MicrosoftTestingExtensionsCodeCoverageVersion>18.6.2</MicrosoftTestingExtensionsCodeCoverageVersion>
-    <MicrosoftTestingExtensionsTrxReportVersion>2.2.3</MicrosoftTestingExtensionsTrxReportVersion>
+    <!-- TrxReport held at 2.0.2 — 2.2.3 needs Microsoft.Testing.Platform 2.2.3 but the .NET 10 SDK implicitly pins Platform at 2.1.0 (NU1009 blocks override) -->
+    <MicrosoftTestingExtensionsTrxReportVersion>2.0.2</MicrosoftTestingExtensionsTrxReportVersion>
 
     <!-- Testably (in-memory filesystem) -->
     <TestablyAbstractionsVersion>10.2.0</TestablyAbstractionsVersion>

@@ -13,15 +13,7 @@
     "generate": "pnpm run generate:openapi && pnpm run generate:types"
   },
   "private": true,
-  "packageManager": "pnpm@11.1.2",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "esbuild",
-      "lmdb",
-      "msgpackr-extract"
-    ]
-  },
+  "packageManager": "pnpm@10.30.2",
   "dependencies": {
     "@angular/common": "^21.2.0",
     "@angular/compiler": "^21.2.0",
