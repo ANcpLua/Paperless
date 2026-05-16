@@ -32,6 +32,10 @@ public class SharedContainerFixture : IAsyncLifetime
 			Environment.GetEnvironmentVariable("ELASTIC_IMAGE") ?? DefaultElasticsearchImage)
 		.WithEnvironment("discovery.type", "single-node")
 		.WithEnvironment("xpack.security.enabled", "false")
+		// Required so Testcontainers' ElasticsearchConfiguration.TlsEnabled evaluates to false
+		// (it AND-s xpack.security.enabled with xpack.security.http.ssl.enabled). Without this,
+		// the built-in wait strategy probes HTTPS while ES listens on plain HTTP, and hangs.
+		.WithEnvironment("xpack.security.http.ssl.enabled", "false")
 		.WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
 		.Build();
 
@@ -188,27 +192,63 @@ public class SharedContainerFixture : IAsyncLifetime
 		TimeSpan? timeout = null,
 		TimeSpan? pollInterval = null)
 	{
-		timeout ??= TimeSpan.FromSeconds(10);
+		// 30s overall budget: GitHub-hosted runners are markedly slower than local
+		// dev machines and the first SearchAsync after index creation can spend
+		// several seconds priming query caches even after Refresh.True returns.
+		timeout ??= TimeSpan.FromSeconds(30);
 		pollInterval ??= TimeSpan.FromMilliseconds(100);
 
 		ElasticsearchClient client = Services.GetRequiredService<ElasticsearchClient>();
-		using CancellationTokenSource cts = new(timeout.Value);
-		using CancellationTokenSource linked =
-			CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
+		using CancellationTokenSource overallCts = new(timeout.Value);
+		using CancellationTokenSource overallLinked =
+			CancellationTokenSource.CreateLinkedTokenSource(overallCts.Token, cancellationToken);
 
-		while (!linked.Token.IsCancellationRequested)
+		// Force an index-level refresh up front. SearchIndexService writes documents
+		// with Refresh.True (`?refresh=true`), which is supposed to guarantee
+		// immediate searchability — but on slow CI disks the per-document refresh
+		// is observed to not always propagate before the first SearchAsync. The
+		// explicit Indices.RefreshAsync here is defensive and idempotent: locally
+		// it's a no-op (everything's already refreshed), on CI it converts an
+		// invisible flake into a passing search.
+		try
 		{
-			SearchResponse<T> response = await client.SearchAsync<T>(configureSearch, linked.Token);
-
-			if (response.Documents.Count > 0)
-			{
-				return response;
-			}
-
-			await Task.Delay(pollInterval.Value, linked.Token);
+			await client.Indices.RefreshAsync(
+				r => r.Indices(client.ElasticsearchClientSettings.DefaultIndex),
+				overallLinked.Token);
+		}
+		catch (OperationCanceledException) when (overallLinked.Token.IsCancellationRequested)
+		{
+			// Fall through to the final attempt below.
 		}
 
-		// Final attempt
+		while (!overallLinked.Token.IsCancellationRequested)
+		{
+			try
+			{
+				SearchResponse<T> response = await client.SearchAsync<T>(configureSearch, overallLinked.Token);
+
+				if (response.Documents.Count > 0)
+				{
+					return response;
+				}
+			}
+			catch (OperationCanceledException) when (overallLinked.Token.IsCancellationRequested)
+			{
+				break;
+			}
+
+			try
+			{
+				await Task.Delay(pollInterval.Value, overallLinked.Token);
+			}
+			catch (OperationCanceledException)
+			{
+				break;
+			}
+		}
+
+		// Final attempt with the caller's token only so the assertion sees real
+		// "found nothing" data rather than a TaskCanceledException at the wait boundary.
 		return await client.SearchAsync<T>(configureSearch, cancellationToken);
 	}
 
