@@ -22,7 +22,7 @@ public class SharedContainerFixture : IAsyncLifetime
 	private const int MinioPort = 9000;
 
 	// Default image versions - override via environment variables for CI flexibility
-	private const string DefaultElasticsearchImage = "docker.elastic.co/elasticsearch/elasticsearch:9.4.1";
+	private const string DefaultElasticsearchImage = "docker.elastic.co/elasticsearch/elasticsearch:9.1.3";
 	private const string DefaultMinioImage = "minio/minio:RELEASE.2025-09-07T16-13-09Z";
 	private const string DefaultRabbitmqImage = "rabbitmq:4.3.0-management";
 
@@ -114,14 +114,21 @@ public class SharedContainerFixture : IAsyncLifetime
 
 	public async ValueTask DisposeAsync()
 	{
-		await _host.StopAsync();
-		_host.Dispose();
+		// _host is assigned in InitializeAsync. If init throws before that line
+		// (e.g. a container wait-strategy times out), _host is still null and a
+		// naive `_host.StopAsync()` here NREs — which masks the real init error
+		// in xUnit's collection-fixture cleanup report. Guard the host, and
+		// swallow per-container Dispose failures for the same reason.
+		if (_host is not null)
+		{
+			try { await _host.StopAsync(); }
+			catch { /* best-effort: don't mask the InitializeAsync exception */ }
+			_host.Dispose();
+		}
 
-		await Task.WhenAll(
-			_rabbit.DisposeAsync().AsTask(),
-			_minio.DisposeAsync().AsTask(),
-			_elastic.DisposeAsync().AsTask()
-		);
+		try { await _rabbit.DisposeAsync(); } catch { /* best-effort */ }
+		try { await _minio.DisposeAsync(); } catch { /* best-effort */ }
+		try { await _elastic.DisposeAsync(); } catch { /* best-effort */ }
 	}
 
 	public async Task<string> UploadPdfAsync(string content)

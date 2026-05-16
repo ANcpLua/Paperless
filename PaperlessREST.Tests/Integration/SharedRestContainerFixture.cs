@@ -25,7 +25,7 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 		string minioImage = Environment.GetEnvironmentVariable("MINIO_IMAGE") ??
 		                    "minio/minio:RELEASE.2025-09-07T16-13-09Z";
 		string elasticImage = Environment.GetEnvironmentVariable("ELASTIC_IMAGE") ??
-		                      "docker.elastic.co/elasticsearch/elasticsearch:9.4.1";
+		                      "docker.elastic.co/elasticsearch/elasticsearch:9.1.3";
 
 		_postgres = new PostgreSqlBuilder(postgresImage)
 			.WithWaitStrategy(Wait.ForUnixContainer()
