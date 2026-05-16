@@ -114,14 +114,21 @@ public class SharedContainerFixture : IAsyncLifetime
 
 	public async ValueTask DisposeAsync()
 	{
-		await _host.StopAsync();
-		_host.Dispose();
+		// _host is assigned in InitializeAsync. If init throws before that line
+		// (e.g. a container wait-strategy times out), _host is still null and a
+		// naive `_host.StopAsync()` here NREs — which masks the real init error
+		// in xUnit's collection-fixture cleanup report. Guard the host, and
+		// swallow per-container Dispose failures for the same reason.
+		if (_host is not null)
+		{
+			try { await _host.StopAsync(); }
+			catch { /* best-effort: don't mask the InitializeAsync exception */ }
+			_host.Dispose();
+		}
 
-		await Task.WhenAll(
-			_rabbit.DisposeAsync().AsTask(),
-			_minio.DisposeAsync().AsTask(),
-			_elastic.DisposeAsync().AsTask()
-		);
+		try { await _rabbit.DisposeAsync(); } catch { /* best-effort */ }
+		try { await _minio.DisposeAsync(); } catch { /* best-effort */ }
+		try { await _elastic.DisposeAsync(); } catch { /* best-effort */ }
 	}
 
 	public async Task<string> UploadPdfAsync(string content)
