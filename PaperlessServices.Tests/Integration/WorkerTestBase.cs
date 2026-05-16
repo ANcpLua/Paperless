@@ -114,8 +114,11 @@ public class SharedContainerFixture : IAsyncLifetime
 
 	public async ValueTask DisposeAsync()
 	{
-		await _host.StopAsync();
-		_host.Dispose();
+		if (_host is not null)
+		{
+			await _host.StopAsync();
+			_host.Dispose();
+		}
 
 		await Task.WhenAll(
 			_rabbit.DisposeAsync().AsTask(),
