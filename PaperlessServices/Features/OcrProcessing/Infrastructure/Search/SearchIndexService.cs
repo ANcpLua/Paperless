@@ -50,7 +50,7 @@ public class SearchIndexService(
 				processedAt = now
 				// storagePath deliberately excluded - internal detail not exposed in search results
 				// summary will be added later by GenAI service
-			}, i => i.Id(id.ToString()).Refresh(Refresh.True), cancellationToken);
+			}, i => i.Index(options.Value.DefaultIndex).Id(id.ToString()).Refresh(Refresh.True), cancellationToken);
 
 			LogIndexResult(id, response.IsValidResponse);
 		}

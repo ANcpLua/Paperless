@@ -113,9 +113,13 @@ public class SearchIndexConcurrencyTests(SharedContainerFixture fixture)
 		CountCreateIndexLogs(collector, indexName).Should().Be(0,
 			"InitializeAsync must skip the create path when ExistsAsync returns true");
 
-		// Document was still indexed successfully via the existing index.
-		GetResponse<JsonElement> response = await fixture.WaitForDocumentAsync<JsonElement>(
-			documentId.ToString(), TestContext.Current.CancellationToken);
+		// Document was still indexed successfully into the SUT's pre-created index.
+		// We query that index directly — fixture.WaitForDocumentAsync uses the client's
+		// DefaultIndex, which is the shared fixture index, not this test's per-test index.
+		GetResponse<JsonElement> response = await ElasticClient.GetAsync<JsonElement>(
+			documentId.ToString(),
+			g => g.Index(indexName),
+			TestContext.Current.CancellationToken);
 		response.Found.Should().BeTrue("document should be indexed in the pre-created index");
 	}
 
