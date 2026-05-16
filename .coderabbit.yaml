@@ -485,8 +485,11 @@ reviews:
       name: Async And Cancellation Safe
       instructions: 'Pass/fail criteria: fail C#/TS/Python changes that introduce
         sync-over-async, unobserved fire-and-forget work, missing CancellationToken/AbortSignal
-        propagation on public/internal async boundaries, sleeps for synchronization,
-        or resource disposal paths that can drop in-flight work.'
+        propagation on public/internal async boundaries when the callee exposes a token/signal
+        accepting overload, sleeps for synchronization, or resource disposal paths that can
+        drop in-flight work. Pass missing propagation when the available public dependency
+        API exposes no cancellation-capable overload; report that as dependency debt only
+        if the changed code owns that dependency contract.'
     - mode: error
       name: Public Contract Documented
       instructions: 'Pass/fail criteria: fail if public APIs, endpoint schemas, CLI
