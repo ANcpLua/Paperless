@@ -21,10 +21,9 @@ public sealed class DatabaseFixture : IAsyncLifetime
 
 	public DatabaseFixture()
 	{
-		string postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:16-alpine";
+		string postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:17-alpine";
 
-		_container = new PostgreSqlBuilder()
-			.WithImage(postgresImage)
+		_container = new PostgreSqlBuilder(postgresImage)
 			.WithWaitStrategy(Wait.ForUnixContainer()
 				.UntilMessageIsLogged("database system is ready to accept connections"))
 			.Build();
