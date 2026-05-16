@@ -307,6 +307,23 @@ reviews:
       runtime images, non-root execution where practical, healthchecks for long-running
       services, explicit versions for infrastructure images, no baked secrets, and
       alignment between compose ports, appsettings/env vars, and test infrastructure.
+  - path: "**/semantic-convention/model/**/*.yaml"
+    instructions: OpenTelemetry semantic-convention model review. Apply Weaver and
+      OpenTelemetry semantic-convention rules only here and in TypeSpec files; validate
+      attribute naming, requirement levels, stability, deprecation/migration notes,
+      schema-version drift, generated-output provenance, and cross-language model
+      projection consistency.
+  - path: "**/semantic-convention/model/**/*.yml"
+    instructions: OpenTelemetry semantic-convention model review. Apply Weaver and
+      OpenTelemetry semantic-convention rules only here and in TypeSpec files; validate
+      attribute naming, requirement levels, stability, deprecation/migration notes,
+      schema-version drift, generated-output provenance, and cross-language model
+      projection consistency.
+  - path: "**/*.tsp"
+    instructions: TypeSpec model review. Validate service/model contracts, decorators,
+      versioning, emitted OpenAPI/client drift, generated-output provenance, and
+      compatibility with REST consumers; apply OpenTelemetry semantic-convention checks
+      only when the TypeSpec file models telemetry or semantic-convention contracts.
   - path: "**/*.md"
     instructions: 'Documentation review. Treat docs as executable team memory: flag
       instructions that disagree with actual scripts, package versions, branch protection,
