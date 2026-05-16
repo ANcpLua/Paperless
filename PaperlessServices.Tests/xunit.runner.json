@@ -4,7 +4,7 @@
 	"methodDisplay": "classAndMethod",
 	"methodDisplayOptions": "replaceUnderscoreWithSpace,useOperatorMonikers",
 	"parallelizeTestCollections": true,
-	"parallelAlgorithm": "aggressive",
+	"parallelAlgorithm": "conservative",
 	"maxParallelThreads": "4x",
 	"stopOnFail": false,
 	"failSkips": false,
