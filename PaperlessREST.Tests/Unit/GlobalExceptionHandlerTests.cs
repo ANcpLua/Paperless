@@ -334,19 +334,29 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	[Fact]
 	public async Task TryHandleAsync_UsesTraceIdentifierWhenNoActivity()
 	{
-		// Arrange
+		// Arrange — Activity.Current is AsyncLocal-backed and leaks across tests in
+		// the same async context if not restored. Wrap the override in try/finally
+		// so a future test in this class doesn't inherit a null Activity unexpectedly.
+		Activity? savedActivity = Activity.Current;
 		Activity.Current = null;
-		DefaultHttpContext httpContext = CreateHttpContext();
-		httpContext.TraceIdentifier = TestTraceId;
-		SetupProblemDetailsService();
-		GlobalExceptionHandler sut = CreateSut();
+		try
+		{
+			DefaultHttpContext httpContext = CreateHttpContext();
+			httpContext.TraceIdentifier = TestTraceId;
+			SetupProblemDetailsService();
+			GlobalExceptionHandler sut = CreateSut();
 
-		// Act
-		await sut.TryHandleAsync(httpContext, new InvalidOperationException(), TestContext.Current.CancellationToken);
+			// Act
+			await sut.TryHandleAsync(httpContext, new InvalidOperationException(), TestContext.Current.CancellationToken);
 
-		// Assert
-		_logCollector.GetSnapshot()
-			.Should().Contain(log => log.Message.Contains(TestTraceId, StringComparison.Ordinal));
+			// Assert
+			_logCollector.GetSnapshot()
+				.Should().Contain(log => log.Message.Contains(TestTraceId, StringComparison.Ordinal));
+		}
+		finally
+		{
+			Activity.Current = savedActivity;
+		}
 	}
 
 	private GlobalExceptionHandler CreateSut() =>
