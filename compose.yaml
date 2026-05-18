@@ -3,6 +3,11 @@ services:
     # ════════════════════════════════════════════════════════════════════════
     # OBSERVABILITY
     # ════════════════════════════════════════════════════════════════════════
+    # LOCAL DEV ONLY: Aspire dashboard is exposed on :18888 with auth=Unsecured
+    # so the developer can open it without configuring OIDC. Do NOT deploy this
+    # compose file to a host reachable from outside localhost — move the
+    # dashboard service to a compose.override.yaml or add an auth mode before
+    # binding to anything other than 127.0.0.1.
     aspire-dashboard:
         container_name: paperless-dashboard
         image: mcr.microsoft.com/dotnet/aspire-dashboard:latest

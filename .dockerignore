@@ -68,10 +68,15 @@
 # Other unnecessary files
 **/azds.yaml
 **/charts
-**/nginx.conf
 **/compose.yaml
-**/*.sh
 **/test.txt
 **/test_*.cs
 **/data/
 **/schemas/
+
+# Repo-root build bootstrappers (NUKE entrypoints, not shipped to images).
+# Scoped exclusion (was '**/*.sh', which would silently swallow any future
+# entrypoint scripts under PaperlessREST/scripts/ or PaperlessServices/scripts/).
+/build.sh
+/build.cmd
+/build.ps1
