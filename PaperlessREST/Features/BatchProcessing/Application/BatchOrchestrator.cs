@@ -102,7 +102,12 @@ public sealed class BatchOrchestrator(
 
 	internal async Task<bool> ProcessFileAsync(string path, CancellationToken ct)
 	{
-		string originalName = Path.GetFileName(path).Replace(ProcessingExt, "");
+		// Trim the .processing suffix only; .Replace would strip embedded occurrences
+		// in pathological filenames like "report.processing.xml.processing".
+		string fileName = Path.GetFileName(path);
+		string originalName = fileName.EndsWith(ProcessingExt, StringComparison.Ordinal)
+			? fileName[..^ProcessingExt.Length]
+			: fileName;
 
 		logger.LogInformation("Processing file: {File}", originalName);
 
