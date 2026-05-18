@@ -68,9 +68,23 @@ public class GenAiResultListener(
 
 			if (updateResult.IsError)
 			{
+				if (updateResult.FirstError.Type == ErrorType.NotFound)
+				{
+					// Document was deleted between OCR and GenAI summary; updating is a no-op.
+					// Ack — the message is processed (idempotent outcome).
+					logger.LogWarning(
+						"Document {DocumentId} no longer exists; dropping GenAI summary - {Error}",
+						genAiEvent.DocumentId, updateResult.FirstError.Description);
+					await consumer.AckAsync();
+					return;
+				}
+
+				// Real failure (infrastructure, validation, etc.) — nack without requeue so
+				// the message goes to the DLQ instead of being silently dropped. Matches
+				// OcrResultListener.ProcessMessage.
 				logger.LogWarning("Failed to update document {DocumentId} with GenAI summary - {Error}",
 					genAiEvent.DocumentId, updateResult.FirstError.Description);
-				await consumer.AckAsync();
+				await consumer.NackAsync(false);
 				return;
 			}
 
