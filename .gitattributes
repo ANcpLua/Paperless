@@ -1,17 +1,21 @@
-# Normalize line endings
-* text=auto
+# Auto detect text files and normalize to LF
+* text=auto eol=lf
 
-# Prevent files from being exported
-.gitattributes export-ignore
-.gitignore     export-ignore
+# Force specific file types to LF
+*.cs text eol=lf
+*.csproj text eol=lf
+*.props text eol=lf
+*.targets text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sln text eol=lf
 
-# ReSharper DotSettings files are in Unix Format
-*.DotSettings text eol=lf
-
-# MonoDevelop on Linux uses CRLF for these files
-*.sln    text    eol=crlf
-
-# Allows checking out and developing in Windows
-# while mounting and running tests in Linux
-*.sh    text eol=lf
-build   text eol=lf
+# Binary files
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.nupkg binary
