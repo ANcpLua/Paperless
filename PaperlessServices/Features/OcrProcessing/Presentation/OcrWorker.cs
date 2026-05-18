@@ -61,14 +61,10 @@ public class OcrWorker(
 			}
 
 			OcrEvent ocrResult = result.Value;
-			OcrEvent completedEvent = new(
-				request.JobId,
-				"Completed",
-				ocrResult.Text,
-				ocrResult.ProcessedAt
-			);
 
-			await publisher.PublishOcrEventAsync(completedEvent);
+			// Publish the processor's result directly — reconstructing an OcrEvent with
+			// identical field values added no behavior and obscured the pass-through.
+			await publisher.PublishOcrEventAsync(ocrResult);
 
 			GenAICommand genAiCommand = new(request.JobId, ocrResult.Text!);
 			await publisher.PublishGenAICommandAsync(genAiCommand);
