@@ -106,8 +106,9 @@ jobs:
                     path: TestResults/
                     if-no-files-found: warn
 
-            -   name: Build PaperlessUI.Blazor
-                run: dotnet build PaperlessUI.Blazor/PaperlessUI.Blazor.csproj -c Release --no-restore
+            # PaperlessUI.Blazor is currently a scaffold-only project (no
+            # Paperless code). Once a real Paperless page is implemented,
+            # re-add it to Paperless.slnx and reintroduce the build step here.
 
     frontend-angular:
         name: Build (PaperlessUI.Angular)
