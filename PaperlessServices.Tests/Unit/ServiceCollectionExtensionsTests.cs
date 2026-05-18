@@ -4,12 +4,12 @@ namespace PaperlessServices.Tests.Unit;
 
 /// <summary>
 ///     Unit tests for the PaperlessServices host extension methods that cover the
-///     no-arg <c>AddOcrServices()</c> entry point used by Program.cs (Program.cs
-///     itself is excluded from coverage) and the <c>AddGenAiServices</c> wrapper
-///     around the library's <c>AddPaperlessGenAI</c>.
+///     <c>AddOcrServices()</c> entry point used by Program.cs (Program.cs itself is
+///     excluded from coverage) and the <c>AddGenAiServices</c> wrapper around the
+///     library's <c>AddPaperlessGenAI</c>.
 /// </summary>
 /// <remarks>
-///     Integration tests cover <c>AddOcrServices(IConfiguration)</c> end-to-end via the
+///     Integration tests exercise <c>AddOcrServices()</c> end-to-end via the
 ///     fixture. These unit tests pin the smaller surfaces that the integration path
 ///     does not exercise.
 /// </remarks>
