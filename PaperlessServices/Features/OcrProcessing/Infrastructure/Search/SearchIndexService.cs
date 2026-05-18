@@ -15,10 +15,20 @@ public class SearchIndexService(
 	IOptions<ElasticsearchOptions> options,
 	TimeProvider timeProvider,
 	ILogger<SearchIndexService> logger)
-	: ISearchIndexService
+	: ISearchIndexService, IDisposable
 {
-	private static readonly SemaphoreSlim s_initLock = new(1, 1);
-	private static readonly ConcurrentDictionary<string, bool> s_initializedIndices = new();
+	// Instance-scoped (was static): DI registers this service as Singleton, so per-host
+	// behavior is identical. Instance fields prevent state leakage when tests construct
+	// the service directly with `new SearchIndexService(...)`. The DI container disposes
+	// the singleton on host shutdown, which calls Dispose() below to release _initLock.
+	private readonly SemaphoreSlim _initLock = new(1, 1);
+	private readonly ConcurrentDictionary<string, bool> _initializedIndices = new();
+
+	public void Dispose()
+	{
+		_initLock.Dispose();
+		GC.SuppressFinalize(this);
+	}
 
 	/// <summary>
 	///     Indexes a document in Elasticsearch after OCR processing completes.
@@ -77,16 +87,16 @@ public class SearchIndexService(
 		string indexName = options.Value.DefaultIndex;
 
 		// Fast path: index already initialized
-		if (s_initializedIndices.ContainsKey(indexName))
+		if (_initializedIndices.ContainsKey(indexName))
 		{
 			return;
 		}
 
-		await s_initLock.WaitAsync(cancellationToken);
+		await _initLock.WaitAsync(cancellationToken);
 		try
 		{
 			// Double-check after acquiring lock
-			if (s_initializedIndices.ContainsKey(indexName))
+			if (_initializedIndices.ContainsKey(indexName))
 			{
 				return;
 			}
@@ -94,7 +104,7 @@ public class SearchIndexService(
 			ExistsResponse existsResponse = await elastic.Indices.ExistsAsync(indexName, cancellationToken);
 			if (existsResponse.Exists)
 			{
-				s_initializedIndices.TryAdd(indexName, true);
+				_initializedIndices.TryAdd(indexName, true);
 				return;
 			}
 
@@ -113,11 +123,11 @@ public class SearchIndexService(
 				logger.LogInformation("Created Elasticsearch index: {IndexName}", indexName);
 			}
 
-			s_initializedIndices.TryAdd(indexName, true);
+			_initializedIndices.TryAdd(indexName, true);
 		}
 		finally
 		{
-			s_initLock.Release();
+			_initLock.Release();
 		}
 	}
 }

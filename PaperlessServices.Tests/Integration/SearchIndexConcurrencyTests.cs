@@ -63,7 +63,7 @@ public class SearchIndexConcurrencyTests(SharedContainerFixture fixture)
 		string indexName = $"test-{Guid.NewGuid():N}";
 		FakeLogCollector collector = new();
 		FakeLogger<SearchIndexService> logger = new(collector);
-		SearchIndexService sut = BuildSut(ElasticClient, indexName, logger);
+		using SearchIndexService sut = BuildSut(ElasticClient, indexName, logger);
 
 		Guid firstId = Guid.NewGuid();
 		Guid secondId = Guid.NewGuid();
@@ -102,7 +102,7 @@ public class SearchIndexConcurrencyTests(SharedContainerFixture fixture)
 
 		FakeLogCollector collector = new();
 		FakeLogger<SearchIndexService> logger = new(collector);
-		SearchIndexService sut = BuildSut(ElasticClient, indexName, logger);
+		using SearchIndexService sut = BuildSut(ElasticClient, indexName, logger);
 
 		// Act — first call into the freshly-constructed service triggers InitializeAsync.
 		Guid documentId = Guid.NewGuid();
