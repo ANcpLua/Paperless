@@ -5,11 +5,13 @@ namespace PaperlessServices.Features.OcrProcessing.Infrastructure.PdfExtractor;
 /// </summary>
 public class CreatePdfExtractor(ILogger<CreatePdfExtractor> logger) : IPdfExtractor
 {
-	public async Task<ErrorOr<string>> ExtractTextAsync(Stream pdfStream)
+	public async Task<ErrorOr<string>> ExtractTextAsync(Stream pdfStream, CancellationToken cancellationToken = default)
 	{
 		try
 		{
-			string text = await Pdf.Load(pdfStream).OcrAsync();
+			cancellationToken.ThrowIfCancellationRequested();
+			string text = await Pdf.Load(pdfStream).OcrAsync(options: null, cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
 
 			if (string.IsNullOrWhiteSpace(text))
 			{

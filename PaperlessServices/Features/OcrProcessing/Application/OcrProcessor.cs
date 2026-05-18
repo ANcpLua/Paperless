@@ -26,7 +26,7 @@ public class OcrProcessor(
 		await using Stream stream = streamResult.Value;
 
 		// Step 2: Extract text using OCR
-		ErrorOr<string> textResult = await pdfExtractor.ExtractTextAsync(stream);
+		ErrorOr<string> textResult = await pdfExtractor.ExtractTextAsync(stream, cancellationToken);
 		if (textResult.IsError)
 		{
 			return textResult.Errors;

@@ -35,7 +35,7 @@ public sealed class CreatePdfExtractorTests
 		CreatePdfExtractor sut = CreateSut();
 
 		// Act
-		ErrorOr<string> result = await sut.ExtractTextAsync(pdfStream);
+		ErrorOr<string> result = await sut.ExtractTextAsync(pdfStream, TestContext.Current.CancellationToken);
 
 		// Assert
 		// The actual OCR may return empty for a minimal PDF, which is expected behavior
@@ -52,7 +52,7 @@ public sealed class CreatePdfExtractorTests
 		CreatePdfExtractor sut = CreateSut();
 
 		// Act
-		ErrorOr<string> result = await sut.ExtractTextAsync(emptyPdfStream);
+		ErrorOr<string> result = await sut.ExtractTextAsync(emptyPdfStream, TestContext.Current.CancellationToken);
 
 		// Assert - Either ExtractionFailed (exception) or EmptyDocument (no text)
 		result.IsError.Should().BeTrue("empty stream should not produce valid text");
@@ -67,7 +67,7 @@ public sealed class CreatePdfExtractorTests
 		CreatePdfExtractor sut = CreateSut();
 
 		// Act
-		ErrorOr<string> result = await sut.ExtractTextAsync(whitespaceStream);
+		ErrorOr<string> result = await sut.ExtractTextAsync(whitespaceStream, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeTrue("whitespace-only content should be treated as empty");
@@ -82,7 +82,7 @@ public sealed class CreatePdfExtractorTests
 		CreatePdfExtractor sut = CreateSut();
 
 		// Act
-		ErrorOr<string> result = await sut.ExtractTextAsync(closedStream);
+		ErrorOr<string> result = await sut.ExtractTextAsync(closedStream, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeTrue("disposed stream should cause exception");
@@ -98,7 +98,7 @@ public sealed class CreatePdfExtractorTests
 		CreatePdfExtractor sut = CreateSut();
 
 		// Act
-		await sut.ExtractTextAsync(closedStream);
+		await sut.ExtractTextAsync(closedStream, TestContext.Current.CancellationToken);
 
 		// Assert
 		_logger.Collector.GetSnapshot()
@@ -113,7 +113,7 @@ public sealed class CreatePdfExtractorTests
 		CreatePdfExtractor sut = CreateSut();
 
 		// Act
-		ErrorOr<string> result = await sut.ExtractTextAsync(pdfStream);
+		ErrorOr<string> result = await sut.ExtractTextAsync(pdfStream, TestContext.Current.CancellationToken);
 
 		// Assert - If successful, should log character count
 		if (!result.IsError)
