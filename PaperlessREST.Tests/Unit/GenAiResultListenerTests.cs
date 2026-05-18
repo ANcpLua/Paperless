@@ -183,6 +183,41 @@ public sealed class GenAiResultListenerTests : IDisposable
 		_sseStream.Verify(s => s.Publish(It.IsAny<GenAIEvent>()), Times.Never);
 	}
 
+	[Fact]
+	public async Task ProcessGenAiEventAsync_WithSummary_UpdateFailureNonNotFound_NacksWithoutRequeue()
+	{
+		// Arrange — Update fails with a non-NotFound error (infrastructure failure,
+		// validation, etc.). Previously this branch silently acked, dropping the
+		// message. After the fix it nack-no-requeues to send the message to the DLQ.
+		GenAIEvent genAiEvent = CreateGenAiEvent();
+		Error infrastructureFailure = Error.Failure(code: "Database.Unavailable",
+			description: "Persistence layer unreachable");
+
+		_documentService.Setup(s => s.UpdateDocumentSummaryAsync(
+				genAiEvent.DocumentId,
+				genAiEvent.Summary!,
+				genAiEvent.GeneratedAt,
+				It.IsAny<CancellationToken>()))
+			.ReturnsAsync(infrastructureFailure);
+
+		_consumer.Setup(c => c.NackAsync(false)).Returns(Task.CompletedTask);
+
+		using GenAiResultListener sut = CreateSut();
+
+		// Act
+		await sut.ProcessGenAiEventAsync(genAiEvent, _consumer.Object, TestContext.Current.CancellationToken);
+
+		// Assert — Nack-no-requeue was invoked (strict mock would fail if AckAsync
+		// were called instead); SSE is not published; warning is logged.
+		_consumer.Verify(c => c.NackAsync(false), Times.Once);
+		_consumer.Verify(c => c.AckAsync(), Times.Never);
+		_sseStream.Verify(s => s.Publish(It.IsAny<GenAIEvent>()), Times.Never);
+		_logCollector.GetSnapshot()
+			.Should().Contain(l =>
+				l.Level == LogLevel.Warning &&
+				l.Message.Contains("Failed to update", StringComparison.OrdinalIgnoreCase));
+	}
+
 	// ═══════════════════════════════════════════════════════════════
 	// TESTS: ProcessGenAiEventAsync - Empty/Null Summary (Failed GenAI)
 	// ═══════════════════════════════════════════════════════════════

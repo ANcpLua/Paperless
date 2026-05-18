@@ -66,7 +66,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
 				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
@@ -88,7 +88,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
 				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
@@ -110,7 +110,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
 				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
@@ -132,7 +132,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
 				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
@@ -163,7 +163,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
 				s_testJobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
@@ -190,7 +190,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
 				jobId, ValidFileName, ExtractedOcrText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
@@ -267,7 +267,7 @@ public sealed class OcrProcessorTests : IDisposable
 		await sut.ProcessDocumentAsync(command, TestContext.Current.CancellationToken);
 
 		// Assert - OCR should never be called when download fails
-		_pdfExtractor.Verify(p => p.ExtractTextAsync(It.IsAny<Stream>()), Times.Never);
+		_pdfExtractor.Verify(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Never);
 	}
 
 	// ═══════════════════════════════════════════════════════════════
@@ -282,7 +282,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(Error.Failure("Ocr.Failed", "OCR extraction failed"));
 
 		OcrProcessor sut = CreateSut();
@@ -304,7 +304,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(Error.Failure("Ocr.Failed", "OCR extraction failed"));
 
 		OcrProcessor sut = CreateSut();
@@ -330,7 +330,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(string.Empty);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
 				s_testJobId, ValidFileName, string.Empty, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))
@@ -357,7 +357,7 @@ public sealed class OcrProcessorTests : IDisposable
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(CreateValidPdfStream());
-		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>()))
+		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(largeText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
 				s_testJobId, ValidFileName, largeText, It.IsAny<DateTimeOffset?>(), It.IsAny<CancellationToken>()))

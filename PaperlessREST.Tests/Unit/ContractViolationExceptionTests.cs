@@ -2,6 +2,21 @@ using PaperlessREST.Host.Extensions;
 
 namespace PaperlessREST.Tests.Unit;
 
+/// <summary>
+///     Unit tests for <see cref="ContractViolationException" /> and its diagnostics records.
+/// </summary>
+/// <remarks>
+///     The record-equality tests at the bottom of this file
+///     (<c>ContractViolationDiagnostics_RecordEquality_*</c>, <c>ErrorDetail_RecordEquality_*</c>)
+///     intentionally exercise the C# compiler's synthesized record equality so that the
+///     <see cref="ContractViolationDiagnostics" /> and <see cref="ErrorDetail" /> records'
+///     array-typed members are documented as <em>reference-equal</em>,
+///     not deep-equal. If someone "fixes" these records to deep-compare their array members
+///     (e.g., by switching to <c>ImmutableArray&lt;Error&gt;</c> with value semantics or by
+///     overriding Equals manually), these tests will break and force the change to be
+///     deliberate. Without them, the footgun is silent and a future deep-compare attempt
+///     might pass tests while changing observable behavior in production callers.
+/// </remarks>
 public sealed class ContractViolationExceptionTests
 {
 	private const string Op = "GetById";

@@ -35,7 +35,6 @@ internal interface ITest : ICompile
 	Target Test => d => d
 		.Description("Run all tests")
 		.DependsOn<ICompile>(x => x.Compile)
-		.TryDependsOn<ITestContainers>()
 		.Executes(() => RunTests(new TestOptions(Filter: TestFilter)));
 
 	Target UnitTests => d => d
@@ -48,7 +47,6 @@ internal interface ITest : ICompile
 	Target IntegrationTests => d => d
 		.Description("Run integration tests only")
 		.DependsOn<ICompile>(x => x.Compile)
-		.TryDependsOn<ITestContainers>()
 		.Executes(() => RunTests(new TestOptions(
 			NamespaceFilter: "*.Integration",
 			ReportPrefix: "Integration")));

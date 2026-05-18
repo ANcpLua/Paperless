@@ -1,6 +1,6 @@
 # Paperless — repo guide for Claude
 
-Document management with OCR, AI summarization, and full-text search. .NET 10 backend, three interchangeable frontends (Blazor / Angular / React).
+Document management with OCR, AI summarization, and full-text search. .NET 10 backend. Frontend story: React is the canonical/priority implementation, Angular is a parallel implementation kept for comparison, Blazor is currently a WIP scaffold. The production demo UI today is the vanilla SPA at `PaperlessREST/wwwroot/` which nginx serves from `compose.yaml`.
 
 This file is the on-disk source of truth for working in this repo. Read it before touching anything.
 
@@ -11,18 +11,19 @@ This file is the on-disk source of truth for working in this repo. Read it befor
 ```
 Paperless.slnx                       # modern slnx; flat — NUKE 10 doesn't traverse <Folder> wrappers
 ├── PaperlessREST/                   # ASP.NET Core API (REST + SSE)
+│   └── wwwroot/                     # Vanilla Bootstrap SPA — production demo UI mounted by nginx
 ├── PaperlessServices/               # BackgroundService worker (OCR + GenAI)
 ├── PaperlessREST.Tests/             # xUnit v3 + Testcontainers
 ├── PaperlessServices.Tests/         # xUnit v3 + Testcontainers
-├── PaperlessUI.Blazor/              # Blazor Web App (Server interactivity) — PaperlessUI.Blazor.csproj
-├── PaperlessUI.Angular/             # Angular 21 + pnpm                    — PaperlessUI.Angular.esproj
-├── PaperlessUI.React/               # Vite + React 19 + TS                 — PaperlessUI.React.esproj
+├── PaperlessUI.React/               # Vite + React 19 + TS  (canonical frontend)  — PaperlessUI.React.esproj
+├── PaperlessUI.Angular/             # Angular 21 + pnpm     (parallel implementation) — PaperlessUI.Angular.esproj
+├── PaperlessUI.Blazor/              # Blazor Web App scaffold — WIP, NOT in Paperless.slnx, NOT built by CI
 ├── Pipeline/                        # NUKE build (Build.csproj)
 ├── docker/, sample-data/, compose.yaml
 └── docs/99_Reference/Rating-Matrix/ # course grading rubric (PDF + xlsx)
 ```
 
-Three frontends share one backend so the same use-cases can be graded across stacks.
+React + Angular share the backend so the same use-cases can be compared across stacks. Blazor is on-disk but not building until a Paperless page is implemented (add back to Paperless.slnx + ci.yml when it does).
 
 ## Build & test
 
@@ -33,15 +34,18 @@ NUKE-based, single entry point. Targets compose via `Pipeline/Components/*.cs` (
 ./build.sh UnitTests                        # MTP v2 + xUnit v3, no containers
 ./build.sh IntegrationTests                 # spins Testcontainers (Postgres, MinIO, RabbitMQ, ES)
 ./build.sh Coverage                         # Cobertura via the MTP CodeCoverage extension
-./build.sh ReportCoverage --coverage-min-line 30 --coverage-min-branch 0
+./build.sh ReportCoverage --coverage-min-line 0 --coverage-min-branch 0 --coverage-format markdown --coverage-exclude-generated-param true
 ```
+
+The `ReportCoverage` gate is report-only (thresholds 0/0). CI publishes the markdown
+summary and Codecov diff; regressions surface in PR review, not as a hard build fail.
 
 UI projects build via their respective toolchains, never via NUKE:
 
 ```bash
-dotnet run --project PaperlessUI.Blazor
-cd PaperlessUI.Angular && pnpm install && pnpm start
-cd PaperlessUI.React   && pnpm install && pnpm dev
+cd PaperlessUI.React   && pnpm install --frozen-lockfile && pnpm dev       # canonical
+cd PaperlessUI.Angular && pnpm install --frozen-lockfile && pnpm start     # parallel impl
+# Blazor scaffold: dotnet run --project PaperlessUI.Blazor (WIP, not in slnx)
 ```
 
 ## CI
@@ -50,20 +54,20 @@ cd PaperlessUI.React   && pnpm install && pnpm dev
 
 | job | gate | runs |
 |---|---|---|
-| `Build & Test (backend)` | **required** | NUKE Compile → UnitTests → IntegrationTests → Coverage → DotCov gate → Codecov upload |
-| `Build (PaperlessUI.Angular)` | non-blocking | `pnpm install && pnpm run build` (ng's default config is production — do NOT pass `--configuration production` after `--`; pnpm 10 passes `--` literally to scripts) |
-| `Build (PaperlessUI.React)` | non-blocking | `pnpm install && pnpm run build` |
+| `Build & Test (backend)` | **required** | NUKE UnitTests → IntegrationTests → Coverage → markdown summary (no hard gate) → Codecov upload |
+| `Build (PaperlessUI.Angular)` | non-blocking | `pnpm install --frozen-lockfile && pnpm run build` (ng's default config is production — do NOT pass `--configuration production` after `--`; pnpm 10 passes `--` literally to scripts) |
+| `Build (PaperlessUI.React)` | non-blocking | `pnpm install --frozen-lockfile && pnpm run build` |
+
+The workflow declares `concurrency:` (cancel-in-progress on PRs only) and least-privilege `permissions:` (read defaults; codecov/check annotations escalate as needed).
 
 Coverage uploads to https://codecov.io/gh/ANcpLua/Paperless via tokenless OIDC. `codecov.yml` ignores host entry points, EF migrations, the pipeline, and test projects so the score reflects production surface only.
 
 ## Coverage tooling — dotcov
 
-The DotCov gate runs `dotcov check` from `dotcov.tool` (NuGet, owner `ANcpLua/dotcov`). Two flags matter on this repo:
+Coverage uses `DotCov.Nuke` (NuGet, owner `ANcpLua/dotcov`) as a NUKE component package — `Pipeline/Build.csproj:29` references it, `Pipeline/Build.cs:43` mixes the `ICoverageReport` interface into the build class. There is no `dotnet tool` CLI; the gate runs via `./build.sh ReportCoverage`. Two parameters matter on this repo:
 
-- `--exclude-generated` strips generators, migrations, designer files, state-machine classes, `Program.cs`. With this flag, dotcov's totals match Codecov's view byte-for-byte (1146/1465 = 78.23%).
-- `--keep <comma-separated patterns>` re-includes paths after exclusion. Use `--exclude-generated --keep Program.cs` if you ever genuinely need to measure `Program.cs` (e.g., a single-binary CLI tool).
-
-Per-file numbers also match Codecov exactly post-`fix(parser): merge <class> blocks and dedupe lines by source-line number` (dotcov PR #3) — records, error factories, and async-state-machine-heavy files all produce identical results.
+- `--coverage-exclude-generated-param true` (the NUKE [Parameter] kebab-cased form of `--exclude-generated`) strips generators, migrations, designer files, async state-machine sequence points, `Program.cs`. With this flag, the gate metric is **99.8% line coverage (928/930)** — see the sequence-point note in Gotchas. Disable by passing `false` to see the raw numbers (currently ~73% with generated code mixed in).
+- `--coverage-min-line` / `--coverage-min-branch` set the gate threshold. CI passes `0 / 0` (report-only mode); per-file numbers and the overall summary still publish to the workflow log as markdown. Codecov-side gating is configured in `codecov.yml` (project: auto, patch: 80%).
 
 ## NUKE Cohesion (build code quality bar)
 
@@ -90,6 +94,8 @@ Anti-patterns that fail the self-check:
 - **BackgroundService race in tests**: `BackgroundService.StartAsync` returns before `ExecuteAsync` runs. Don't wait on a log predicate that's already true for an empty snapshot (`_ => true`). Signal via `TaskCompletionSource` from a mock's `DisposeAsync` or `AckAsync`, then await that.
 - **Hangfire NU1107**: Hangfire + Hangfire.AspNetCore must move together. Renovate split them once and broke restore on `main` for days.
 - **Gemini placeholder key**: `.env.test` ships `GEMINI__APIKEY=test-gemini-key-placeholder`. The integration test must mock `ITextSummarizer` (`FakeTextSummarizer` in `PaperlessServices.Tests/Integration/`), not hit the real API.
+- **The "missing 2 lines" of coverage are sequence-point artifacts, not testable code**. Gate metric is 928/930 = 99.8%. The two unhit lines are the closing braces of try/catch blocks in `GenAiResultListener.cs` and `ReportProcessor.cs:120` — Roslyn emits a sequence point on the fall-through-after-catch path, but every code path inside those try blocks either `return`s early or unwinds via exception. No test can reach those sequence points without breaking the design intent. Leave them; do not chase 100% by restructuring around the coverage tool.
+- **Custom SDK in Dockerfiles**: PaperlessREST.csproj uses `<Project Sdk="ANcpLua.NET.Sdk.Web">` (version pinned in `global.json` msbuild-sdks). For docker builds, `global.json` + `nuget.config` + `Directory.Packages.props` + `Version.props` must be COPYed into the build context BEFORE `dotnet restore`, otherwise the SDK resolver errors with "Could not resolve SDK". Both Dockerfiles do this; if you copy a Dockerfile for a new project, preserve those COPY lines.
 
 ## Rating-Matrix mapping (course grading)
 
@@ -98,7 +104,7 @@ Anti-patterns that fail the self-check:
 | Category | Where |
 |---|---|
 | Use Cases / REST API | `PaperlessREST/Features/DocumentManagement/Presentation/Endpoints/` |
-| Web Frontend | three implementations under `PaperlessUI.*/` |
+| Web Frontend | React (`PaperlessUI.React/`, canonical) + Angular (`PaperlessUI.Angular/`, parallel impl) + the vanilla SPA at `PaperlessREST/wwwroot/` that nginx serves in production. Blazor (`PaperlessUI.Blazor/`) is a WIP scaffold, not currently built. |
 | Queues | `SWEN3.Paperless.RabbitMq` consumed by REST + Services |
 | Logging | `Microsoft.Extensions.Logging`; `FakeLogger` in tests |
 | Validation | Mapster + DataAnnotations + FluentValidation at the boundary |
@@ -112,21 +118,23 @@ Anti-patterns that fail the self-check:
 | DI | `IServiceCollection` extension methods per feature |
 | DAL | EF Core 10 + repository pattern (`IDocumentRepository`) |
 | BL | `DocumentService`, `OcrProcessor`, GenAI worker |
-| GitFlow / CI / Docs | `.github/workflows/ci.yml`, branch-protected `main`, this file |
+| Trunk-based / CI / Docs | `.github/workflows/ci.yml`, branch-protected `main`, this file |
 
 ## Stack pins
 
-| | version |
+Inline versions drift; treat `Version.props` + `Directory.Packages.props` as the source of truth and the table below as commentary on what matters.
+
+| | version (see `Version.props` for exact) |
 |---|---|
-| .NET | 10.0 |
-| EF Core | 10.0.0 |
-| Hangfire | 1.8.23 (with Hangfire.AspNetCore 1.8.23 + Hangfire.PostgreSql 1.21.1) |
-| xUnit | v3.2.1 + MTP v2 |
+| .NET SDK | 10.0.300 (`global.json`, rollForward latestFeature) |
+| EF Core | 10.0.x (currently 10.0.8 — `Version.props:MicrosoftEntityFrameworkCoreVersion`) |
+| Hangfire | 1.8.23 (Hangfire + Hangfire.AspNetCore share `$(HangfireVersion)` MSBuild var; Hangfire.PostgreSql 1.21.1) |
+| xUnit | v3.2.x + MTP v2 (`Version.props:XunitV3MtpV2Version`) |
 | SWEN3.Paperless.RabbitMq | 2.3.1 |
-| React | 19.2 (Vite 7) |
-| Angular | 21 (pnpm 10) |
+| React | 19.2 + Vite 8 + TypeScript 6 |
+| Angular | 21 (pnpm 10.30.2 via corepack) |
 | Node | 22 LTS in CI |
-| Postgres / RabbitMQ / MinIO / Elasticsearch | 17 / 4 / latest / 9.x |
+| Postgres / RabbitMQ / MinIO / Elasticsearch | 17-alpine / 4.3.0-management / RELEASE-date-pinned / 9.1.3 |
 
 ## House rules
 

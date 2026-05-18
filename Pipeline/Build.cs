@@ -1,7 +1,6 @@
 using Build.Components;
 using DotCov.Nuke;
 using Nuke.Common;
-using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.IO;
 using Serilog;
 
@@ -22,16 +21,11 @@ namespace Build;
 ///     - IChangelog: Git-based changelog generation
 ///     - IDockerBuild: Application image builds
 ///     - IDockerCompose: Docker Compose orchestration
-///     - ITestContainers: CI Docker configuration
+///
+/// CI is hand-authored at .github/workflows/ci.yml. The [GitHubActions]
+/// attribute previously here was AutoGenerate=false (declarative only),
+/// which made it misleading documentation that drifted from reality.
 /// </remarks>
-[GitHubActions(
-	"ci",
-	GitHubActionsImage.UbuntuLatest,
-	AutoGenerate = false,
-	OnPushBranches = ["main", "develop", "feature/*"],
-	OnPullRequestBranches = ["main", "develop"],
-	InvokedTargets = [nameof(ITest.Test)],
-	FetchDepth = 0)]
 internal sealed class Build : NukeBuild,
 	// Core build pipeline
 	IRestore,
@@ -41,7 +35,6 @@ internal sealed class Build : NukeBuild,
 	ITest,
 	ICoverage,
 	ICoverageReport,
-	ITestContainers,
 	// Docker
 	IDockerBuild,
 	IDockerCompose

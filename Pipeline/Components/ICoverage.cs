@@ -26,7 +26,6 @@ internal interface ICoverage : ITest
 	Target Coverage => d => d
 		.Description("Run tests with code coverage")
 		.DependsOn<ICompile>(x => x.Compile)
-		.TryDependsOn<ITestContainers>()
 		.Produces(CoverageDirectory / "**")
 		.Executes(() =>
 		{

@@ -37,6 +37,7 @@ public sealed class SearchIndexServiceThrowingTests : IDisposable
 	public void Dispose()
 	{
 		TestContext.Current.SendDiagnosticMessage("Full logs:\n{0}", _logCollector.GetFullLoggerText());
+		_sut.Dispose();
 		(_settings as IDisposable)?.Dispose();
 	}
 

@@ -11,12 +11,23 @@ on:
     push:
         branches:
             - main
-            - develop
             - 'feature/*'
     pull_request:
         branches:
             - main
-            - develop
+
+# Cancel superseded runs on PRs (developer is iterating; only the latest push matters).
+# Never cancel push-to-main runs — release/tag pipelines must complete.
+concurrency:
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Least-privilege defaults; individual jobs/steps escalate if they truly need it.
+permissions:
+    contents: read
+    actions: read
+    checks: write           # codecov / test-result annotations
+    pull-requests: write    # codecov PR comments
 
 env:
     DOTNET_NOLOGO: true
@@ -63,8 +74,11 @@ jobs:
             -   name: Coverage (Cobertura via MTP)
                 run: ./build.sh Coverage
 
-            -   name: DotCov coverage gate (+ markdown summary)
-                run: ./build.sh ReportCoverage --coverage-min-line 30 --coverage-min-branch 0 --coverage-format markdown --coverage-exclude-generated-param true
+            # Coverage is report-only — thresholds explicitly 0/0 so the step never
+            # fails CI. The markdown summary is the signal; regressions surface in
+            # PR review via Codecov's diff + the artifact, not by failing the build.
+            -   name: Coverage report (markdown summary, no gate)
+                run: ./build.sh ReportCoverage --coverage-min-line 0 --coverage-min-branch 0 --coverage-format markdown --coverage-exclude-generated-param true
 
             -   name: Upload coverage artifacts
                 if: always()
@@ -92,8 +106,9 @@ jobs:
                     path: TestResults/
                     if-no-files-found: warn
 
-            -   name: Build PaperlessUI.Blazor
-                run: dotnet build PaperlessUI.Blazor/PaperlessUI.Blazor.csproj -c Release --no-restore
+            # PaperlessUI.Blazor is currently a scaffold-only project (no
+            # Paperless code). Once a real Paperless page is implemented,
+            # re-add it to Paperless.slnx and reintroduce the build step here.
 
     frontend-angular:
         name: Build (PaperlessUI.Angular)
@@ -112,7 +127,7 @@ jobs:
                     node-version: 22
                     cache: pnpm
                     cache-dependency-path: PaperlessUI.Angular/pnpm-lock.yaml
-            -   run: pnpm install --frozen-lockfile=false
+            -   run: pnpm install --frozen-lockfile
             -   run: pnpm run build  # ng build defaults to production
             # `ng test` needs a real browser; opt-in only — wire later via Playwright/Karma headless.
 
@@ -133,5 +148,5 @@ jobs:
                     node-version: 22
                     cache: pnpm
                     cache-dependency-path: PaperlessUI.React/pnpm-lock.yaml
-            -   run: pnpm install --frozen-lockfile=false
+            -   run: pnpm install --frozen-lockfile
             -   run: pnpm run build

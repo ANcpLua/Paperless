@@ -6,21 +6,13 @@ public static class ServiceCollectionExtensions
 	{
 		/// <summary>
 		///     Registers all OCR-related services: storage, search indexing, and OCR processing.
+		///     Options are bound via DI using BindConfiguration, so no IConfiguration argument is needed.
 		/// </summary>
 		public IServiceCollection AddOcrServices() =>
 			services
 				.AddMinioStorage()
 				.AddElasticsearchSearch()
 				.AddOcrProcessing();
-
-		/// <summary>
-		///     Registers all OCR-related services. Overload that accepts IConfiguration for
-		///     backwards compatibility with callers passing configuration explicitly.
-		///     The provided configuration is not required because options are bound via
-		///     DI using BindConfiguration, but the overload is kept to avoid breaking changes.
-		/// </summary>
-		public IServiceCollection AddOcrServices(IConfiguration _)
-			=> AddOcrServices(services);
 
 		/// <summary>
 		///     Registers GenAI services using the library's implementation.

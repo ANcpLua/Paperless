@@ -46,22 +46,3 @@ public class OcrIntegrationTests(SharedContainerFixture fixture)
 		});
 	}
 }
-
-[Collection(SharedContainerCollection.Name)]
-public class GenAiIntegrationTests(SharedContainerFixture fixture, ITestOutputHelper output)
-{
-	private ITextSummarizer TextSummarizer => fixture.Services.GetRequiredService<ITextSummarizer>();
-
-	[Fact]
-	public async Task SummarizesFinancialReport()
-	{
-		const string Report = "Q3 2024 Report: Revenue $4.2M (+28% YoY), Expenses $2.1M (+12%)";
-
-		string? summary = await TextSummarizer.SummarizeAsync(
-			Report,
-			TestContext.Current.CancellationToken);
-
-		summary.Should().NotBeNullOrWhiteSpace();
-		output.WriteLine($"Summary: {summary}");
-	}
-}

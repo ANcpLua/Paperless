@@ -104,7 +104,7 @@ public class SharedContainerFixture : IAsyncLifetime
 		});
 
 		builder.Services.AddPaperlessRabbitMq(builder.Configuration);
-		builder.Services.AddOcrServices(builder.Configuration);
+		builder.Services.AddOcrServices();
 		builder.Services.AddSingleton<ITextSummarizer, FakeTextSummarizer>();
 
 		_host = builder.Build();
