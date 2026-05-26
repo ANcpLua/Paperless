@@ -4,9 +4,9 @@
 		"rollForward": "latestFeature"
 	},
 	"msbuild-sdks": {
-		"ANcpLua.NET.Sdk": "3.4.32",
-		"ANcpLua.NET.Sdk.Web": "3.4.32",
-		"ANcpLua.NET.Sdk.Test": "3.4.32"
+		"ANcpLua.NET.Sdk": "3.4.36",
+		"ANcpLua.NET.Sdk.Web": "3.4.36",
+		"ANcpLua.NET.Sdk.Test": "3.4.36"
 	},
 	"test": {
 		"runner": "Microsoft.Testing.Platform"
