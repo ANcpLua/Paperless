@@ -44,7 +44,6 @@
         "Print",
         "ReportCoverage",
         "Restore",
-        "SetupTestcontainers",
         "Test",
         "UnitTests",
         "Verify"

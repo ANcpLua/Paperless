@@ -39,6 +39,8 @@ Paperless.slnx                          # MSBuild slnx (modern format)
 
 The production demo today is the vanilla SPA at `PaperlessREST/wwwroot/` (mounted by nginx in `compose.yaml`). React and Angular are parallel SDK-stack implementations consuming the same `/api/*` surface; Blazor is on-disk but not currently building.
 
+Contributor & agent conventions live in [`AGENTS.md`](AGENTS.md) (`CLAUDE.md` is a symlink to it).
+
 ## Quick start
 
 ```bash
@@ -49,6 +51,8 @@ docker compose up -d                    # postgres, rabbitmq, minio, elasticsear
 ./build.sh Coverage                     # Cobertura via MTP CodeCoverage
 ./build.sh ReportCoverage --coverage-min-line 0 --coverage-min-branch 0 --coverage-format markdown --coverage-exclude-generated-param true
 ```
+
+`./build.sh` is the sole build entry point (Linux/macOS). The Windows NUKE bootstrappers (`build.cmd`/`build.ps1`) have been retired; regenerate them via NUKE setup if Windows support is ever needed.
 
 ### Run individual UIs
 
