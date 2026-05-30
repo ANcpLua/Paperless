@@ -13,7 +13,8 @@ This file is the on-disk source of truth for working in this repo. Read it befor
 ```
 Paperless.slnx                       # modern slnx; flat — NUKE 10 doesn't traverse <Folder> wrappers
 ├── PaperlessREST/                   # ASP.NET Core API (REST + SSE)
-│   └── wwwroot/                     # Vanilla Bootstrap SPA — production demo UI mounted by nginx
+│   ├── wwwroot/                     # Vanilla Bootstrap SPA — production demo UI mounted by nginx
+│   └── sample-data/                 # XML batch fixtures (input/archive/error), mounted by compose
 ├── PaperlessServices/               # BackgroundService worker (OCR + GenAI)
 ├── PaperlessREST.Tests/             # xUnit v3 + Testcontainers
 ├── PaperlessServices.Tests/         # xUnit v3 + Testcontainers
@@ -21,7 +22,7 @@ Paperless.slnx                       # modern slnx; flat — NUKE 10 doesn't tra
 ├── PaperlessUI.Angular/             # Angular 21 + pnpm     (parallel implementation) — PaperlessUI.Angular.esproj
 ├── PaperlessUI.Blazor/              # Blazor Web App scaffold — WIP, NOT in Paperless.slnx, NOT built by CI
 ├── Pipeline/                        # NUKE build (Build.csproj)
-├── docker/, sample-data/, compose.yaml
+├── docker/, compose.yaml
 └── docs/99_Reference/Rating-Matrix/ # course grading rubric (PDF + xlsx)
 ```
 
