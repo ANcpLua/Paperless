@@ -215,3 +215,6 @@ $RECYCLE.BIN/
 codecov.json
 **/bin/
 **/obj/
+
+# Local triage bin — files staged for deletion pending review; not part of the repo
+/alexander has to decide/
