@@ -1,12 +1,10 @@
 using System.Diagnostics;
 using System.Reflection;
-using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Asp.Versioning.ApiExplorer;
 using Hangfire.Common;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
-using PaperlessREST.API;
 using PaperlessREST.Host.Extensions;
 using Scalar.AspNetCore;
 
@@ -343,11 +341,11 @@ public sealed class ServiceCollectionExtensionsTests
 		object generatedTarget = requestDelegate.Target!;
 		FieldInfo handlerField = generatedTarget.GetType()
 			.GetField("handler", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
-		Delegate handlerDelegate = (Delegate)handlerField.GetValue(generatedTarget)!;
+		var handlerDelegate = (Delegate)handlerField.GetValue(generatedTarget)!;
 		object scalarClosure = handlerDelegate.Target!;
 		FieldInfo configureField = scalarClosure.GetType()
 			.GetField("configureOptions", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
-		Action<ScalarOptions, HttpContext> productionConfigure =
+		var productionConfigure =
 			(Action<ScalarOptions, HttpContext>)configureField.GetValue(scalarClosure)!;
 
 		ScalarOptions scalarOpts = new();
@@ -465,7 +463,7 @@ public sealed class ServiceCollectionExtensionsTests
 		object jobServer = jobServerDescriptor.ImplementationFactory!(app.Services);
 		FieldInfo optionsField = jobServer.GetType().GetField("_options",
 			BindingFlags.NonPublic | BindingFlags.Instance)!;
-		BackgroundJobServerOptions opts = (BackgroundJobServerOptions)optionsField.GetValue(jobServer)!;
+		var opts = (BackgroundJobServerOptions)optionsField.GetValue(jobServer)!;
 
 		opts.WorkerCount.Should().Be(Environment.ProcessorCount);
 		opts.ServerName.Should().StartWith(Environment.MachineName + "-");
@@ -527,14 +525,14 @@ public sealed class ServiceCollectionExtensionsTests
 
 		FieldInfo transformersField = typeof(OpenApiOptions).GetField("DocumentTransformers",
 			BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
-		System.Collections.IList transformers = (System.Collections.IList)transformersField.GetValue(opts)!;
+		var transformers = (System.Collections.IList)transformersField.GetValue(opts)!;
 		transformers.Count.Should().Be(1);
 
 		object delegateTransformer = transformers[0]!;
 		// DelegateOpenApiDocumentTransformer wraps the user Func in _documentTransformer.
 		FieldInfo delegateField = delegateTransformer.GetType().GetField("_documentTransformer",
 			BindingFlags.NonPublic | BindingFlags.Instance)!;
-		Func<OpenApiDocument, OpenApiDocumentTransformerContext, CancellationToken, Task> productionDelegate =
+		var productionDelegate =
 			(Func<OpenApiDocument, OpenApiDocumentTransformerContext, CancellationToken, Task>)
 			delegateField.GetValue(delegateTransformer)!;
 

@@ -46,7 +46,7 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 	public async Task Upload_ValidPdf_Returns202WithLocation()
 	{
 		// Arrange
-		string uniqueFileName = $"{TestFilePrefix}-upload-{Guid.NewGuid():N}.pdf";
+		var uniqueFileName = $"{TestFilePrefix}-upload-{Guid.NewGuid():N}.pdf";
 		using MultipartFormDataContent content = await CreatePdfUploadAsync(uniqueFileName);
 
 		// Act

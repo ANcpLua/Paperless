@@ -69,7 +69,7 @@ public class SharedContainerFixture : IAsyncLifetime
 		// Wait for Elasticsearch to be fully ready (not just port open)
 		await WaitForElasticsearchAsync();
 
-		string minioEndpoint = $"{_minio.Hostname}:{_minio.GetMappedPublicPort(MinioPort)}";
+		var minioEndpoint = $"{_minio.Hostname}:{_minio.GetMappedPublicPort(MinioPort)}";
 
 		using MinioClient minioClient = new();
 		minioClient
@@ -133,10 +133,10 @@ public class SharedContainerFixture : IAsyncLifetime
 
 	public async Task<string> UploadPdfAsync(string content)
 	{
-		string fileName = $"test-{Guid.NewGuid():N}.pdf";
+		var fileName = $"test-{Guid.NewGuid():N}.pdf";
 		string pdfPath = await Pdf.Create(Dye.White).AddText(content).SaveAsync(fileName);
 
-		string storageKey = $"documents/{TimeProvider.System.GetUtcNow():yyyy-MM}/{Guid.NewGuid():N}/{fileName}";
+		var storageKey = $"documents/{TimeProvider.System.GetUtcNow():yyyy-MM}/{Guid.NewGuid():N}/{fileName}";
 		IMinioClient client = Services.GetRequiredService<IMinioClient>();
 
 		await using FileStream stream = File.OpenRead(pdfPath);
@@ -264,7 +264,7 @@ public class SharedContainerFixture : IAsyncLifetime
 		Uri elasticUri = new($"http://{_elastic.Hostname}:{_elastic.GetMappedPublicPort(ElasticsearchPort)}");
 		using HttpClient http = new() { Timeout = TimeSpan.FromSeconds(2) };
 
-		for (int i = 0; i < 30; i++)
+		for (var i = 0; i < 30; i++)
 		{
 			try
 			{

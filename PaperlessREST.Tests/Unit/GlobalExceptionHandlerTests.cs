@@ -32,10 +32,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	private const string FieldName = "Field";
 	private const string FieldError = "Error";
 	private const string EmailFieldName = "Email";
-	private const string NameFieldName = "Name";
 	private const string EmailRequiredError = "Required";
-	private const string EmailFormatError = "Invalid format";
-	private const string NameLengthError = "Too short";
 	private const string DocNotFoundMessage = "Doc not found";
 	private const string NotFoundMessage = "Not found";
 	private const string BadRequestMessage = "bad request";
@@ -79,7 +76,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	public void FromException_BadRequestExceptions_Returns400(Type exceptionType)
 	{
 		// Arrange
-		Exception exception = (Exception)Activator.CreateInstance(exceptionType, TestMessage)!;
+		var exception = (Exception)Activator.CreateInstance(exceptionType, TestMessage)!;
 
 		// Act
 		ExceptionInfo info = ExceptionInfo.FromException(exception);
@@ -136,7 +133,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	public void FromException_NotFoundExceptions_Returns404(Type exceptionType)
 	{
 		// Arrange
-		Exception exception = (Exception)Activator.CreateInstance(exceptionType, NotFoundMessage)!;
+		var exception = (Exception)Activator.CreateInstance(exceptionType, NotFoundMessage)!;
 
 		// Act
 		ExceptionInfo info = ExceptionInfo.FromException(exception);
@@ -270,7 +267,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		captured.Should().NotBeNull();
 		captured!.ProblemDetails.Should().BeOfType<HttpValidationProblemDetails>();
 
-		HttpValidationProblemDetails validation = (HttpValidationProblemDetails)captured.ProblemDetails;
+		var validation = (HttpValidationProblemDetails)captured.ProblemDetails;
 		validation.Errors.Should().ContainKey(EmailFieldName).WhoseValue.Should().ContainSingle();
 		validation.Type.Should().Contain(CodeValidationError);
 	}

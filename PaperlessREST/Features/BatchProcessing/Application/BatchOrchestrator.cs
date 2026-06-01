@@ -138,7 +138,7 @@ public sealed class BatchOrchestrator(
 		fs.DirectoryInfo.New(destinationDir).Create();
 
 		DateTime timestamp = time.GetUtcNow().UtcDateTime;
-		string destFileName = $"{originalName}.{timestamp:yyyyMMdd_HHmmss_fffffff}_{Guid.NewGuid():N}{statusSuffix}";
+		var destFileName = $"{originalName}.{timestamp:yyyyMMdd_HHmmss_fffffff}_{Guid.NewGuid():N}{statusSuffix}";
 		string destPath = fs.Path.Combine(destinationDir, destFileName);
 
 		if (!fs.File.Exists(sourcePath))
@@ -155,7 +155,7 @@ public sealed class BatchOrchestrator(
 
 		catch (Exception ex)
 		{
-			string message = $"Infrastructure error moving file '{sourcePath}' to '{destPath}'";
+			var message = $"Infrastructure error moving file '{sourcePath}' to '{destPath}'";
 			logger.LogError(ex, "{Message} - Hangfire will retry", message);
 			throw new IOException(message, ex);
 		}
