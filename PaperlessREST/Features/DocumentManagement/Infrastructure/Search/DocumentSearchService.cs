@@ -28,11 +28,11 @@ public sealed class DocumentSearchService(
 	{
 		logger.LogInformation("Searching for query: {Query} (limit: {Limit})", query, limit);
 
-		string searchQuery = query.Length > SearchServiceConstraints.ServiceQueryMaxLength
+		var searchQuery = query.Length > SearchServiceConstraints.ServiceQueryMaxLength
 			? query[..SearchServiceConstraints.ServiceQueryMaxLength]
 			: query;
 
-		SearchResponse<T> response = await elastic.SearchAsync<T>(
+		var response = await elastic.SearchAsync<T>(
 			s => s.Indices(elastic.ElasticsearchClientSettings.DefaultIndex)
 				.Query(q => q.MultiMatch(mm => mm
 					.Query(searchQuery)
@@ -47,7 +47,7 @@ public sealed class DocumentSearchService(
 
 		logger.LogInformation("Found {Count} results", response.Documents.Count);
 
-		foreach (T doc in response.Documents)
+		foreach (var doc in response.Documents)
 		{
 			yield return doc;
 		}
@@ -56,7 +56,7 @@ public sealed class DocumentSearchService(
 	public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
 	{
 		DeleteRequest deleteRequest = new(elastic.ElasticsearchClientSettings.DefaultIndex, id.ToString());
-		DeleteResponse response = await elastic.DeleteAsync(deleteRequest, cancellationToken);
+		var response = await elastic.DeleteAsync(deleteRequest, cancellationToken);
 
 		logger.LogInformation("Document {DocumentId} removed from search index", id);
 		return response.IsValidResponse;

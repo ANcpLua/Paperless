@@ -5,7 +5,7 @@ public sealed class DocumentAccessRepository(IDbContextFactory<DocumentPersisten
 {
 	public async Task<Guid[]> GetExistingDocumentIdsAsync(Guid[] documentIds, CancellationToken ct)
 	{
-		await using DocumentPersistence db = await factory.CreateDbContextAsync(ct);
+		await using var db = await factory.CreateDbContextAsync(ct);
 		return await db.Documents
 			.Where(d => documentIds.AsEnumerable().Contains(d.Id))
 			.Select(d => d.Id)
@@ -22,10 +22,10 @@ public sealed class DocumentAccessRepository(IDbContextFactory<DocumentPersisten
 			return;
 		}
 
-		await using DocumentPersistence db = await factory.CreateDbContextAsync(ct);
+		await using var db = await factory.CreateDbContextAsync(ct);
 
 		// Use raw SQL upsert instead of BulkExtensions to handle snake_case column naming correctly
-		foreach ((Guid documentId, long accessCount) in items)
+		foreach ((var documentId, var accessCount) in items)
 		{
 			await db.Database.ExecuteSqlAsync($"""
 			                                   INSERT INTO daily_document_access (id, document_id, log_date, access_count, updated_at)

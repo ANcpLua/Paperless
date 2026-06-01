@@ -21,7 +21,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
 
 	public DatabaseFixture()
 	{
-		string postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:17-alpine";
+		var postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:17-alpine";
 
 		_container = new PostgreSqlBuilder(postgresImage)
 			.WithWaitStrategy(Wait.ForUnixContainer()
@@ -54,9 +54,9 @@ public sealed class DatabaseFixture : IAsyncLifetime
 		ServiceCollection services = [];
 
 		// Use cross-platform temp directory with unique suffix to avoid test collisions
-		string batchTestBase = Path.Combine(Path.GetTempPath(), $"batch-test-{Guid.NewGuid():N}");
+		var batchTestBase = Path.Combine(Path.GetTempPath(), $"batch-test-{Guid.NewGuid():N}");
 
-		IConfigurationRoot configuration = new ConfigurationBuilder()
+		var configuration = new ConfigurationBuilder()
 			.AddEnvironmentVariables() // Add first so in-memory values override
 			.AddInMemoryCollection(new Dictionary<string, string?>
 			{
@@ -74,7 +74,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
 
 		services.AddSingleton<IConfiguration>(configuration);
 
-		NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(_container.GetConnectionString())
+		var dataSource = new NpgsqlDataSourceBuilder(_container.GetConnectionString())
 			.MapEnum<DocumentStatus>("document_status")
 			.Build();
 
@@ -110,7 +110,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
 		ContextFactory = Services.GetRequiredService<IDbContextFactory<DocumentPersistence>>();
 		LogCollector = Services.GetFakeLogCollector();
 
-		await using DocumentPersistence context = await ContextFactory.CreateDbContextAsync();
+		await using var context = await ContextFactory.CreateDbContextAsync();
 		await context.Database.MigrateAsync();
 	}
 

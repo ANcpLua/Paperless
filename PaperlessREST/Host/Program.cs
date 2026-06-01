@@ -17,7 +17,7 @@ public class Program
 {
 	public static async Task Main(string[] args)
 	{
-		WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+		var builder = WebApplication.CreateBuilder(args);
 
 		if (!builder.Environment.IsEnvironment("Test"))
 		{
@@ -27,7 +27,7 @@ public class Program
 		builder.AddDependencies();
 		TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
 
-		WebApplication app = builder.Build();
+		var app = builder.Build();
 
 		app.ConfigureMiddleware();
 		await app.InitializeApplicationAsync();

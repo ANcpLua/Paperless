@@ -7,7 +7,7 @@ public sealed class DocumentPersistence(DbContextOptions<DocumentPersistence> op
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
-		modelBuilder.Entity<DocumentEntity>(e =>
+		modelBuilder.Entity<DocumentEntity>(static e =>
 		{
 			e.ToTable("documents");
 			e.Property(x => x.Id).HasColumnName("id");
@@ -22,7 +22,7 @@ public sealed class DocumentPersistence(DbContextOptions<DocumentPersistence> op
 			e.HasIndex(x => x.FileName);
 		});
 
-		modelBuilder.Entity<DailyDocumentAccess>(e =>
+		modelBuilder.Entity<DailyDocumentAccess>(static e =>
 		{
 			e.ToTable("daily_document_access");
 			e.Property(x => x.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()").ValueGeneratedOnAdd();
@@ -50,15 +50,15 @@ public sealed class DocumentPersistenceFactory : IDesignTimeDbContextFactory<Doc
 	{
 		Env.Load(".env");
 
-		string cs = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__PAPERLESSDB")
-		            ?? throw new InvalidOperationException("CONNECTIONSTRINGS__PAPERLESSDB not set");
+		var cs = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__PAPERLESSDB")
+		         ?? throw new InvalidOperationException("CONNECTIONSTRINGS__PAPERLESSDB not set");
 
-		NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(cs)
+		var dataSource = new NpgsqlDataSourceBuilder(cs)
 			.MapEnum<DocumentStatus>("document_status")
 			.Build();
 
-		DbContextOptions<DocumentPersistence> opts = new DbContextOptionsBuilder<DocumentPersistence>()
-			.UseNpgsql(dataSource, o => o.MapEnum<DocumentStatus>("document_status"))
+		var opts = new DbContextOptionsBuilder<DocumentPersistence>()
+			.UseNpgsql(dataSource, static o => o.MapEnum<DocumentStatus>("document_status"))
 			.Options;
 
 		return new DocumentPersistence(opts);

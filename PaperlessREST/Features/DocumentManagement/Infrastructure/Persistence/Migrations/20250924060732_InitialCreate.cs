@@ -17,7 +17,7 @@ namespace PaperlessREST.Features.DocumentManagement.Infrastructure.Persistence.M
 
             migrationBuilder.CreateTable(
                 name: "documents",
-                columns: table => new
+                columns: static table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     file_name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -28,14 +28,14 @@ namespace PaperlessREST.Features.DocumentManagement.Infrastructure.Persistence.M
                     summary = table.Column<string>(type: "character varying(5000)", maxLength: 5000, nullable: true),
                     processed_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
-                constraints: table =>
+                constraints: static table =>
                 {
                     table.PrimaryKey("PK_documents", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
                 name: "daily_document_access",
-                columns: table => new
+                columns: static table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     document_id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -43,7 +43,7 @@ namespace PaperlessREST.Features.DocumentManagement.Infrastructure.Persistence.M
                     access_count = table.Column<int>(type: "integer", nullable: false),
                     updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
-                constraints: table =>
+                constraints: static table =>
                 {
                     table.PrimaryKey("PK_daily_document_access", x => x.id);
                     table.ForeignKey(
