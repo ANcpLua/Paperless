@@ -10,7 +10,7 @@ public sealed class DocumentRepository(
 		Guid? cursor = null,
 		CancellationToken ct = default)
 	{
-		await using DocumentPersistence db = await dbf.CreateDbContextAsync(ct);
+		await using var db = await dbf.CreateDbContextAsync(ct);
 
 		// GUIDv7 is time-ordered, so we can use it directly for cursor-based pagination
 		// Fetch one extra to determine if more pages exist
@@ -22,11 +22,11 @@ public sealed class DocumentRepository(
 			query = query.Where(d => d.Id.CompareTo(cursor.Value) < 0);
 		}
 
-		List<DocumentEntity> entities = await query
+		var entities = await query
 			.Take(pageSize + 1)
 			.ToListAsync(ct);
 
-		bool hasMore = entities.Count > pageSize;
+		var hasMore = entities.Count > pageSize;
 		if (hasMore)
 		{
 			entities.RemoveAt(entities.Count - 1);
@@ -37,15 +37,15 @@ public sealed class DocumentRepository(
 
 	public async ValueTask<Document?> GetByIdAsync(Guid id, CancellationToken ct = default)
 	{
-		await using DocumentPersistence db = await dbf.CreateDbContextAsync(ct);
-		DocumentEntity? entity = await db.Documents.FindAsync([id], ct);
+		await using var db = await dbf.CreateDbContextAsync(ct);
+		var entity = await db.Documents.FindAsync([id], ct);
 		return entity?.ToDocument();
 	}
 
 	public async Task<Document> AddAsync(Document document, CancellationToken ct = default)
 	{
-		await using DocumentPersistence db = await dbf.CreateDbContextAsync(ct);
-		DocumentEntity entity = document.ToDocumentEntity();
+		await using var db = await dbf.CreateDbContextAsync(ct);
+		var entity = document.ToDocumentEntity();
 		db.Documents.Add(entity);
 		await db.SaveChangesAsync(ct);
 
@@ -55,10 +55,10 @@ public sealed class DocumentRepository(
 
 	public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
 	{
-		await using DocumentPersistence db = await dbf.CreateDbContextAsync(ct);
+		await using var db = await dbf.CreateDbContextAsync(ct);
 
 		// Single DELETE statement - no entity loading required
-		int rowsAffected = await db.Documents
+		var rowsAffected = await db.Documents
 			.Where(d => d.Id == id)
 			.ExecuteDeleteAsync(ct);
 
@@ -73,10 +73,10 @@ public sealed class DocumentRepository(
 	public async Task<bool> UpdateSummaryAsync(Guid id, string summary, DateTimeOffset generatedAt,
 		CancellationToken ct = default)
 	{
-		await using DocumentPersistence db = await dbf.CreateDbContextAsync(ct);
+		await using var db = await dbf.CreateDbContextAsync(ct);
 
 		// Single UPDATE statement - only updates summary fields, avoids race with OCR updates
-		int rowsAffected = await db.Documents
+		var rowsAffected = await db.Documents
 			.Where(d => d.Id == id)
 			.ExecuteUpdateAsync(s => s
 				.SetProperty(d => d.Summary, summary)
@@ -92,10 +92,10 @@ public sealed class DocumentRepository(
 
 	public async Task<bool> UpdateAsync(Document document, CancellationToken ct = default)
 	{
-		await using DocumentPersistence db = await dbf.CreateDbContextAsync(ct);
+		await using var db = await dbf.CreateDbContextAsync(ct);
 
 		// Single UPDATE statement - no entity loading required
-		int rowsAffected = await db.Documents
+		var rowsAffected = await db.Documents
 			.Where(d => d.Id == document.Id)
 			.ExecuteUpdateAsync(s => s
 				.SetProperty(d => d.FileName, document.FileName)

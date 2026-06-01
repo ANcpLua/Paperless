@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
 			if (app.IsDev)
 			{
 				app.MapOpenApi();
-				app.MapScalarApiReference("/docs", options =>
+				app.MapScalarApiReference("/docs", static options =>
 				{
 					options.Title = "Paperless OCR API";
 					options.Servers = [new ScalarServer("http://localhost/")];
@@ -50,8 +50,8 @@ public static class ServiceCollectionExtensions
 
 		public async Task InitializeApplicationAsync()
 		{
-			await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
-			IServiceProvider sp = scope.ServiceProvider;
+			await using var scope = app.Services.CreateAsyncScope();
+			var sp = scope.ServiceProvider;
 
 			await sp.MigrateDatabaseAsync(app.Logger);
 			await sp.EnsureStorageBucketAsync(app.Logger);
@@ -74,14 +74,14 @@ public static class ServiceCollectionExtensions
 
 		public async Task MigrateDatabaseAsync(ILogger logger)
 		{
-			await using DocumentPersistence db = await sp.DbFactory.CreateDbContextAsync();
+			await using var db = await sp.DbFactory.CreateDbContextAsync();
 			await db.Database.MigrateAsync();
 			logger.LogInformation("Database migration completed");
 		}
 
 		public async Task EnsureStorageBucketAsync(ILogger logger)
 		{
-			string bucket = sp.MinioOpts.BucketName;
+			var bucket = sp.MinioOpts.BucketName;
 
 			if (await sp.Minio.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucket)))
 			{
@@ -102,8 +102,8 @@ public static class ServiceCollectionExtensions
 
 		public void RegisterRecurringJobs(ILogger logger)
 		{
-			BatchOptions opts = sp.BatchOpts;
-			IRecurringJobManager manager = sp.GetRequiredService<IRecurringJobManager>();
+			var opts = sp.BatchOpts;
+			var manager = sp.GetRequiredService<IRecurringJobManager>();
 
 			manager.AddOrUpdate<BatchOrchestrator>(
 				BatchOptions.JobId,
@@ -128,16 +128,16 @@ public static class ServiceCollectionExtensions
 
 		private IServiceCollection AddCrossCuttingConcerns()
 		{
-			services.AddHttpLogging(o => o.LoggingFields =
+			services.AddHttpLogging(static o => o.LoggingFields =
 				HttpLoggingFields.RequestProperties |
 				HttpLoggingFields.ResponseStatusCode |
 				HttpLoggingFields.ResponseHeaders);
 
-			services.ConfigureHttpJsonOptions(o =>
+			services.ConfigureHttpJsonOptions(static o =>
 				o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 			services.AddExceptionHandler<GlobalExceptionHandler>();
-			services.AddProblemDetails(options =>
+			services.AddProblemDetails(static options =>
 				options.CustomizeProblemDetails = ctx =>
 				{
 					ctx.ProblemDetails.Extensions["trace_id"] = Activity.Current?.Id ?? ctx.HttpContext.TraceIdentifier;
@@ -150,7 +150,7 @@ public static class ServiceCollectionExtensions
 			services.AddMapster();
 
 			// Rate limiting with tiered policies
-			services.AddRateLimiter(options =>
+			services.AddRateLimiter(static options =>
 			{
 				options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
@@ -183,7 +183,7 @@ public static class ServiceCollectionExtensions
 			});
 
 			// Output caching for GET operations
-			services.AddOutputCache(options =>
+			services.AddOutputCache(static options =>
 			{
 				// Document list: cache for 10 seconds, vary by query params
 				options.AddPolicy(CachePolicies.DocumentList, builder =>
@@ -220,7 +220,7 @@ public static class ServiceCollectionExtensions
 
 		private IServiceCollection AddPostgres(IConfiguration config)
 		{
-			NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(config.GetConnectionString("PaperlessDb"))
+			var dataSource = new NpgsqlDataSourceBuilder(config.GetConnectionString("PaperlessDb"))
 				.MapEnum<DocumentStatus>("document_status")
 				.Build();
 
@@ -240,9 +240,9 @@ public static class ServiceCollectionExtensions
 				.BindConfiguration(MinioOptions.SectionName)
 				.ValidateDataAnnotations();
 
-			services.AddSingleton<IMinioClient>(sp =>
+			services.AddSingleton<IMinioClient>(static sp =>
 			{
-				MinioOptions opts = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
+				var opts = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
 				return new MinioClient()
 					.WithEndpoint(opts.EndpointUri.Host, opts.EndpointUri.Port)
 					.WithCredentials(opts.AccessKey, opts.SecretKey)
@@ -259,9 +259,9 @@ public static class ServiceCollectionExtensions
 				.BindConfiguration(ElasticsearchOptions.SectionName)
 				.ValidateDataAnnotations();
 
-			services.AddSingleton(sp =>
+			services.AddSingleton(static sp =>
 			{
-				ElasticsearchOptions opts = sp.GetRequiredService<IOptions<ElasticsearchOptions>>().Value;
+				var opts = sp.GetRequiredService<IOptions<ElasticsearchOptions>>().Value;
 				return new ElasticsearchClient(
 					new ElasticsearchClientSettings(opts.Uri)
 						.DefaultIndex(opts.DefaultIndex)
@@ -333,7 +333,7 @@ public static class ServiceCollectionExtensions
 
 		private IServiceCollection AddApiLayer()
 		{
-			services.AddOpenApi(o =>
+			services.AddOpenApi(static o =>
 			{
 				o.CreateSchemaReferenceId =
 					t => t.Type.IsEnum ? null : OpenApiOptions.CreateDefaultSchemaReferenceId(t);
@@ -346,12 +346,12 @@ public static class ServiceCollectionExtensions
 				});
 			});
 
-			services.AddApiVersioning(v =>
+			services.AddApiVersioning(static v =>
 			{
 				v.DefaultApiVersion = new ApiVersion(1, 0);
 				v.AssumeDefaultVersionWhenUnspecified = true;
 				v.ReportApiVersions = true;
-			}).AddApiExplorer(opts =>
+			}).AddApiExplorer(static opts =>
 			{
 				opts.GroupNameFormat = "'v'VVV";
 				opts.SubstituteApiVersionInUrl = true;

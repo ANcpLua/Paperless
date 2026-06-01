@@ -19,7 +19,7 @@ internal class DocumentPersistenceModelSnapshot : ModelSnapshot
 		]);
 		modelBuilder.UseIdentityByDefaultColumns();
 
-		modelBuilder.Entity("PaperlessREST.DAL.DailyDocumentAccess", b =>
+		modelBuilder.Entity("PaperlessREST.DAL.DailyDocumentAccess", static b =>
 		{
 			b.Property<Guid>("Id")
 				.ValueGeneratedOnAdd()
@@ -55,7 +55,7 @@ internal class DocumentPersistenceModelSnapshot : ModelSnapshot
 			b.ToTable("daily_document_access", (string)null);
 		});
 
-		modelBuilder.Entity("PaperlessREST.DAL.DocumentEntity", b =>
+		modelBuilder.Entity("PaperlessREST.DAL.DocumentEntity", static b =>
 		{
 			b.Property<Guid>("Id")
 				.ValueGeneratedOnAdd()
@@ -109,7 +109,7 @@ internal class DocumentPersistenceModelSnapshot : ModelSnapshot
 			b.ToTable("documents", (string)null);
 		});
 
-		modelBuilder.Entity("PaperlessREST.DAL.DailyDocumentAccess", b =>
+		modelBuilder.Entity("PaperlessREST.DAL.DailyDocumentAccess", static b =>
 		{
 			b.HasOne("PaperlessREST.DAL.DocumentEntity", null)
 				.WithMany()

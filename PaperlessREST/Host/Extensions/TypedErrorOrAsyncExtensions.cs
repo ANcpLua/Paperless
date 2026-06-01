@@ -7,9 +7,9 @@ public static class TypedErrorOrAsyncExtensions
 {
 	private static ValidationProblem CreateValidationProblem(IReadOnlyList<Error> errors) =>
 		TypedResults.ValidationProblem(
-			errors.Where(e => e.Type == ErrorType.Validation)
-				.GroupBy(e => e.Code)
-				.ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray()));
+			errors.Where(static e => e.Type == ErrorType.Validation)
+				.GroupBy(static e => e.Code)
+				.ToDictionary(static g => g.Key, static g => g.Select(e => e.Description).ToArray()));
 
 	private static ProblemHttpResult CreateServerError(Error error) =>
 		TypedResults.Problem(
@@ -19,7 +19,7 @@ public static class TypedErrorOrAsyncExtensions
 			type: $"urn:paperless:error:{ToKebabCase(error.Code)}",
 			extensions: error.Metadata is { Count: > 0 }
 				? error.Metadata.ToDictionary(
-					kvp => char.ToLowerInvariant(kvp.Key[0]) + kvp.Key[1..], object? (kvp) => kvp.Value)
+static kvp => char.ToLowerInvariant(kvp.Key[0]) + kvp.Key[1..], static object? (kvp) => kvp.Value)
 				: null);
 
 	private static ProblemHttpResult CreateServiceUnavailable(Error error) =>
@@ -42,7 +42,7 @@ public static class TypedErrorOrAsyncExtensions
 			return extensions;
 		}
 
-		foreach (KeyValuePair<string, object> kvp in error.Metadata.Where(kvp => kvp.Key != "RetryAfter"))
+		foreach (var kvp in error.Metadata.Where(static kvp => kvp.Key != "RetryAfter"))
 		{
 			extensions[char.ToLowerInvariant(kvp.Key[0]) + kvp.Key[1..]] = kvp.Value;
 		}
@@ -51,7 +51,7 @@ public static class TypedErrorOrAsyncExtensions
 	}
 
 	private static string ToKebabCase(string value) =>
-		string.Concat(value.Select((c, i) =>
+		string.Concat(value.Select(static (c, i) =>
 			i > 0 && char.IsUpper(c) ? $"-{char.ToLowerInvariant(c)}" : char.ToLowerInvariant(c).ToString()));
 
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -108,7 +108,7 @@ public static class TypedErrorOrAsyncExtensions
 			[InstantHandle] Func<T, TResult> mapper,
 			[CallerMemberName] string callerName = "")
 		{
-			ErrorOr<T> result = await task.ConfigureAwait(false);
+			var result = await task.ConfigureAwait(false);
 			return result.ToOkOr404(mapper, callerName);
 		}
 
@@ -124,7 +124,7 @@ public static class TypedErrorOrAsyncExtensions
 				[InstantHandle] Func<T, object> routeValuesFactory,
 				[CallerMemberName] string callerName = "")
 		{
-			ErrorOr<T> result = await task.ConfigureAwait(false);
+			var result = await task.ConfigureAwait(false);
 
 			if (!result.IsError)
 			{
@@ -151,7 +151,7 @@ public static class TypedErrorOrAsyncExtensions
 		[MustUseReturnValue]
 		public async Task<Results<NoContent, NotFound>> ToNoContentOr404([CallerMemberName] string callerName = "")
 		{
-			ErrorOr<Deleted> result = await task.ConfigureAwait(false);
+			var result = await task.ConfigureAwait(false);
 			return result.ToNoContentOr404(callerName);
 		}
 	}

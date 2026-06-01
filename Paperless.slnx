@@ -1,5 +1,4 @@
 <Solution>
-  <Project Path="Paperless.Contracts/Paperless.Contracts.csproj" />
   <Project Path="PaperlessREST/PaperlessREST.csproj" />
   <Project Path="PaperlessServices/PaperlessServices.csproj" />
   <Project Path="PaperlessREST.Tests/PaperlessREST.Tests.csproj" />

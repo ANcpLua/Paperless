@@ -15,8 +15,8 @@ public sealed class PdfUploadFilter : IEndpointFilter
 {
 	public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext ctx, EndpointFilterDelegate next)
 	{
-		IFormFile? file = ctx.Arguments.OfType<UploadDocumentRequest>().FirstOrDefault()?.File
-		                  ?? ctx.Arguments.OfType<IFormFile>().FirstOrDefault();
+		var file = ctx.Arguments.OfType<UploadDocumentRequest>().FirstOrDefault()?.File
+		           ?? ctx.Arguments.OfType<IFormFile>().FirstOrDefault();
 
 		if (file is null)
 			return ValidationError("File is required");
@@ -24,7 +24,7 @@ public sealed class PdfUploadFilter : IEndpointFilter
 		if (file.Length > FileUploadConstraints.MaxFileSizeBytes)
 			return ValidationError($"File size cannot exceed {FileUploadConstraints.MaxFileSizeBytes / FileUploadConstraints.BytesPerMegabyte:F0} MB");
 
-		string contentType = file.ContentType?.Split(';')[0].Trim() ?? "";
+		var contentType = file.ContentType?.Split(';')[0].Trim() ?? "";
 		if (!contentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
 			return ValidationError("Only PDF files are allowed");
 

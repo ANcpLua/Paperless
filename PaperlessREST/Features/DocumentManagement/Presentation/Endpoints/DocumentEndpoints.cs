@@ -107,7 +107,7 @@ public static class DocumentEndpoints
 
 		PaginatedDocumentsResponse response = new()
 		{
-			Items = items.ConvertAll(d => d.ToDocumentDto()),
+			Items = items.ConvertAll(static d => d.ToDocumentDto()),
 			HasMore = hasMore,
 			NextCursor = hasMore && items.Count > 0 ? items[^1].Id : null
 		};
@@ -135,7 +135,7 @@ public static class DocumentEndpoints
 	{
 		var results = await documentService
 			.SearchDocumentsAsync(search.Query, search.Limit, cancellationToken)
-			.Select(r => r.ToDocumentSearchResultDto())
+			.Select(static r => r.ToDocumentSearchResultDto())
 			.ToListAsync(cancellationToken);
 
 		return TypedResults.Ok(results);
@@ -168,7 +168,7 @@ public static class DocumentEndpoints
 		CancellationToken cancellationToken)
 	{
 		var result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
-		return result.ToOkOr404(doc => doc.ToDocumentDto());
+		return result.ToOkOr404(static doc => doc.ToDocumentDto());
 	}
 
 	/// <summary>
@@ -193,7 +193,7 @@ public static class DocumentEndpoints
 		CancellationToken cancellationToken)
 	{
 		var result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
-		return result.ToOkOr404(doc => new SummaryDto { Summary = doc.Summary });
+		return result.ToOkOr404(static doc => new SummaryDto { Summary = doc.Summary });
 	}
 
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -241,9 +241,9 @@ public static class DocumentEndpoints
 			CancellationToken cancellationToken) =>
 		documentService.UploadDocumentAsync(request, cancellationToken)
 			.ToAcceptedAtRouteOrProblem(
-				doc => doc.ToCreateDocumentResponse(),
+static doc => doc.ToCreateDocumentResponse(),
 				nameof(GetDocumentById),
-				d => new { id = d.Id });
+static d => new { id = d.Id });
 
 	/// <summary>
 	///     Deletes a document from all storage systems.

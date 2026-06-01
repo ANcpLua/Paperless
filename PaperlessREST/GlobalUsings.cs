@@ -69,10 +69,10 @@ global using PaperlessREST.Features.DocumentManagement.Presentation.Endpoints;
 // Project namespaces - Batch Processing Feature
 global using PaperlessREST.Features.BatchProcessing.Application;
 
-// Project namespaces - Paperless.Contracts (transport boundary)
-global using Paperless.Contracts.BatchProcessing;
-global using Paperless.Contracts.DocumentManagement;
-global using Paperless.Contracts.Validation;
+// Project namespaces - transport contracts
+global using PaperlessREST.Contracts.BatchProcessing;
+global using PaperlessREST.Contracts.DocumentManagement;
+global using PaperlessREST.Contracts.Validation;
 
 // Project namespaces - Event Processing Feature
 global using PaperlessREST.Features.EventProcessing.Presentation;

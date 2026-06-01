@@ -1,9 +1,4 @@
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
-using Paperless.Contracts.Validation;
-
-namespace Paperless.Contracts.DocumentManagement;
+namespace PaperlessREST.Contracts.DocumentManagement;
 
 // All records below are pure transport DTOs. Behaviour belongs in BL/DAL/API;
 // coverage on compiler-generated record members (Equals/GetHashCode/PrintMembers/

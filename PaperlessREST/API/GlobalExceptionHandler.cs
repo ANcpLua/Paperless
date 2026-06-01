@@ -41,7 +41,7 @@ public sealed class GlobalExceptionHandler(
 			return true;
 		}
 
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Set status code explicitly before writing response
 		context.Response.StatusCode = info.StatusCode;
@@ -85,8 +85,8 @@ public sealed class ProblemDetailsEnricher(
 
 	private void Enrich(ProblemDetailsContext context)
 	{
-		ProblemDetails pd = context.ProblemDetails;
-		HttpContext httpContext = context.HttpContext;
+		var pd = context.ProblemDetails;
+		var httpContext = context.HttpContext;
 
 		pd.Extensions["trace_id"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
 		pd.Extensions["timestamp"] = timeProvider.GetUtcNow().ToString("O");
@@ -113,7 +113,7 @@ public sealed class ProblemDetailsEnricher(
 		}
 
 		{
-			Exception? ex = context.Exception;
+			var ex = context.Exception;
 			pd.Extensions["debug"] = new
 			{
 				exception_type = ex.GetType().FullName,

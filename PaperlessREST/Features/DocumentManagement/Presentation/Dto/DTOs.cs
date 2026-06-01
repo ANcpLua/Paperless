@@ -4,9 +4,9 @@ namespace PaperlessREST.Features.DocumentManagement.Presentation.Dto;
 /// Request model for uploading a PDF document.
 /// Validation handled by <see cref="Filters.PdfUploadFilter"/>.
 ///
-/// Stays in the API project (rather than Paperless.Contracts) because it carries an
+/// Lives beside the feature (not under <c>Contracts/</c>) because it carries an
 /// <see cref="IFormFile"/> — an ASP.NET Core input-model concern, not a transport DTO.
-/// All response/query DTOs live in <c>Paperless.Contracts.DocumentManagement</c>.
+/// The response/query DTOs the OpenAPI contract exposes live in <c>PaperlessREST.Contracts.DocumentManagement</c>.
 /// </summary>
 public sealed record UploadDocumentRequest
 {

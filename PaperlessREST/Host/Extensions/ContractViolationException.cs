@@ -78,11 +78,11 @@ public sealed class ContractViolationException(
 	/// </summary>
 	public ContractViolationDiagnostics GetDiagnostics() => new(
 		EndpointOperation,
-		[.. ExpectedErrorTypes.Select(e => e.ToString())],
+		[.. ExpectedErrorTypes.Select(static e => e.ToString())],
 		ActualError.Type.ToString(),
 		ActualError.Code,
 		ActualError.Description,
-		[.. AllErrors.Select(e => new ErrorDetail(e.Type.ToString(), e.Code, e.Description))],
+		[.. AllErrors.Select(static e => new ErrorDetail(e.Type.ToString(), e.Code, e.Description))],
 		ActualError.Metadata);
 
 	private static string BuildMessage(
