@@ -118,13 +118,17 @@ public sealed class ReportProcessor(
 		}
 		catch (InvalidOperationException ex)
 		{
-			// XmlSerializer.Deserialize wraps both XmlException (well-formedness)
-			// and XmlSchemaException (validation) as InvalidOperationException, so a
-			// separate `catch (XmlException)` branch is unreachable.
+			// Deserialize wraps the underlying parse failure (e.g. XmlException for malformed
+			// XML) in an InvalidOperationException with InnerException set, so a dedicated
+			// `catch (XmlException)` branch would be unreachable. Input schema-validation
+			// failures don't land here either — the ValidationEventHandler above collects
+			// them into validationErrors.
 			return ReportErrors.InvalidSchema(ex.Message);
 		}
 		catch (XmlSchemaException ex)
 		{
+			// Separate, non-wrapped path: XmlSchemaSet.Compile() throws this raw when the
+			// bundled accessReport.xsd itself is invalid (first access to the Schemas getter).
 			return ReportErrors.InvalidSchema(ex.Message);
 		}
 	}
