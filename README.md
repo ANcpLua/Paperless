@@ -33,7 +33,7 @@ Paperless.slnx                          # MSBuild slnx (modern format)
 │   └── PaperlessUI.Blazor.csproj
 ├── Pipeline/                           # NUKE build (`./build.sh <Target>`)
 ├── docker/                             # nginx config (single file: docker/nginx.conf)
-├── sample-data/                        # XML batch + PDF fixtures
+├── PaperlessREST/sample-data/          # XML batch fixtures (input/archive/error), mounted by compose
 └── compose.yaml                        # Local stack (postgres, minio, rabbitmq, elastic)
 ```
 
