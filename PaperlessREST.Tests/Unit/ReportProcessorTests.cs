@@ -504,41 +504,6 @@ public sealed class ReportProcessorTests : IDisposable
 	private ReportProcessor CreateSut() => new(_fileSystem, _repo.Object, _logger);
 
 	// ═══════════════════════════════════════════════════════════════
-	// TESTS: ProcessAsync - XmlSchemaException Handler Branch
-	// ═══════════════════════════════════════════════════════════════
-
-	[Fact]
-	public async Task ProcessAsync_MalformedSchema_ReturnsValidationError()
-	{
-		// Arrange - Create a new test instance with corrupted schema
-		MockFileSystem corruptFs = new();
-		var schemaDir = Path.Combine(AppContext.BaseDirectory, "Schemas");
-		corruptFs.Directory.CreateDirectory(schemaDir);
-		// Write invalid XSD that will cause XmlSchemaException when parsing
-		corruptFs.File.WriteAllText(Path.Combine(schemaDir, "accessReport.xsd"),
-			"<?xml version=\"1.0\"?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:invalid/></xs:schema>");
-
-		var xmlContent = $"""
-		                     <?xml version="1.0" encoding="UTF-8"?>
-		                     <accessReport date="{ValidDate}">
-		                     </accessReport>
-		                     """;
-		var baseDir = AppContext.BaseDirectory;
-		corruptFs.Directory.CreateDirectory(baseDir);
-		var filePath = Path.Combine(baseDir, "schema-test.xml");
-		corruptFs.File.WriteAllText(filePath, xmlContent);
-
-		ReportProcessor sut = new(corruptFs, _repo.Object, _logger);
-
-		// Act
-		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
-
-		// Assert - Should return validation error from XmlSchemaException handler
-		result.IsError.Should().BeTrue();
-		result.FirstError.Type.Should().Be(ErrorType.Validation);
-	}
-
-	// ═══════════════════════════════════════════════════════════════
 	// TESTS: ProcessAsync - InvalidDate path AFTER schema validation passes
 	// Covers ReportProcessor.cs lines 100-103: DateOnly.TryParseExact failure
 	// for a date string that survives xs:date schema validation but is not

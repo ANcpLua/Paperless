@@ -118,17 +118,17 @@ public sealed class ReportProcessor(
 		}
 		catch (InvalidOperationException ex)
 		{
-			// Deserialize wraps the underlying parse failure (e.g. XmlException for malformed
-			// XML) in an InvalidOperationException with InnerException set, so a dedicated
-			// `catch (XmlException)` branch would be unreachable. Input schema-validation
-			// failures don't land here either — the ValidationEventHandler above collects
+			// Malformed input XML surfaces here: Deserialize wraps the underlying XmlException
+			// in an InvalidOperationException (InnerException set), so a dedicated
+			// `catch (XmlException)` branch would be unreachable. Schema-validation failures
+			// against the input don't throw at all — the ValidationEventHandler above collects
 			// them into validationErrors.
-			return ReportErrors.InvalidSchema(ex.Message);
-		}
-		catch (XmlSchemaException ex)
-		{
-			// Separate, non-wrapped path: XmlSchemaSet.Compile() throws this raw when the
-			// bundled accessReport.xsd itself is invalid (first access to the Schemas getter).
+			//
+			// There is deliberately NO `catch (XmlSchemaException)`: that is thrown raw by
+			// XmlSchemaSet.Compile() only when the bundled accessReport.xsd itself is invalid —
+			// a deploy bug, not bad input. Letting it propagate fails the Hangfire batch job
+			// loudly (and retries) instead of quarantining every file under a bogus
+			// "invalid schema" data error.
 			return ReportErrors.InvalidSchema(ex.Message);
 		}
 	}
