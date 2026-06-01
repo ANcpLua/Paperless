@@ -440,7 +440,7 @@ public sealed class ListenerLifecycleTests
 	{
 		// Yield the first item immediately; for each subsequent item, wait on the gate so the
 		// test can deterministically cancel the token before the producer yields again.
-		for (int i = 0; i < items.Count; i++)
+		for (var i = 0; i < items.Count; i++)
 		{
 			if (i > 0)
 			{

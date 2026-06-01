@@ -90,7 +90,7 @@ public sealed class ReportProcessor(
 			};
 
 			using XmlReader reader = XmlReader.Create(stream, settings);
-			AccessReportDto dto = (AccessReportDto)s_serializer.Deserialize(reader)!;
+			var dto = (AccessReportDto)s_serializer.Deserialize(reader)!;
 
 			if (validationErrors.Count > 0)
 			{

@@ -325,7 +325,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	{
 		// Arrange
 		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-baddate.pdf");
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0"?>
 		                     <accessReport date="not-a-date">
 		                         <document id="{docId}" accessCount="10"/>
@@ -349,7 +349,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	{
 		// Arrange
 		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-negative.pdf");
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0"?>
 		                     <accessReport date="2024-01-15">
 		                         <document id="{docId}" accessCount="-10"/>
@@ -373,7 +373,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	{
 		// Arrange
 		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-nodate.pdf");
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0"?>
 		                     <accessReport>
 		                         <document id="{docId}" accessCount="10"/>

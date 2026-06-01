@@ -165,7 +165,7 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_InvalidDateFormat_ReturnsValidationError(string invalidDate)
 	{
 		// Arrange
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{invalidDate}">
 		                     </accessReport>
@@ -185,7 +185,7 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_EmptyDocumentsList_ReturnsZeroProcessed()
 	{
 		// Arrange
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                     </accessReport>
@@ -207,7 +207,7 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_EmptyDocuments_LogsInformation()
 	{
 		// Arrange
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                     </accessReport>
@@ -230,7 +230,7 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_EmptyGuidInDocument_ReturnsInvalidGuidError()
 	{
 		// Arrange
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                         <document id="00000000-0000-0000-0000-000000000000" accessCount="10"/>
@@ -279,7 +279,7 @@ public sealed class ReportProcessorTests : IDisposable
 		// Arrange
 		Guid unknownId1 = Guid.NewGuid();
 		Guid unknownId2 = Guid.NewGuid();
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                         <document id="{unknownId1}" accessCount="{AccessCount10}"/>
@@ -317,7 +317,7 @@ public sealed class ReportProcessorTests : IDisposable
 		// Arrange
 		Guid knownId = Guid.NewGuid();
 		Guid unknownId = Guid.NewGuid();
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                         <document id="{knownId}" accessCount="{AccessCount10}"/>
@@ -355,7 +355,7 @@ public sealed class ReportProcessorTests : IDisposable
 	{
 		// Arrange
 		Guid docId = Guid.NewGuid();
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                         <document id="{docId}" accessCount="{AccessCount5}"/>
@@ -394,7 +394,7 @@ public sealed class ReportProcessorTests : IDisposable
 		// Arrange
 		Guid doc1 = Guid.NewGuid();
 		Guid doc2 = Guid.NewGuid();
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                         <document id="{doc1}" accessCount="{AccessCount10}"/>
@@ -431,7 +431,7 @@ public sealed class ReportProcessorTests : IDisposable
 	{
 		// Arrange
 		Guid docId = Guid.NewGuid();
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                         <document id="{docId}" accessCount="{AccessCount10}"/>
@@ -470,7 +470,7 @@ public sealed class ReportProcessorTests : IDisposable
 	{
 		// Arrange
 		Guid unknownId = Guid.NewGuid();
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                         <document id="{unknownId}" accessCount="{AccessCount10}"/>
@@ -519,7 +519,7 @@ public sealed class ReportProcessorTests : IDisposable
 		corruptFs.File.WriteAllText(Path.Combine(schemaDir, "accessReport.xsd"),
 			"<?xml version=\"1.0\"?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:invalid/></xs:schema>");
 
-		string xmlContent = $"""
+		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
 		                     </accessReport>

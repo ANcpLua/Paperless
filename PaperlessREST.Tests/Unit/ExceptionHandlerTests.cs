@@ -89,7 +89,7 @@ public sealed class ExceptionHandlerTests
 		Type exceptionType, int expectedStatus, LogLevel expectedLevel, string expectedCode)
 	{
 		HttpContext context = _setup.CreateHttpContext();
-		Exception exception = (Exception)Activator.CreateInstance(exceptionType, "Test")!;
+		var exception = (Exception)Activator.CreateInstance(exceptionType, "Test")!;
 		GlobalExceptionHandler handler = _setup.WithProblemDetailsWrite().CreateHandler();
 
 		bool handled = await handler.TryHandleAsync(context, exception, TestContext.Current.CancellationToken);

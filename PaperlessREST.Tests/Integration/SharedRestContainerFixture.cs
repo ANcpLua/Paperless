@@ -92,7 +92,7 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__PAPERLESSDB", _postgres.GetConnectionString());
 		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__HANGFIRE", _postgres.GetConnectionString());
 		Environment.SetEnvironmentVariable("RABBITMQ__URI", _rabbit.GetConnectionString());
-		string minioEndpoint = $"{_minio.Hostname}:{_minio.GetMappedPublicPort(9000)}";
+		var minioEndpoint = $"{_minio.Hostname}:{_minio.GetMappedPublicPort(9000)}";
 		Environment.SetEnvironmentVariable("STORAGE__MINIO__ENDPOINT", minioEndpoint);
 		Environment.SetEnvironmentVariable("STORAGE__MINIO__ACCESSKEY", _minio.GetAccessKey());
 		Environment.SetEnvironmentVariable("STORAGE__MINIO__SECRETKEY", _minio.GetSecretKey());

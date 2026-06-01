@@ -427,7 +427,7 @@ public static class OcrWorkerTests
 		public async Task CancellationStopsProcessing()
 		{
 			using CancellationTokenSource cts = new();
-			int messagesProcessed = 0;
+			var messagesProcessed = 0;
 
 			SetupConsumerInfrastructure();
 			SetupScopeFactory();

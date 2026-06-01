@@ -79,7 +79,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	public void FromException_BadRequestExceptions_Returns400(Type exceptionType)
 	{
 		// Arrange
-		Exception exception = (Exception)Activator.CreateInstance(exceptionType, TestMessage)!;
+		var exception = (Exception)Activator.CreateInstance(exceptionType, TestMessage)!;
 
 		// Act
 		ExceptionInfo info = ExceptionInfo.FromException(exception);
@@ -136,7 +136,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	public void FromException_NotFoundExceptions_Returns404(Type exceptionType)
 	{
 		// Arrange
-		Exception exception = (Exception)Activator.CreateInstance(exceptionType, NotFoundMessage)!;
+		var exception = (Exception)Activator.CreateInstance(exceptionType, NotFoundMessage)!;
 
 		// Act
 		ExceptionInfo info = ExceptionInfo.FromException(exception);
@@ -270,7 +270,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		captured.Should().NotBeNull();
 		captured!.ProblemDetails.Should().BeOfType<HttpValidationProblemDetails>();
 
-		HttpValidationProblemDetails validation = (HttpValidationProblemDetails)captured.ProblemDetails;
+		var validation = (HttpValidationProblemDetails)captured.ProblemDetails;
 		validation.Errors.Should().ContainKey(EmailFieldName).WhoseValue.Should().ContainSingle();
 		validation.Type.Should().Contain(CodeValidationError);
 	}
