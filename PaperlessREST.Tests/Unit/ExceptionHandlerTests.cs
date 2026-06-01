@@ -6,15 +6,9 @@ public static class ExceptionHandlerConstants
 	public const string BadRequestCode = "bad_request";
 	public const string ValidationErrorCode = "validation_error";
 	public const string NotFoundCode = "not_found";
-	public const string ForbiddenCode = "forbidden";
-	public const string TimeoutCode = "timeout";
-	public const string InternalErrorCode = "internal_error";
 	public const string TestExceptionMessage = "Test";
 	public const string PropertyName = "Name";
-	public const string PropertyEmail = "Email";
 	public const string NameRequiredError = "Name is required";
-	public const string InvalidEmailError = "Invalid email format";
-	public const string DuplicateNameError = "Name already exists";
 }
 
 public sealed class ExceptionHandlerSetup

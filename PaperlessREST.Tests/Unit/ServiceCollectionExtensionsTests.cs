@@ -1,12 +1,10 @@
 using System.Diagnostics;
 using System.Reflection;
-using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Asp.Versioning.ApiExplorer;
 using Hangfire.Common;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
-using PaperlessREST.API;
 using PaperlessREST.Host.Extensions;
 using Scalar.AspNetCore;
 

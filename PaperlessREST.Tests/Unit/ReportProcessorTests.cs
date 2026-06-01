@@ -1,4 +1,3 @@
-using System.Text;
 using Testably.Abstractions.Testing;
 
 namespace PaperlessREST.Tests.Unit;

@@ -32,10 +32,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	private const string FieldName = "Field";
 	private const string FieldError = "Error";
 	private const string EmailFieldName = "Email";
-	private const string NameFieldName = "Name";
 	private const string EmailRequiredError = "Required";
-	private const string EmailFormatError = "Invalid format";
-	private const string NameLengthError = "Too short";
 	private const string DocNotFoundMessage = "Doc not found";
 	private const string NotFoundMessage = "Not found";
 	private const string BadRequestMessage = "bad request";
