@@ -23,7 +23,7 @@ public class StorageIntegrationTests(SharedContainerFixture fixture)
 	public async Task DownloadNonExistent_ThrowsException()
 	{
 		// Arrange
-		string missingPath = $"missing/{Guid.NewGuid()}.pdf";
+		var missingPath = $"missing/{Guid.NewGuid()}.pdf";
 
 		// Act & Assert
 		await FluentActions

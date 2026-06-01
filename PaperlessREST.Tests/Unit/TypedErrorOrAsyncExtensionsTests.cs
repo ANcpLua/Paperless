@@ -23,7 +23,7 @@ public sealed class TypedErrorOrAsyncExtensionsTests
 	[Fact]
 	public void ToOkOr404_Sync_Success_ReturnsOkWithMappedValue()
 	{
-		ErrorOr<int> result = (ErrorOr<int>)7;
+		var result = (ErrorOr<int>)7;
 		Results<Ok<string>, NotFound> typed = result.ToOkOr404(v => $"v={v}");
 
 		Ok<string>? ok = typed.Result.Should().BeOfType<Ok<string>>().Subject;
@@ -33,7 +33,7 @@ public sealed class TypedErrorOrAsyncExtensionsTests
 	[Fact]
 	public void ToOkOr404_Sync_NotFound_ReturnsNotFoundResult()
 	{
-		ErrorOr<int> result = (ErrorOr<int>)Error.NotFound("X", "missing");
+		var result = (ErrorOr<int>)Error.NotFound("X", "missing");
 		Results<Ok<string>, NotFound> typed = result.ToOkOr404(v => v.ToString());
 
 		typed.Result.Should().BeOfType<NotFound>();
@@ -42,7 +42,7 @@ public sealed class TypedErrorOrAsyncExtensionsTests
 	[Fact]
 	public void ToOkOr404_Sync_NonNotFoundError_ThrowsContractViolation()
 	{
-		ErrorOr<int> result = (ErrorOr<int>)Error.Conflict("X", "conflict");
+		var result = (ErrorOr<int>)Error.Conflict("X", "conflict");
 
 		Action act = () => result.ToOkOr404(v => v.ToString());
 
@@ -56,7 +56,7 @@ public sealed class TypedErrorOrAsyncExtensionsTests
 	[Fact]
 	public void ToNoContentOr404_Sync_Success_ReturnsNoContent()
 	{
-		ErrorOr<Deleted> result = (ErrorOr<Deleted>)Result.Deleted;
+		var result = (ErrorOr<Deleted>)Result.Deleted;
 		Results<NoContent, NotFound> typed = result.ToNoContentOr404();
 
 		typed.Result.Should().BeOfType<NoContent>();
@@ -65,7 +65,7 @@ public sealed class TypedErrorOrAsyncExtensionsTests
 	[Fact]
 	public void ToNoContentOr404_Sync_NotFound_ReturnsNotFoundResult()
 	{
-		ErrorOr<Deleted> result = (ErrorOr<Deleted>)Error.NotFound("X", "missing");
+		var result = (ErrorOr<Deleted>)Error.NotFound("X", "missing");
 		Results<NoContent, NotFound> typed = result.ToNoContentOr404();
 
 		typed.Result.Should().BeOfType<NotFound>();
@@ -74,7 +74,7 @@ public sealed class TypedErrorOrAsyncExtensionsTests
 	[Fact]
 	public void ToNoContentOr404_Sync_NonNotFoundError_ThrowsContractViolation()
 	{
-		ErrorOr<Deleted> result = (ErrorOr<Deleted>)Error.Failure("X", "boom");
+		var result = (ErrorOr<Deleted>)Error.Failure("X", "boom");
 
 		Action act = () => result.ToNoContentOr404();
 

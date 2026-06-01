@@ -60,7 +60,7 @@ public class SearchIndexConcurrencyTests(SharedContainerFixture fixture)
 	{
 		// Arrange — unique index ensures the static cache has no entry, so both
 		// callers pass the outer ContainsKey check and race for the semaphore.
-		string indexName = $"test-{Guid.NewGuid():N}";
+		var indexName = $"test-{Guid.NewGuid():N}";
 		FakeLogCollector collector = new();
 		FakeLogger<SearchIndexService> logger = new(collector);
 		using SearchIndexService sut = BuildSut(ElasticClient, indexName, logger);
@@ -95,7 +95,7 @@ public class SearchIndexConcurrencyTests(SharedContainerFixture fixture)
 	public async Task InitializeAsync_WhenIndexPreCreated_SkipsCreateAndLogsNothing()
 	{
 		// Arrange — pre-create the index out-of-band, before any SearchIndexService touches it.
-		string indexName = $"test-{Guid.NewGuid():N}";
+		var indexName = $"test-{Guid.NewGuid():N}";
 		Elastic.Clients.Elasticsearch.IndexManagement.CreateIndexResponse preCreate = await ElasticClient.Indices
 			.CreateAsync(indexName, TestContext.Current.CancellationToken);
 		preCreate.IsValidResponse.Should().BeTrue("pre-creating the index out-of-band is a precondition for this test");

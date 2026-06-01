@@ -308,7 +308,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task GetDocumentsPagedAsync_ReturnsNewestFirst()
 	{
 		// Arrange - Use GUIDv7 which is time-ordered
-		string testPrefix = $"{TestFilePrefix}-paged-{Guid.NewGuid():N}";
+		var testPrefix = $"{TestFilePrefix}-paged-{Guid.NewGuid():N}";
 
 		// Add documents with slight delays to ensure distinct GUIDv7s
 		Document oldest = new DocumentBuilder().WithFileName($"{testPrefix}-old.pdf").Build();
@@ -339,9 +339,9 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task GetDocumentsPagedAsync_RespectsPageSize()
 	{
 		// Arrange
-		string testPrefix = $"{TestFilePrefix}-pagesize-{Guid.NewGuid():N}";
+		var testPrefix = $"{TestFilePrefix}-pagesize-{Guid.NewGuid():N}";
 
-		for (int i = 0; i < 5; i++)
+		for (var i = 0; i < 5; i++)
 		{
 			await Repository.AddAsync(
 				new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build(),
@@ -362,10 +362,10 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task GetDocumentsPagedAsync_WithCursor_ReturnsNextPage()
 	{
 		// Arrange
-		string testPrefix = $"{TestFilePrefix}-cursor-{Guid.NewGuid():N}";
+		var testPrefix = $"{TestFilePrefix}-cursor-{Guid.NewGuid():N}";
 		List<Document> addedDocs = [];
 
-		for (int i = 0; i < 5; i++)
+		for (var i = 0; i < 5; i++)
 		{
 			Document doc = new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build();
 			Document added = await Repository.AddAsync(doc, TestContext.Current.CancellationToken);
@@ -394,9 +394,9 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task GetDocumentsPagedAsync_LastPage_HasMoreIsFalse()
 	{
 		// Arrange
-		string testPrefix = $"{TestFilePrefix}-lastpage-{Guid.NewGuid():N}";
+		var testPrefix = $"{TestFilePrefix}-lastpage-{Guid.NewGuid():N}";
 
-		for (int i = 0; i < 3; i++)
+		for (var i = 0; i < 3; i++)
 		{
 			await Repository.AddAsync(
 				new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build(),
