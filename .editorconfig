@@ -19,6 +19,11 @@ insert_final_newline = true
 
 #### .NET Coding Conventions ####
 dotnet_diagnostic.IDE0051.severity = suggestion
+# AL1210 (Use StringComparison extension) is meant for Roslyn-analyzer projects: its
+# EndsWithOrdinal/EqualsOrdinal/etc. live in the internal ANcpLua.Roslyn.Utilities source
+# package, which this app does not (and should not) reference. The BCL StringComparison
+# overloads are correct here, so the rule is not applicable to this repo.
+dotnet_diagnostic.AL1210.severity = none
 # Organize usings
 dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = false
@@ -76,10 +81,11 @@ dotnet_style_allow_statement_immediately_after_block_experimental = true
 
 #### C# Coding Conventions ####
 
-# var preferences (you currently prefer explicit types)
-csharp_style_var_elsewhere = false
-csharp_style_var_for_built_in_types = false
-csharp_style_var_when_type_is_apparent = false
+# var preferences — prefer var, to match the SDK's AL1703 analyzer (otherwise the IDE
+# "use explicit type" hint and AL1703 "use implicit type" fight each other).
+csharp_style_var_elsewhere = true
+csharp_style_var_for_built_in_types = true
+csharp_style_var_when_type_is_apparent = true
 
 # Expression-bodied members
 csharp_style_expression_bodied_accessors = true

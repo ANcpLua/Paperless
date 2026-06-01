@@ -103,13 +103,7 @@ public sealed class ReportProcessor(
 				return ReportErrors.InvalidDate(dto.Date);
 			}
 
-			// Handle empty document list (valid case - no documents to process)
-			// List<T> + [XmlElement] guarantees Documents is never null
-			if (dto.Documents.Count is 0)
-			{
-				return (dto, date);
-			}
-
+			// Empty document list is valid; FindIndex returns -1 and we fall through to success.
 			int emptyGuidIndex = dto.Documents.FindIndex(d => d.Id == Guid.Empty);
 			if (emptyGuidIndex >= 0)
 			{

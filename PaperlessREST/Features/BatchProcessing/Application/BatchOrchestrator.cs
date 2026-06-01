@@ -28,7 +28,7 @@ public sealed class BatchOrchestrator(
 			"Batch job '{JobId}' started. Pattern: '{Pattern}', Input: '{InputPath}'",
 			BatchOptions.JobId, _opts.FilePattern, _opts.InputPath);
 
-		List<string> paths = ClaimFiles();
+		var paths = ClaimFiles();
 		int processed = 0, quarantined = 0;
 
 		switch (paths.Count)
@@ -41,7 +41,7 @@ public sealed class BatchOrchestrator(
 				break;
 		}
 
-		foreach (string path in paths)
+		foreach (var path in paths)
 		{
 			token.ThrowIfCancellationRequested();
 
@@ -61,7 +61,7 @@ public sealed class BatchOrchestrator(
 
 	private List<string> ClaimFiles()
 	{
-		IDirectoryInfo inputDir = fs.DirectoryInfo.New(_opts.InputPath);
+		var inputDir = fs.DirectoryInfo.New(_opts.InputPath);
 		inputDir.Create();
 
 		List<string> claimed = [];
@@ -74,7 +74,7 @@ public sealed class BatchOrchestrator(
 
 	private void ReclaimOrphanedFiles(IDirectoryInfo inputDir, List<string> claimed)
 	{
-		foreach (IFileInfo orphan in inputDir.EnumerateFiles($"*{ProcessingExt}"))
+		foreach (var orphan in inputDir.EnumerateFiles($"*{ProcessingExt}"))
 		{
 			logger.LogInformation("Reclaiming orphaned file: {File}", orphan.Name);
 			claimed.Add(orphan.FullName);
@@ -83,9 +83,9 @@ public sealed class BatchOrchestrator(
 
 	private void ClaimNewFiles(IDirectoryInfo inputDir, List<string> claimed)
 	{
-		foreach (IFileInfo file in inputDir.EnumerateFiles(_opts.FilePattern))
+		foreach (var file in inputDir.EnumerateFiles(_opts.FilePattern))
 		{
-			string claimedPath = $"{file.FullName}{ProcessingExt}";
+			var claimedPath = $"{file.FullName}{ProcessingExt}";
 
 			try
 			{
@@ -104,14 +104,14 @@ public sealed class BatchOrchestrator(
 	{
 		// Trim the .processing suffix only; .Replace would strip embedded occurrences
 		// in pathological filenames like "report.processing.xml.processing".
-		string fileName = Path.GetFileName(path);
-		string originalName = fileName.EndsWith(ProcessingExt, StringComparison.Ordinal)
+		var fileName = Path.GetFileName(path);
+		var originalName = fileName.EndsWith(ProcessingExt, StringComparison.Ordinal)
 			? fileName[..^ProcessingExt.Length]
 			: fileName;
 
 		logger.LogInformation("Processing file: {File}", originalName);
 
-		ErrorOr<ProcessingResult> result = await processor.ProcessAsync(path, ct);
+		var result = await processor.ProcessAsync(path, ct);
 
 		if (result.IsError)
 		{
@@ -137,9 +137,9 @@ public sealed class BatchOrchestrator(
 	{
 		fs.DirectoryInfo.New(destinationDir).Create();
 
-		DateTime timestamp = time.GetUtcNow().UtcDateTime;
+		var timestamp = time.GetUtcNow().UtcDateTime;
 		var destFileName = $"{originalName}.{timestamp:yyyyMMdd_HHmmss_fffffff}_{Guid.NewGuid():N}{statusSuffix}";
-		string destPath = fs.Path.Combine(destinationDir, destFileName);
+		var destPath = fs.Path.Combine(destinationDir, destFileName);
 
 		if (!fs.File.Exists(sourcePath))
 		{
