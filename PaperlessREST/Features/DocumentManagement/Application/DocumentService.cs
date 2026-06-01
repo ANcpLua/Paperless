@@ -105,13 +105,12 @@ public sealed class DocumentService(
 		{
 			if (TryMapStorageException(ex, document.StoragePath) is not { } storageError)
 			{
+				// Unrecognized exception - let it propagate to GlobalExceptionHandler
 				throw;
 			}
 
 			logger.LogWarning(ex, "Storage error: {ErrorCode}", storageError.Code);
 			return storageError;
-
-			// Unrecognized exception - let it propagate to GlobalExceptionHandler
 		}
 
 		var savedDocument = await repository.AddAsync(document, cancellationToken);
