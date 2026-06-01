@@ -14,7 +14,7 @@ public static class FileUploadConstraints
 
 /// <summary>
 /// Server-side search constants that don't belong on the public contract.
-/// Boundary-level <see cref="Paperless.Contracts.Validation.SearchConstraints"/> covers query / limit ranges.
+/// Boundary-level <see cref="PaperlessREST.Contracts.Validation.SearchConstraints"/> covers query / limit ranges.
 /// </summary>
 public static class SearchServiceConstraints
 {

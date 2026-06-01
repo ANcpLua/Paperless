@@ -1,4 +1,4 @@
-namespace Paperless.Contracts.Validation;
+namespace PaperlessREST.Contracts.Validation;
 
 /// <summary>
 /// Search query validation constraints applied at the HTTP boundary.
