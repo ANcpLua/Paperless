@@ -43,7 +43,7 @@ public sealed class ServiceCollectionExtensionsTests
 
 		FakeLogCollector logs = new();
 		FakeLogger logger = new(logs);
-		IServiceProvider sp = BuildMinioServiceProvider(minio.Object);
+		var sp = BuildMinioServiceProvider(minio.Object);
 
 		await sp.EnsureStorageBucketAsync(logger);
 
@@ -61,12 +61,12 @@ public sealed class ServiceCollectionExtensionsTests
 
 		FakeLogCollector logs = new();
 		FakeLogger logger = new(logs);
-		IServiceProvider sp = BuildMinioServiceProvider(minio.Object);
+		var sp = BuildMinioServiceProvider(minio.Object);
 
 		await sp.EnsureStorageBucketAsync(logger);
 
 		minio.Verify(c => c.MakeBucketAsync(It.IsAny<MakeBucketArgs>(), It.IsAny<CancellationToken>()), Times.Once);
-		FakeLogRecord rec = logs.GetSnapshot().Should().ContainSingle(r => r.Level == LogLevel.Information).Subject;
+		var rec = logs.GetSnapshot().Should().ContainSingle(r => r.Level == LogLevel.Information).Subject;
 		rec.Message.Should().Contain(Bucket).And.Contain("created");
 	}
 
@@ -81,12 +81,12 @@ public sealed class ServiceCollectionExtensionsTests
 
 		FakeLogCollector logs = new();
 		FakeLogger logger = new(logs);
-		IServiceProvider sp = BuildMinioServiceProvider(minio.Object);
+		var sp = BuildMinioServiceProvider(minio.Object);
 
-		Func<Task> act = async () => await sp.EnsureStorageBucketAsync(logger);
+		var act = async () => await sp.EnsureStorageBucketAsync(logger);
 
 		await act.Should().NotThrowAsync();
-		FakeLogRecord rec = logs.GetSnapshot().Should().ContainSingle(r => r.Level == LogLevel.Debug).Subject;
+		var rec = logs.GetSnapshot().Should().ContainSingle(r => r.Level == LogLevel.Debug).Subject;
 		rec.Message.Should().Contain(Bucket).And.Contain("already exists");
 	}
 
@@ -100,11 +100,11 @@ public sealed class ServiceCollectionExtensionsTests
 		minio.Setup(c => c.MakeBucketAsync(It.IsAny<MakeBucketArgs>(), It.IsAny<CancellationToken>()))
 			.ThrowsAsync(differentArg);
 
-		IServiceProvider sp = BuildMinioServiceProvider(minio.Object);
+		var sp = BuildMinioServiceProvider(minio.Object);
 
-		Func<Task> act = async () => await sp.EnsureStorageBucketAsync(NullLogger.Instance);
+		var act = async () => await sp.EnsureStorageBucketAsync(NullLogger.Instance);
 
-		ArgumentException thrown = (await act.Should().ThrowAsync<ArgumentException>()).Which;
+		var thrown = (await act.Should().ThrowAsync<ArgumentException>()).Which;
 		thrown.Message.Should().Be("Bucket name invalid");
 	}
 
@@ -137,8 +137,8 @@ public sealed class ServiceCollectionExtensionsTests
 	{
 		Mock<IRecurringJobManager> mgr = new();
 
-		BatchOptions opts = MakeBatchOptions();
-		IServiceProvider sp = BuildJobManagerServiceProvider(mgr.Object, opts);
+		var opts = MakeBatchOptions();
+		var sp = BuildJobManagerServiceProvider(mgr.Object, opts);
 
 		FakeLogCollector logs = new();
 		FakeLogger logger = new(logs);
@@ -151,7 +151,7 @@ public sealed class ServiceCollectionExtensionsTests
 				"0 0 * * *",
 				It.Is<RecurringJobOptions>(o => o.TimeZone!.Id == "UTC")),
 			Times.Once);
-		FakeLogRecord rec = logs.GetSnapshot().Should().ContainSingle(r => r.Level == LogLevel.Information).Subject;
+		var rec = logs.GetSnapshot().Should().ContainSingle(r => r.Level == LogLevel.Information).Subject;
 		rec.Message.Should().Contain(BatchOptions.JobId)
 			.And.Contain("0 0 * * *")
 			.And.Contain("UTC");
@@ -192,7 +192,7 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void BatchOpts_AccessorReturnsConfiguredOptions()
 	{
-		BatchOptions opts = MakeBatchOptions();
+		var opts = MakeBatchOptions();
 		ServiceCollection services = new();
 		services.AddSingleton<IOptions<BatchOptions>>(Options.Create(opts));
 		IServiceProvider sp = services.BuildServiceProvider();
@@ -218,11 +218,11 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void IsDev_WhenEnvironmentIsDevelopment_ReturnsTrue()
 	{
-		WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
+		var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 		{
 			EnvironmentName = "Development"
 		});
-		WebApplication app = builder.Build();
+		var app = builder.Build();
 
 		app.IsDev.Should().BeTrue();
 	}
@@ -230,11 +230,11 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void IsDev_WhenEnvironmentIsProduction_ReturnsFalse()
 	{
-		WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
+		var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 		{
 			EnvironmentName = "Production"
 		});
-		WebApplication app = builder.Build();
+		var app = builder.Build();
 
 		app.IsDev.Should().BeFalse();
 	}
@@ -246,7 +246,7 @@ public sealed class ServiceCollectionExtensionsTests
 
 	private static WebApplicationBuilder CreateWiredBuilder(string environment)
 	{
-		WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
+		var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 		{
 			EnvironmentName = environment
 		});
@@ -288,12 +288,12 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void MapEndpoints_WhenIsDev_RegistersDevelopmentOnlyRoutes()
 	{
-		WebApplicationBuilder builder = CreateWiredBuilder("Development");
-		WebApplication app = builder.Build();
+		var builder = CreateWiredBuilder("Development");
+		var app = builder.Build();
 
 		app.MapEndpoints();
 
-		HashSet<string> patterns = CollectMappedPatterns(app);
+		var patterns = CollectMappedPatterns(app);
 
 		// Dev-only routes from the IsDev=true branch
 		patterns.Should().Contain(p => p.StartsWith("/openapi/", StringComparison.Ordinal));
@@ -308,12 +308,12 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void MapEndpoints_WhenNotDev_OmitsDevelopmentOnlyRoutes()
 	{
-		WebApplicationBuilder builder = CreateWiredBuilder("Production");
-		WebApplication app = builder.Build();
+		var builder = CreateWiredBuilder("Production");
+		var app = builder.Build();
 
 		app.MapEndpoints();
 
-		HashSet<string> patterns = CollectMappedPatterns(app);
+		var patterns = CollectMappedPatterns(app);
 
 		patterns.Should().NotContain(p => p.StartsWith("/docs", StringComparison.Ordinal));
 		patterns.Should().NotContain(p => p.StartsWith("/hangfire", StringComparison.Ordinal));
@@ -324,26 +324,26 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void MapEndpoints_WhenIsDev_ScalarConfigureCallback_SetsTitleServersAndTheme()
 	{
-		WebApplicationBuilder builder = CreateWiredBuilder("Development");
-		WebApplication app = builder.Build();
+		var builder = CreateWiredBuilder("Development");
+		var app = builder.Build();
 
 		app.MapEndpoints();
 
 		// Scalar's MapScalarApiReference captures the options Action inside the request delegate
 		// (it runs lazily on HTTP request, not at map time). Extract it via the documented
 		// internal field path and invoke it manually to verify the production lambda body.
-		RouteEndpoint scalarEndpoint = ((IEndpointRouteBuilder)app).DataSources
+		var scalarEndpoint = ((IEndpointRouteBuilder)app).DataSources
 			.SelectMany(s => s.Endpoints)
 			.OfType<RouteEndpoint>()
 			.Single(e => e.RoutePattern.RawText == "/docs/{documentName?}");
 
-		RequestDelegate requestDelegate = scalarEndpoint.RequestDelegate!;
-		object generatedTarget = requestDelegate.Target!;
-		FieldInfo handlerField = generatedTarget.GetType()
+		var requestDelegate = scalarEndpoint.RequestDelegate!;
+		var generatedTarget = requestDelegate.Target!;
+		var handlerField = generatedTarget.GetType()
 			.GetField("handler", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
 		var handlerDelegate = (Delegate)handlerField.GetValue(generatedTarget)!;
-		object scalarClosure = handlerDelegate.Target!;
-		FieldInfo configureField = scalarClosure.GetType()
+		var scalarClosure = handlerDelegate.Target!;
+		var configureField = scalarClosure.GetType()
 			.GetField("configureOptions", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
 		var productionConfigure =
 			(Action<ScalarOptions, HttpContext>)configureField.GetValue(scalarClosure)!;
@@ -364,7 +364,7 @@ public sealed class ServiceCollectionExtensionsTests
 		// AddProblemDetails(opts => ...) registers a ConfigureNamedOptions<ProblemDetailsOptions>
 		// whose Action is the production lambda at L141-146. Find it (ImplementationInstance, NOT
 		// the ProblemDetailsEnricher transient).
-		foreach (ServiceDescriptor d in services)
+		foreach (var d in services)
 		{
 			if (d.ServiceType != typeof(IConfigureOptions<ProblemDetailsOptions>) ||
 			    d.ImplementationInstance is not ConfigureNamedOptions<ProblemDetailsOptions> named ||
@@ -382,14 +382,14 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void AddDependencies_ProblemDetailsCustomization_PopulatesTraceIdAndInstanceFromHttpContextWhenNoActivity()
 	{
-		WebApplicationBuilder builder = CreateWiredBuilder("Production");
-		Action<ProblemDetailsOptions> configure = GetInlineProblemDetailsConfigure(builder.Services);
+		var builder = CreateWiredBuilder("Production");
+		var configure = GetInlineProblemDetailsConfigure(builder.Services);
 
 		ProblemDetailsOptions opts = new();
 		configure(opts);
 		opts.CustomizeProblemDetails.Should().NotBeNull();
 
-		Activity? saved = Activity.Current;
+		var saved = Activity.Current;
 		Activity.Current = null;
 		try
 		{
@@ -419,8 +419,8 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void AddDependencies_ProblemDetailsCustomization_UsesActivityIdWhenAvailable()
 	{
-		WebApplicationBuilder builder = CreateWiredBuilder("Production");
-		Action<ProblemDetailsOptions> configure = GetInlineProblemDetailsConfigure(builder.Services);
+		var builder = CreateWiredBuilder("Production");
+		var configure = GetInlineProblemDetailsConfigure(builder.Services);
 
 		ProblemDetailsOptions opts = new();
 		configure(opts);
@@ -428,7 +428,7 @@ public sealed class ServiceCollectionExtensionsTests
 
 		using Activity activity = new("unit-test-span");
 		activity.Start();
-		string expectedTrace = activity.Id!;
+		var expectedTrace = activity.Id!;
 
 		DefaultHttpContext http = new();
 		http.Request.Method = "DELETE";
@@ -449,26 +449,26 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void AddDependencies_HangfireServerOptions_SetWorkerCountAndServerName()
 	{
-		WebApplicationBuilder builder = CreateWiredBuilder("Production");
+		var builder = CreateWiredBuilder("Production");
 
 		// Find only the BackgroundJobServerHostedService factory and invoke it directly,
 		// avoiding resolution of other IHostedService entries (RabbitMQ listeners would
 		// try to dial 127.0.0.1:5672 and fail).
-		ServiceDescriptor jobServerDescriptor = builder.Services.Single(d =>
+		var jobServerDescriptor = builder.Services.Single(d =>
 			d.ServiceType == typeof(IHostedService) &&
 			d.ImplementationFactory is not null &&
 			d.ImplementationFactory.GetType().GenericTypeArguments[1].FullName == "Hangfire.BackgroundJobServerHostedService");
 
-		WebApplication app = builder.Build();
-		object jobServer = jobServerDescriptor.ImplementationFactory!(app.Services);
-		FieldInfo optionsField = jobServer.GetType().GetField("_options",
+		var app = builder.Build();
+		var jobServer = jobServerDescriptor.ImplementationFactory!(app.Services);
+		var optionsField = jobServer.GetType().GetField("_options",
 			BindingFlags.NonPublic | BindingFlags.Instance)!;
 		var opts = (BackgroundJobServerOptions)optionsField.GetValue(jobServer)!;
 
 		opts.WorkerCount.Should().Be(Environment.ProcessorCount);
 		opts.ServerName.Should().StartWith(Environment.MachineName + "-");
 		// Trailing token must be a 32-char "N"-format GUID with no dashes.
-		string suffix = opts.ServerName![(Environment.MachineName.Length + 1)..];
+		var suffix = opts.ServerName![(Environment.MachineName.Length + 1)..];
 		suffix.Should().HaveLength(32);
 		suffix.Should().MatchRegex("^[0-9a-f]{32}$");
 	}
@@ -477,7 +477,7 @@ public sealed class ServiceCollectionExtensionsTests
 	{
 		// AddOpenApi(Action) registers Configure<OpenApiOptions>("v1", action). Find the
 		// ConfigureNamedOptions<OpenApiOptions> whose Name == "v1".
-		foreach (ServiceDescriptor d in services)
+		foreach (var d in services)
 		{
 			if (d.ServiceType != typeof(IConfigureOptions<OpenApiOptions>) ||
 			    d.ImplementationInstance is not ConfigureNamedOptions<OpenApiOptions> named ||
@@ -495,19 +495,19 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void AddDependencies_OpenApiCreateSchemaReferenceId_ReturnsNullForEnumAndDefaultForOther()
 	{
-		WebApplicationBuilder builder = CreateWiredBuilder("Production");
-		Action<OpenApiOptions> configure = GetOpenApiConfigure(builder.Services);
+		var builder = CreateWiredBuilder("Production");
+		var configure = GetOpenApiConfigure(builder.Services);
 
 		OpenApiOptions opts = new();
 		configure(opts);
 		opts.CreateSchemaReferenceId.Should().NotBeNull();
 
 		JsonSerializerOptions jsonOpts = new();
-		JsonTypeInfo enumInfo = JsonTypeInfo.CreateJsonTypeInfo(typeof(DayOfWeek), jsonOpts);
-		JsonTypeInfo dtoInfo = JsonTypeInfo.CreateJsonTypeInfo(typeof(DocumentDto), jsonOpts);
+		var enumInfo = JsonTypeInfo.CreateJsonTypeInfo(typeof(DayOfWeek), jsonOpts);
+		var dtoInfo = JsonTypeInfo.CreateJsonTypeInfo(typeof(DocumentDto), jsonOpts);
 
-		string? enumId = opts.CreateSchemaReferenceId!(enumInfo);
-		string? dtoId = opts.CreateSchemaReferenceId!(dtoInfo);
+		var enumId = opts.CreateSchemaReferenceId!(enumInfo);
+		var dtoId = opts.CreateSchemaReferenceId!(dtoInfo);
 
 		enumId.Should().BeNull();
 		dtoId.Should().Be(OpenApiOptions.CreateDefaultSchemaReferenceId(dtoInfo));
@@ -517,20 +517,20 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public async Task AddDependencies_OpenApiDocumentTransformer_SetsTitleVersionAndDescription()
 	{
-		WebApplicationBuilder builder = CreateWiredBuilder("Production");
-		Action<OpenApiOptions> configure = GetOpenApiConfigure(builder.Services);
+		var builder = CreateWiredBuilder("Production");
+		var configure = GetOpenApiConfigure(builder.Services);
 
 		OpenApiOptions opts = new();
 		configure(opts);
 
-		FieldInfo transformersField = typeof(OpenApiOptions).GetField("DocumentTransformers",
+		var transformersField = typeof(OpenApiOptions).GetField("DocumentTransformers",
 			BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
 		var transformers = (System.Collections.IList)transformersField.GetValue(opts)!;
 		transformers.Count.Should().Be(1);
 
-		object delegateTransformer = transformers[0]!;
+		var delegateTransformer = transformers[0]!;
 		// DelegateOpenApiDocumentTransformer wraps the user Func in _documentTransformer.
-		FieldInfo delegateField = delegateTransformer.GetType().GetField("_documentTransformer",
+		var delegateField = delegateTransformer.GetType().GetField("_documentTransformer",
 			BindingFlags.NonPublic | BindingFlags.Instance)!;
 		var productionDelegate =
 			(Func<OpenApiDocument, OpenApiDocumentTransformerContext, CancellationToken, Task>)
@@ -555,10 +555,10 @@ public sealed class ServiceCollectionExtensionsTests
 	[Fact]
 	public void AddDependencies_ApiExplorerOptions_SetsGroupNameFormatAndSubstituteApiVersionInUrl()
 	{
-		WebApplicationBuilder builder = CreateWiredBuilder("Production");
-		WebApplication app = builder.Build();
+		var builder = CreateWiredBuilder("Production");
+		var app = builder.Build();
 
-		ApiExplorerOptions opts = app.Services.GetRequiredService<IOptions<ApiExplorerOptions>>().Value;
+		var opts = app.Services.GetRequiredService<IOptions<ApiExplorerOptions>>().Value;
 
 		opts.GroupNameFormat.Should().Be("'v'VVV");
 		opts.SubstituteApiVersionInUrl.Should().BeTrue();

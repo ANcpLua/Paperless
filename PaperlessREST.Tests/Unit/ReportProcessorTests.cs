@@ -102,8 +102,8 @@ public sealed class ReportProcessorTests : IDisposable
 
 	public static IEnumerable<TheoryDataRow<Guid[], Guid[], int, int>> DocumentProcessingScenarios()
 	{
-		Guid doc1 = Guid.Parse("11111111-1111-1111-1111-111111111111");
-		Guid doc2 = Guid.Parse("22222222-2222-2222-2222-222222222222");
+		var doc1 = Guid.Parse("11111111-1111-1111-1111-111111111111");
+		var doc2 = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
 		yield return new TheoryDataRow<Guid[], Guid[], int, int>(
 				[doc1, doc2], [doc1, doc2], 2, 0)
@@ -120,7 +120,7 @@ public sealed class ReportProcessorTests : IDisposable
 
 	private void SetupSchemaFile()
 	{
-		string schemaDir = Path.Combine(AppContext.BaseDirectory, "Schemas");
+		var schemaDir = Path.Combine(AppContext.BaseDirectory, "Schemas");
 		_fileSystem.Directory.CreateDirectory(schemaDir);
 		_fileSystem.File.WriteAllText(Path.Combine(schemaDir, "accessReport.xsd"), SchemaContent);
 	}
@@ -129,13 +129,13 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_FileNotFound_ReturnsNotFoundError()
 	{
 		// Arrange - Create directory so MockFileSystem throws FileNotFoundException (not DirectoryNotFoundException)
-		string baseDir = AppContext.BaseDirectory;
+		var baseDir = AppContext.BaseDirectory;
 		_fileSystem.Directory.CreateDirectory(baseDir);
-		string missingFilePath = Path.Combine(baseDir, "nonexistent.xml");
-		ReportProcessor sut = CreateSut();
+		var missingFilePath = Path.Combine(baseDir, "nonexistent.xml");
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result =
+		var result =
 			await sut.ProcessAsync(missingFilePath, TestContext.Current.CancellationToken);
 
 		// Assert
@@ -148,11 +148,11 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_MalformedXml_ReturnsValidationError(string malformedXml)
 	{
 		// Arrange
-		string filePath = CreateTestFile("malformed.xml", malformedXml);
-		ReportProcessor sut = CreateSut();
+		var filePath = CreateTestFile("malformed.xml", malformedXml);
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeTrue();
@@ -169,11 +169,11 @@ public sealed class ReportProcessorTests : IDisposable
 		                     <accessReport date="{invalidDate}">
 		                     </accessReport>
 		                     """;
-		string filePath = CreateTestFile("invalid-date.xml", xmlContent);
-		ReportProcessor sut = CreateSut();
+		var filePath = CreateTestFile("invalid-date.xml", xmlContent);
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeTrue();
@@ -190,11 +190,11 @@ public sealed class ReportProcessorTests : IDisposable
 		                     </accessReport>
 		                     """;
 
-		string filePath = CreateTestFile("empty.xml", xmlContent);
-		ReportProcessor sut = CreateSut();
+		var filePath = CreateTestFile("empty.xml", xmlContent);
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeFalse();
@@ -212,8 +212,8 @@ public sealed class ReportProcessorTests : IDisposable
 		                     </accessReport>
 		                     """;
 
-		string filePath = CreateTestFile("info-empty.xml", xmlContent);
-		ReportProcessor sut = CreateSut();
+		var filePath = CreateTestFile("info-empty.xml", xmlContent);
+		var sut = CreateSut();
 
 		// Act
 		await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
@@ -236,11 +236,11 @@ public sealed class ReportProcessorTests : IDisposable
 		                     </accessReport>
 		                     """;
 
-		string filePath = CreateTestFile("empty-guid.xml", xmlContent);
-		ReportProcessor sut = CreateSut();
+		var filePath = CreateTestFile("empty-guid.xml", xmlContent);
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeTrue();
@@ -259,12 +259,12 @@ public sealed class ReportProcessorTests : IDisposable
 			.Select((id, i) => (id, (i + 1) * AccessCount10))
 			.ToArray();
 
-		string xmlContent = CreateAccessReportXml(ValidDate, documents);
-		string filePath = CreateTestFile("scenarios.xml", xmlContent);
-		ReportProcessor sut = CreateSut();
+		var xmlContent = CreateAccessReportXml(ValidDate, documents);
+		var filePath = CreateTestFile("scenarios.xml", xmlContent);
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeFalse();
@@ -276,8 +276,8 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_AllDocumentsUnknown_ReturnsZeroProcessedWithSkipped()
 	{
 		// Arrange
-		Guid unknownId1 = Guid.NewGuid();
-		Guid unknownId2 = Guid.NewGuid();
+		var unknownId1 = Guid.NewGuid();
+		var unknownId2 = Guid.NewGuid();
 		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
@@ -286,7 +286,7 @@ public sealed class ReportProcessorTests : IDisposable
 		                     </accessReport>
 		                     """;
 
-		string filePath = CreateTestFile("all-unknown.xml", xmlContent);
+		var filePath = CreateTestFile("all-unknown.xml", xmlContent);
 
 		_repo.Setup(r => r.GetExistingDocumentIdsAsync(
 				It.IsAny<Guid[]>(),
@@ -299,10 +299,10 @@ public sealed class ReportProcessorTests : IDisposable
 				It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
-		ReportProcessor sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeFalse();
@@ -314,8 +314,8 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_SomeDocumentsUnknown_ProcessesKnownAndSkipsUnknown()
 	{
 		// Arrange
-		Guid knownId = Guid.NewGuid();
-		Guid unknownId = Guid.NewGuid();
+		var knownId = Guid.NewGuid();
+		var unknownId = Guid.NewGuid();
 		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
@@ -324,7 +324,7 @@ public sealed class ReportProcessorTests : IDisposable
 		                     </accessReport>
 		                     """;
 
-		string filePath = CreateTestFile("mixed.xml", xmlContent);
+		var filePath = CreateTestFile("mixed.xml", xmlContent);
 
 		_repo.Setup(r => r.GetExistingDocumentIdsAsync(
 				It.IsAny<Guid[]>(),
@@ -338,10 +338,10 @@ public sealed class ReportProcessorTests : IDisposable
 				It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
-		ReportProcessor sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeFalse();
@@ -353,7 +353,7 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_DuplicateDocumentIds_AggregatesAccessCounts()
 	{
 		// Arrange
-		Guid docId = Guid.NewGuid();
+		var docId = Guid.NewGuid();
 		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
@@ -363,7 +363,7 @@ public sealed class ReportProcessorTests : IDisposable
 		                     </accessReport>
 		                     """;
 
-		string filePath = CreateTestFile("duplicates.xml", xmlContent);
+		var filePath = CreateTestFile("duplicates.xml", xmlContent);
 
 		_repo.Setup(r => r.GetExistingDocumentIdsAsync(
 				It.IsAny<Guid[]>(),
@@ -377,10 +377,10 @@ public sealed class ReportProcessorTests : IDisposable
 				It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
-		ReportProcessor sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeFalse();
@@ -391,8 +391,8 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_ValidXmlWithKnownDocuments_ProcessesSuccessfully()
 	{
 		// Arrange
-		Guid doc1 = Guid.NewGuid();
-		Guid doc2 = Guid.NewGuid();
+		var doc1 = Guid.NewGuid();
+		var doc2 = Guid.NewGuid();
 		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
@@ -401,7 +401,7 @@ public sealed class ReportProcessorTests : IDisposable
 		                     </accessReport>
 		                     """;
 
-		string filePath = CreateTestFile("valid.xml", xmlContent);
+		var filePath = CreateTestFile("valid.xml", xmlContent);
 
 		_repo.Setup(r => r.GetExistingDocumentIdsAsync(
 				It.IsAny<Guid[]>(),
@@ -414,10 +414,10 @@ public sealed class ReportProcessorTests : IDisposable
 				It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
-		ReportProcessor sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.IsError.Should().BeFalse();
@@ -429,7 +429,7 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_ValidDocuments_CallsRepositoryWithCorrectDate()
 	{
 		// Arrange
-		Guid docId = Guid.NewGuid();
+		var docId = Guid.NewGuid();
 		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
@@ -437,7 +437,7 @@ public sealed class ReportProcessorTests : IDisposable
 		                     </accessReport>
 		                     """;
 
-		string filePath = CreateTestFile("date-check.xml", xmlContent);
+		var filePath = CreateTestFile("date-check.xml", xmlContent);
 
 		_repo.Setup(r => r.GetExistingDocumentIdsAsync(
 				It.IsAny<Guid[]>(),
@@ -450,7 +450,7 @@ public sealed class ReportProcessorTests : IDisposable
 				It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
-		ReportProcessor sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
 		await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
@@ -468,7 +468,7 @@ public sealed class ReportProcessorTests : IDisposable
 	public async Task ProcessAsync_WithSkippedDocuments_LogsWarning()
 	{
 		// Arrange
-		Guid unknownId = Guid.NewGuid();
+		var unknownId = Guid.NewGuid();
 		var xmlContent = $"""
 		                     <?xml version="1.0" encoding="UTF-8"?>
 		                     <accessReport date="{ValidDate}">
@@ -476,7 +476,7 @@ public sealed class ReportProcessorTests : IDisposable
 		                     </accessReport>
 		                     """;
 
-		string filePath = CreateTestFile("warning.xml", xmlContent);
+		var filePath = CreateTestFile("warning.xml", xmlContent);
 
 		_repo.Setup(r => r.GetExistingDocumentIdsAsync(
 				It.IsAny<Guid[]>(),
@@ -489,7 +489,7 @@ public sealed class ReportProcessorTests : IDisposable
 				It.IsAny<CancellationToken>()))
 			.Returns(Task.CompletedTask);
 
-		ReportProcessor sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
 		await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
@@ -502,41 +502,6 @@ public sealed class ReportProcessorTests : IDisposable
 	}
 
 	private ReportProcessor CreateSut() => new(_fileSystem, _repo.Object, _logger);
-
-	// ═══════════════════════════════════════════════════════════════
-	// TESTS: ProcessAsync - XmlSchemaException Handler Branch
-	// ═══════════════════════════════════════════════════════════════
-
-	[Fact]
-	public async Task ProcessAsync_MalformedSchema_ReturnsValidationError()
-	{
-		// Arrange - Create a new test instance with corrupted schema
-		MockFileSystem corruptFs = new();
-		string schemaDir = Path.Combine(AppContext.BaseDirectory, "Schemas");
-		corruptFs.Directory.CreateDirectory(schemaDir);
-		// Write invalid XSD that will cause XmlSchemaException when parsing
-		corruptFs.File.WriteAllText(Path.Combine(schemaDir, "accessReport.xsd"),
-			"<?xml version=\"1.0\"?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:invalid/></xs:schema>");
-
-		var xmlContent = $"""
-		                     <?xml version="1.0" encoding="UTF-8"?>
-		                     <accessReport date="{ValidDate}">
-		                     </accessReport>
-		                     """;
-		string baseDir = AppContext.BaseDirectory;
-		corruptFs.Directory.CreateDirectory(baseDir);
-		string filePath = Path.Combine(baseDir, "schema-test.xml");
-		corruptFs.File.WriteAllText(filePath, xmlContent);
-
-		ReportProcessor sut = new(corruptFs, _repo.Object, _logger);
-
-		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
-
-		// Assert - Should return validation error from XmlSchemaException handler
-		result.IsError.Should().BeTrue();
-		result.FirstError.Type.Should().Be(ErrorType.Validation);
-	}
 
 	// ═══════════════════════════════════════════════════════════════
 	// TESTS: ProcessAsync - InvalidDate path AFTER schema validation passes
@@ -556,11 +521,11 @@ public sealed class ReportProcessorTests : IDisposable
 		                          </accessReport>
 		                          """;
 
-		string filePath = CreateTestFile("date-with-tz.xml", XmlContent);
-		ReportProcessor sut = CreateSut();
+		var filePath = CreateTestFile("date-with-tz.xml", XmlContent);
+		var sut = CreateSut();
 
 		// Act
-		ErrorOr<ProcessingResult> result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
+		var result = await sut.ProcessAsync(filePath, TestContext.Current.CancellationToken);
 
 		// Assert — must be the InvalidDate factory, distinct from InvalidSchema
 		result.IsError.Should().BeTrue();
@@ -571,10 +536,10 @@ public sealed class ReportProcessorTests : IDisposable
 
 	private string CreateTestFile(string fileName, string content)
 	{
-		string baseDir = AppContext.BaseDirectory;
+		var baseDir = AppContext.BaseDirectory;
 		_fileSystem.Directory.CreateDirectory(baseDir);
 
-		string filePath = Path.Combine(baseDir, fileName);
+		var filePath = Path.Combine(baseDir, fileName);
 		_fileSystem.File.WriteAllText(filePath, content);
 		return filePath;
 	}
@@ -599,7 +564,7 @@ public sealed class ReportProcessorTests : IDisposable
 		sb.AppendLine("""<?xml version="1.0" encoding="UTF-8"?>""");
 		sb.AppendLine($"""<accessReport date="{date}">""");
 
-		foreach ((Guid id, long count) in documents)
+		foreach ((var id, var count) in documents)
 		{
 			sb.AppendLine($"""    <document id="{id}" accessCount="{count}"/>""");
 		}

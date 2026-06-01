@@ -18,7 +18,7 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 	{
 		// Arrange & Act — explicit pageSize avoids any [AsParameters]
 		// default-binding edge cases on the cursor-paginated endpoint.
-		HttpResponseMessage response = await _fixture.Client.GetAsync(
+		var response = await _fixture.Client.GetAsync(
 			$"{DocumentsEndpoint}?pageSize=20",
 			TestContext.Current.CancellationToken);
 
@@ -26,13 +26,13 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 		// actual problem-details payload, not a JSON-parser error.
 		if (!response.IsSuccessStatusCode)
 		{
-			string body = await response.Content.ReadAsStringAsync(
+			var body = await response.Content.ReadAsStringAsync(
 				TestContext.Current.CancellationToken);
 			throw new InvalidOperationException(
 				$"GET {DocumentsEndpoint}?pageSize=20 returned {(int)response.StatusCode} {response.ReasonPhrase}. Body: {body}");
 		}
 
-		PaginatedDocumentsResponse? page = await response.Content.ReadFromJsonAsync<PaginatedDocumentsResponse>(
+		var page = await response.Content.ReadFromJsonAsync<PaginatedDocumentsResponse>(
 			TestContext.Current.CancellationToken);
 		page.Should().NotBeNull();
 		page!.Items.Should().NotBeNull();
@@ -47,10 +47,10 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 	{
 		// Arrange
 		var uniqueFileName = $"{TestFilePrefix}-upload-{Guid.NewGuid():N}.pdf";
-		using MultipartFormDataContent content = await CreatePdfUploadAsync(uniqueFileName);
+		using var content = await CreatePdfUploadAsync(uniqueFileName);
 
 		// Act
-		HttpResponseMessage response = await _fixture.Client.PostAsync(
+		var response = await _fixture.Client.PostAsync(
 			DocumentsEndpoint,
 			content,
 			TestContext.Current.CancellationToken);
@@ -58,7 +58,7 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 		// Assert
 		response.StatusCode.Should().Be(HttpStatusCode.Accepted);
 
-		CreateDocumentResponse? result = await response.Content.ReadFromJsonAsync<CreateDocumentResponse>(
+		var result = await response.Content.ReadFromJsonAsync<CreateDocumentResponse>(
 			TestContext.Current.CancellationToken);
 
 		result!.Id.Should().NotBeEmpty();
@@ -75,15 +75,15 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 	public async Task GetById_ExistingDocument_ReturnsDocument()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-get-{Guid.NewGuid():N}.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-get-{Guid.NewGuid():N}.pdf");
 
 		// Act
-		HttpResponseMessage response = await _fixture.Client.GetAsync(
+		var response = await _fixture.Client.GetAsync(
 			$"{DocumentsEndpoint}/{docId}",
 			TestContext.Current.CancellationToken);
 
 		// Assert
-		DocumentDto? doc = await response.Content.ReadFromJsonAsync<DocumentDto>(
+		var doc = await response.Content.ReadFromJsonAsync<DocumentDto>(
 			TestContext.Current.CancellationToken);
 		doc!.Id.Should().Be(docId);
 	}
@@ -96,10 +96,10 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 	public async Task Delete_ExistingDocument_Returns204()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-delete-{Guid.NewGuid():N}.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-delete-{Guid.NewGuid():N}.pdf");
 
 		// Act
-		HttpResponseMessage response = await _fixture.Client.DeleteAsync(
+		var response = await _fixture.Client.DeleteAsync(
 			$"{DocumentsEndpoint}/{docId}",
 			TestContext.Current.CancellationToken);
 
@@ -135,10 +135,10 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 	{
 		if (_createdDocIds.Count > 0)
 		{
-			await using AsyncServiceScope scope = _fixture.CreateAsyncScope();
-			IDbContextFactory<DocumentPersistence> factory =
+			await using var scope = _fixture.CreateAsyncScope();
+			var factory =
 				scope.ServiceProvider.GetRequiredService<IDbContextFactory<DocumentPersistence>>();
-			await using DocumentPersistence db = await factory.CreateDbContextAsync();
+			await using var db = await factory.CreateDbContextAsync();
 			await db.Documents.Where(d => _createdDocIds.Contains(d.Id)).ExecuteDeleteAsync();
 		}
 	}
@@ -149,13 +149,13 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 
 	private async Task<Guid> SeedDocumentAsync(string fileName)
 	{
-		await using AsyncServiceScope scope = _fixture.CreateAsyncScope();
-		IDbContextFactory<DocumentPersistence> factory =
+		await using var scope = _fixture.CreateAsyncScope();
+		var factory =
 			scope.ServiceProvider.GetRequiredService<IDbContextFactory<DocumentPersistence>>();
-		await using DocumentPersistence db = await factory.CreateDbContextAsync(
+		await using var db = await factory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
 
-		DocumentEntity entity = new DocumentBuilder()
+		var entity = new DocumentBuilder()
 			.WithFileName(fileName)
 			.BuildEntity();
 
@@ -170,10 +170,10 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 		                + "the inner try/catch covers the pre-transfer window. Standard .NET HttpClient pattern.")]
 	private async Task<MultipartFormDataContent> CreatePdfUploadAsync(string fileName)
 	{
-		string tempPath = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid():N}.pdf");
-		string pdfPath = await Pdf.Create(Dye.White).AddText("Test Document").SaveAsync(tempPath);
+		var tempPath = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid():N}.pdf");
+		var pdfPath = await Pdf.Create(Dye.White).AddText("Test Document").SaveAsync(tempPath);
 
-		byte[] pdfBytes = await File.ReadAllBytesAsync(pdfPath, TestContext.Current.CancellationToken);
+		var pdfBytes = await File.ReadAllBytesAsync(pdfPath, TestContext.Current.CancellationToken);
 
 		File.Delete(pdfPath);
 

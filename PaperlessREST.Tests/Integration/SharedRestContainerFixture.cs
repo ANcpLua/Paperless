@@ -20,12 +20,12 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 
 	public SharedRestContainerFixture()
 	{
-		string postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:17-alpine";
-		string rabbitImage = Environment.GetEnvironmentVariable("RABBITMQ_IMAGE") ?? "rabbitmq:4.3.0-management";
-		string minioImage = Environment.GetEnvironmentVariable("MINIO_IMAGE") ??
-		                    "minio/minio:RELEASE.2025-09-07T16-13-09Z";
-		string elasticImage = Environment.GetEnvironmentVariable("ELASTIC_IMAGE") ??
-		                      "docker.elastic.co/elasticsearch/elasticsearch:9.1.3";
+		var postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:17-alpine";
+		var rabbitImage = Environment.GetEnvironmentVariable("RABBITMQ_IMAGE") ?? "rabbitmq:4.3.0-management";
+		var minioImage = Environment.GetEnvironmentVariable("MINIO_IMAGE") ??
+		                 "minio/minio:RELEASE.2025-09-07T16-13-09Z";
+		var elasticImage = Environment.GetEnvironmentVariable("ELASTIC_IMAGE") ??
+		                   "docker.elastic.co/elasticsearch/elasticsearch:9.1.3";
 
 		_postgres = new PostgreSqlBuilder(postgresImage)
 			.WithWaitStrategy(Wait.ForUnixContainer()
@@ -113,7 +113,7 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 		Services = Factory.Services;
 		DbFactory = Services.GetRequiredService<IDbContextFactory<DocumentPersistence>>();
 
-		await using DocumentPersistence db = await DbFactory.CreateDbContextAsync();
+		await using var db = await DbFactory.CreateDbContextAsync();
 		await db.Database.MigrateAsync();
 	}
 
@@ -142,7 +142,7 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 
 				services.RemoveAll<IDbContextFactory<DocumentPersistence>>();
 
-				NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(postgresConnectionString)
+				var dataSource = new NpgsqlDataSourceBuilder(postgresConnectionString)
 					.MapEnum<DocumentStatus>("document_status")
 					.Build();
 

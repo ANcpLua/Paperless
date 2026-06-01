@@ -60,9 +60,9 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task SuccessfulOcr_AcknowledgesMessage()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId);
-			OcrEvent successResult = CreateSuccessEvent(jobId);
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId);
+			var successResult = CreateSuccessEvent(jobId);
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(successResult);
@@ -74,7 +74,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 		}
@@ -82,9 +82,9 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task SuccessfulOcr_LogsCompletion()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId);
-			OcrEvent successResult = CreateSuccessEvent(jobId);
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId);
+			var successResult = CreateSuccessEvent(jobId);
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(successResult);
@@ -96,7 +96,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -109,9 +109,9 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task SuccessfulOcr_LogsProcessingStart()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId, "invoice-2024.pdf");
-			OcrEvent successResult = CreateSuccessEvent(jobId);
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId, "invoice-2024.pdf");
+			var successResult = CreateSuccessEvent(jobId);
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(successResult);
@@ -123,7 +123,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -136,9 +136,9 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task OcrFails_AcknowledgesMessage()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId);
-			Error ocrError = Error.Failure("Ocr.ExtractionFailed", "Could not extract text from PDF");
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId);
+			var ocrError = Error.Failure("Ocr.ExtractionFailed", "Could not extract text from PDF");
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(ocrError);
@@ -148,7 +148,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 		}
@@ -156,9 +156,9 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task OcrFails_LogsWarning()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId);
-			Error ocrError = Error.Failure("Ocr.ExtractionFailed", "Could not extract text from PDF");
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId);
+			var ocrError = Error.Failure("Ocr.ExtractionFailed", "Could not extract text from PDF");
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(ocrError);
@@ -168,7 +168,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -181,9 +181,9 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task OcrFails_LogsErrorCode()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId);
-			Error ocrError = Error.Failure("Ocr.ExtractionFailed", "Could not extract text from PDF");
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId);
+			var ocrError = Error.Failure("Ocr.ExtractionFailed", "Could not extract text from PDF");
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(ocrError);
@@ -193,7 +193,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -206,8 +206,8 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task ProcessorThrows_NacksMessage()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId);
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId);
 			Exception exception = new InvalidOperationException("Infrastructure failure");
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
@@ -215,7 +215,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.NackAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 		}
@@ -223,8 +223,8 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task ProcessorThrows_DoesNotAck()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId);
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId);
 			Exception exception = new InvalidOperationException("Infrastructure failure");
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
@@ -232,7 +232,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.NackAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -242,8 +242,8 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task ProcessorThrows_LogsError()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId);
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId);
 			Exception exception = new InvalidOperationException("Infrastructure failure");
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
@@ -251,7 +251,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.NackAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -264,8 +264,8 @@ public static class OcrWorkerTests
 		[Fact]
 		public async Task ProcessorThrows_LogsJobId()
 		{
-			Guid jobId = Guid.CreateVersion7();
-			OcrCommand command = CreateCommand(jobId);
+			var jobId = Guid.CreateVersion7();
+			var command = CreateCommand(jobId);
 			Exception exception = new InvalidOperationException("Infrastructure failure");
 
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command, It.IsAny<CancellationToken>()))
@@ -273,7 +273,7 @@ public static class OcrWorkerTests
 
 			_consumer.Setup(c => c.NackAsync()).Returns(Task.CompletedTask);
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.ProcessMessage(command, _consumer.Object, TestContext.Current.CancellationToken);
 
@@ -367,7 +367,7 @@ public static class OcrWorkerTests
 			_consumer.Setup(c => c.ConsumeAsync(It.IsAny<CancellationToken>()))
 				.Returns(CreateAsyncEnumerable());
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.StartAsync(cts.Token);
 
@@ -387,10 +387,10 @@ public static class OcrWorkerTests
 		public async Task ProcessesMultipleMessages()
 		{
 			using CancellationTokenSource cts = new();
-			Guid jobId1 = Guid.CreateVersion7();
-			Guid jobId2 = Guid.CreateVersion7();
-			OcrCommand command1 = CreateCommand(jobId1);
-			OcrCommand command2 = CreateCommand(jobId2);
+			var jobId1 = Guid.CreateVersion7();
+			var jobId2 = Guid.CreateVersion7();
+			var command1 = CreateCommand(jobId1);
+			var command2 = CreateCommand(jobId2);
 
 			SetupConsumerInfrastructure();
 			SetupScopeFactory();
@@ -406,7 +406,7 @@ public static class OcrWorkerTests
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command2, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(CreateSuccessEvent(jobId2));
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.StartAsync(cts.Token);
 
@@ -445,7 +445,7 @@ public static class OcrWorkerTests
 					return CreateSuccessEvent(cmd.JobId);
 				});
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.StartAsync(cts.Token);
 
@@ -465,12 +465,12 @@ public static class OcrWorkerTests
 		public async Task ProcessorThrows_ContinuesWithNextMessage()
 		{
 			using CancellationTokenSource cts = new();
-			Guid jobId1 = Guid.CreateVersion7();
-			Guid jobId2 = Guid.CreateVersion7();
-			Guid jobId3 = Guid.CreateVersion7();
-			OcrCommand command1 = CreateCommand(jobId1);
-			OcrCommand command2 = CreateCommand(jobId2);
-			OcrCommand command3 = CreateCommand(jobId3);
+			var jobId1 = Guid.CreateVersion7();
+			var jobId2 = Guid.CreateVersion7();
+			var jobId3 = Guid.CreateVersion7();
+			var command1 = CreateCommand(jobId1);
+			var command2 = CreateCommand(jobId2);
+			var command3 = CreateCommand(jobId3);
 
 			SetupConsumerInfrastructure();
 			SetupScopeFactory();
@@ -489,7 +489,7 @@ public static class OcrWorkerTests
 			_ocrProcessor.Setup(p => p.ProcessDocumentAsync(command3, It.IsAny<CancellationToken>()))
 				.ReturnsAsync(CreateSuccessEvent(jobId3));
 
-			using OcrWorker sut = CreateSut();
+			using var sut = CreateSut();
 
 			await sut.StartAsync(cts.Token);
 
@@ -534,7 +534,7 @@ public static class OcrWorkerTests
 
 	private static async IAsyncEnumerable<OcrCommand> CreateAsyncEnumerable(params OcrCommand[] commands)
 	{
-		foreach (OcrCommand command in commands)
+		foreach (var command in commands)
 		{
 			await Task.Yield();
 			yield return command;

@@ -12,13 +12,13 @@ public sealed class ReportProcessor(
 
 	public async Task<ErrorOr<ProcessingResult>> ProcessAsync(string path, CancellationToken ct)
 	{
-		ErrorOr<(AccessReportDto Dto, DateOnly Date)> parseResult = await ParseAndValidateXmlAsync(path);
+		var parseResult = await ParseAndValidateXmlAsync(path);
 		if (parseResult.IsError)
 		{
 			return parseResult.Errors;
 		}
 
-		(AccessReportDto dto, DateOnly date) = parseResult.Value;
+		var (dto, date) = parseResult.Value;
 
 		if (dto.Documents.Count is 0)
 		{
@@ -28,7 +28,7 @@ public sealed class ReportProcessor(
 
 		Guid[] docIds = [.. dto.Documents.Select(d => d.Id).Distinct()];
 		HashSet<Guid> knownIds = [.. await repo.GetExistingDocumentIdsAsync(docIds, ct)];
-		int skippedCount = docIds.Length - knownIds.Count;
+		var skippedCount = docIds.Length - knownIds.Count;
 
 		if (skippedCount > 0)
 		{
@@ -54,10 +54,10 @@ public sealed class ReportProcessor(
 	private XmlSchemaSet LoadSchemas()
 	{
 		XmlSchemaSet schemas = new();
-		string schemaPath = fs.Path.Combine(AppContext.BaseDirectory, "Schemas", SchemaFileName);
+		var schemaPath = fs.Path.Combine(AppContext.BaseDirectory, "Schemas", SchemaFileName);
 
 		using Stream schemaStream = fs.FileStream.New(schemaPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-		using XmlReader schemaReader = XmlReader.Create(schemaStream);
+		using var schemaReader = XmlReader.Create(schemaStream);
 		schemas.Add("", schemaReader);
 		schemas.Compile();
 		return schemas;
@@ -67,7 +67,7 @@ public sealed class ReportProcessor(
 	{
 		try
 		{
-			await using FileSystemStream stream =
+			await using var stream =
 				fs.FileStream.New(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 
 			XmlReaderSettings settings = new()
@@ -89,7 +89,7 @@ public sealed class ReportProcessor(
 				}
 			};
 
-			using XmlReader reader = XmlReader.Create(stream, settings);
+			using var reader = XmlReader.Create(stream, settings);
 			var dto = (AccessReportDto)s_serializer.Deserialize(reader)!;
 
 			if (validationErrors.Count > 0)
@@ -98,13 +98,13 @@ public sealed class ReportProcessor(
 			}
 
 			if (!DateOnly.TryParseExact(dto.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture,
-				    DateTimeStyles.None, out DateOnly date))
+				    DateTimeStyles.None, out var date))
 			{
 				return ReportErrors.InvalidDate(dto.Date);
 			}
 
 			// Empty document list is valid; FindIndex returns -1 and we fall through to success.
-			int emptyGuidIndex = dto.Documents.FindIndex(d => d.Id == Guid.Empty);
+			var emptyGuidIndex = dto.Documents.FindIndex(d => d.Id == Guid.Empty);
 			if (emptyGuidIndex >= 0)
 			{
 				return ReportErrors.InvalidGuid(emptyGuidIndex);
@@ -118,13 +118,17 @@ public sealed class ReportProcessor(
 		}
 		catch (InvalidOperationException ex)
 		{
-			// XmlSerializer.Deserialize wraps both XmlException (well-formedness)
-			// and XmlSchemaException (validation) as InvalidOperationException, so a
-			// separate `catch (XmlException)` branch is unreachable.
-			return ReportErrors.InvalidSchema(ex.Message);
-		}
-		catch (XmlSchemaException ex)
-		{
+			// Malformed input XML surfaces here: Deserialize wraps the underlying XmlException
+			// in an InvalidOperationException (InnerException set), so a dedicated
+			// `catch (XmlException)` branch would be unreachable. Schema-validation failures
+			// against the input don't throw at all — the ValidationEventHandler above collects
+			// them into validationErrors.
+			//
+			// There is deliberately NO `catch (XmlSchemaException)`: that is thrown raw by
+			// XmlSchemaSet.Compile() only when the bundled accessReport.xsd itself is invalid —
+			// a deploy bug, not bad input. Letting it propagate fails the Hangfire batch job
+			// loudly (and retries) instead of quarantining every file under a bogus
+			// "invalid schema" data error.
 			return ReportErrors.InvalidSchema(ex.Message);
 		}
 	}
