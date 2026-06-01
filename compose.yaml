@@ -149,9 +149,9 @@ services:
             OTEL_SERVICE_NAME: paperless-rest
             TZ: ${TZ}
         volumes:
-            - ./sample-data/input:${BATCH__INPUTPATH}
-            - ./sample-data/archive:${BATCH__ARCHIVEPATH}
-            - ./sample-data/error:${BATCH__ERRORPATH}
+            - ./PaperlessREST/sample-data/input:${BATCH__INPUTPATH}
+            - ./PaperlessREST/sample-data/archive:${BATCH__ARCHIVEPATH}
+            - ./PaperlessREST/sample-data/error:${BATCH__ERRORPATH}
 
     paperless-services:
         container_name: paperless-services
