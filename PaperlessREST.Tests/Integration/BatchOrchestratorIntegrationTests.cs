@@ -13,7 +13,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		_fileSystem = fixture.Services.GetRequiredService<IFileSystem>();
 		_orchestrator = fixture.Services.GetRequiredService<BatchOrchestrator>();
 		_dbFactory = fixture.ContextFactory;
-		BatchOptions batchOptions = fixture.Services.GetRequiredService<IOptions<BatchOptions>>().Value;
+		var batchOptions = fixture.Services.GetRequiredService<IOptions<BatchOptions>>().Value;
 		_paths = new BatchPaths(batchOptions.InputPath, batchOptions.ArchivePath, batchOptions.ErrorPath);
 	}
 
@@ -71,7 +71,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async ValueTask InitializeAsync()
 	{
 		EnsureCleanDirectories();
-		await using DocumentPersistence db = await _dbFactory.CreateDbContextAsync();
+		await using var db = await _dbFactory.CreateDbContextAsync();
 		await db.DailyDocumentAccesses.ExecuteDeleteAsync();
 	}
 
@@ -89,7 +89,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_TwoFilesOneValid_ProcessesBothCorrectly()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-report.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-report.pdf");
 		await CreateXmlFileAsync("good.xml", (docId, 10));
 		await _fileSystem.File.WriteAllTextAsync(
 			_fileSystem.Path.Combine(_paths.Input, "bad.xml"),
@@ -110,10 +110,10 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_OrphanClaimedFile_Processes()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-orphan.pdf");
-		string xmlContent = CreateXmlContent(DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime), (docId, 25));
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-orphan.pdf");
+		var xmlContent = CreateXmlContent(DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime), (docId, 25));
 
-		string claimedPath = _fileSystem.Path.Combine(_paths.Input, "orphan.xml.processing");
+		var claimedPath = _fileSystem.Path.Combine(_paths.Input, "orphan.xml.processing");
 		await _fileSystem.File.WriteAllTextAsync(
 			claimedPath,
 			xmlContent,
@@ -132,7 +132,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_NonMatchingFilePattern_IgnoresFile()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-pattern.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-pattern.pdf");
 		await CreateXmlFileAsync("access_report.xml", (docId, 10));
 		await _fileSystem.File.WriteAllTextAsync(
 			_fileSystem.Path.Combine(_paths.Input, "readme.txt"),
@@ -167,7 +167,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_ValidXmlFile_MovesToArchive()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-invoice.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-invoice.pdf");
 		await CreateXmlFileAsync("daily-report.xml", (docId, 15));
 
 		// Act
@@ -189,8 +189,8 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_MultipleDocumentsInOneFile_AggregatesAndUpserts()
 	{
 		// Arrange
-		Guid doc1 = await SeedDocumentAsync($"{TestFilePrefix}-multi1.pdf");
-		Guid doc2 = await SeedDocumentAsync($"{TestFilePrefix}-multi2.pdf");
+		var doc1 = await SeedDocumentAsync($"{TestFilePrefix}-multi1.pdf");
+		var doc2 = await SeedDocumentAsync($"{TestFilePrefix}-multi2.pdf");
 		await CreateXmlFileAsync("multi-doc.xml", (doc1, 10), (doc2, 20));
 
 		// Act
@@ -206,7 +206,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_DuplicateDocumentIdInSameFile_Aggregates()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-dup.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-dup.pdf");
 		await CreateXmlFileAsync("duplicates.xml", (docId, 5), (docId, 8));
 
 		// Act
@@ -221,7 +221,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_SameDocumentProcessedTwice_AccumulatesCounts()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-monthly.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-monthly.pdf");
 
 		await CreateXmlFileAsync("morning.xml", (docId, 5));
 		await _orchestrator.ProcessAsync(s_testToken);
@@ -242,8 +242,8 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_UnknownDocumentId_FiltersAndArchives()
 	{
 		// Arrange
-		Guid knownId = await SeedDocumentAsync($"{TestFilePrefix}-known.pdf");
-		Guid unknownId = Guid.NewGuid();
+		var knownId = await SeedDocumentAsync($"{TestFilePrefix}-known.pdf");
+		var unknownId = Guid.NewGuid();
 
 		await CreateXmlFileAsync("mixed.xml", (knownId, 10), (unknownId, 99));
 
@@ -254,9 +254,9 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		_fileSystem.Directory.GetFiles(_paths.Archive).Should().ContainSingle("file should still archive");
 		await VerifyAccessRecordAsync(knownId, 10, "known document should be persisted");
 
-		await using DocumentPersistence db = await _dbFactory.CreateDbContextAsync(
+		await using var db = await _dbFactory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
-		DailyDocumentAccess? unknownRecord = await db.DailyDocumentAccesses
+		var unknownRecord = await db.DailyDocumentAccesses
 			.FirstOrDefaultAsync(a => a.DocumentId == unknownId, TestContext.Current.CancellationToken);
 		unknownRecord.Should().BeNull("unknown document should not create a DB row");
 	}
@@ -265,8 +265,8 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_AllDocumentsUnknown_StillArchives()
 	{
 		// Arrange
-		Guid unknownId1 = Guid.NewGuid();
-		Guid unknownId2 = Guid.NewGuid();
+		var unknownId1 = Guid.NewGuid();
+		var unknownId2 = Guid.NewGuid();
 		await CreateXmlFileAsync("all-unknown.xml", (unknownId1, 10), (unknownId2, 20));
 
 		// Act
@@ -276,9 +276,9 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 		_fileSystem.Directory.GetFiles(_paths.Archive).Should().ContainSingle("file should archive");
 		_fileSystem.Directory.GetFiles(_paths.Error).Should().BeEmpty();
 
-		await using DocumentPersistence db = await _dbFactory.CreateDbContextAsync(
+		await using var db = await _dbFactory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
-		bool anyRecords = await db.DailyDocumentAccesses.AnyAsync(TestContext.Current.CancellationToken);
+		var anyRecords = await db.DailyDocumentAccesses.AnyAsync(TestContext.Current.CancellationToken);
 		anyRecords.Should().BeFalse("no records should be created for unknown documents");
 	}
 
@@ -324,7 +324,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_InvalidDate_MovesToError()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-baddate.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-baddate.pdf");
 		var xmlContent = $"""
 		                     <?xml version="1.0"?>
 		                     <accessReport date="not-a-date">
@@ -348,7 +348,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_NegativeAccessCount_MovesToError()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-negative.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-negative.pdf");
 		var xmlContent = $"""
 		                     <?xml version="1.0"?>
 		                     <accessReport date="2024-01-15">
@@ -372,7 +372,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	public async Task ProcessAsync_MissingDate_MovesToError()
 	{
 		// Arrange
-		Guid docId = await SeedDocumentAsync($"{TestFilePrefix}-nodate.pdf");
+		var docId = await SeedDocumentAsync($"{TestFilePrefix}-nodate.pdf");
 		var xmlContent = $"""
 		                     <?xml version="1.0"?>
 		                     <accessReport>
@@ -398,10 +398,10 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 
 	private async Task<Guid> SeedDocumentAsync(string fileName)
 	{
-		await using DocumentPersistence db = await _dbFactory.CreateDbContextAsync(
+		await using var db = await _dbFactory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
 
-		DocumentEntity entity = new DocumentBuilder()
+		var entity = new DocumentBuilder()
 			.WithFileName(fileName)
 			.AsCompleted($"Content for {fileName}")
 			.BuildEntity();
@@ -413,8 +413,8 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 
 	private async Task CreateXmlFileAsync(string fileName, params (Guid id, int count)[] documents)
 	{
-		DateOnly date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
-		string xmlContent = CreateXmlContent(date, documents);
+		var date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
+		var xmlContent = CreateXmlContent(date, documents);
 		await _fileSystem.File.WriteAllTextAsync(
 			_fileSystem.Path.Combine(_paths.Input, fileName),
 			xmlContent,
@@ -423,7 +423,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 
 	private static string CreateXmlContent(DateOnly date, params (Guid id, int count)[] documents)
 	{
-		string documentElements = string.Join("\n",
+		var documentElements = string.Join("\n",
 			documents.Select(d => $"    <document id=\"{d.id}\" accessCount=\"{d.count}\"/>"));
 
 		return $"""
@@ -436,11 +436,11 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 
 	private async Task VerifyAccessRecordAsync(Guid documentId, long expectedCount, string? because = null)
 	{
-		await using DocumentPersistence db = await _dbFactory.CreateDbContextAsync(
+		await using var db = await _dbFactory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
-		DateOnly date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
+		var date = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
 
-		DailyDocumentAccess? access = await db.DailyDocumentAccesses
+		var access = await db.DailyDocumentAccesses
 			.FirstOrDefaultAsync(
 				a => a.DocumentId == documentId && a.LogDate == date,
 				TestContext.Current.CancellationToken);
@@ -473,7 +473,7 @@ public sealed class BatchOrchestratorIntegrationTests : IClassFixture<DatabaseFi
 	{
 		if (_fileSystem.Directory.Exists(path))
 		{
-			foreach (string file in _fileSystem.Directory.GetFiles(path))
+			foreach (var file in _fileSystem.Directory.GetFiles(path))
 			{
 				_fileSystem.File.Delete(file);
 			}

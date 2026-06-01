@@ -82,11 +82,11 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_VariousExceptions_ReturnsExpectedStatusAndLogs(
 		Type exceptionType, int expectedStatus, LogLevel expectedLevel, string expectedCode)
 	{
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		var exception = (Exception)Activator.CreateInstance(exceptionType, "Test")!;
-		GlobalExceptionHandler handler = _setup.WithProblemDetailsWrite().CreateHandler();
+		var handler = _setup.WithProblemDetailsWrite().CreateHandler();
 
-		bool handled = await handler.TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
+		var handled = await handler.TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
 
 		handled.Should().BeTrue();
 		context.Response.StatusCode.Should().Be(expectedStatus);
@@ -97,12 +97,12 @@ public sealed class ExceptionHandlerTests
 	[Fact]
 	public async Task TryHandleAsync_OperationCancelled_Returns499()
 	{
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		OperationCanceledException exception = new();
 		CancellationToken token = new(true);
-		GlobalExceptionHandler handler = _setup.WithProblemDetailsWrite(false).CreateHandler();
+		var handler = _setup.WithProblemDetailsWrite(false).CreateHandler();
 
-		bool handled = await handler.TryHandleAsync(context, exception, token);
+		var handled = await handler.TryHandleAsync(context, exception, token);
 
 		handled.Should().BeTrue();
 		context.Response.StatusCode.Should().Be(499);
@@ -115,12 +115,12 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_OperationCancelledWithoutCancelledToken_TreatsAsInternalError()
 	{
 		// Arrange - OperationCanceledException but token is NOT cancelled
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		OperationCanceledException exception = new("Task was cancelled");
-		GlobalExceptionHandler handler = _setup.WithProblemDetailsWrite().CreateHandler();
+		var handler = _setup.WithProblemDetailsWrite().CreateHandler();
 
 		// Act - Use non-cancelled token
-		bool handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
+		var handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
 
 		// Assert - Should NOT take the early return path, but go through normal exception handling
 		handled.Should().BeTrue();
@@ -132,7 +132,7 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_ValidationException_Returns400WithErrors()
 	{
 		// Arrange
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		ValidationException validationEx = new(new ValidationResult("Name is required", ["Name"]), null, null);
 
 		_setup.ProblemDetails.Setup(p => p.TryWriteAsync(It.IsAny<ProblemDetailsContext>()))
@@ -144,10 +144,10 @@ public sealed class ExceptionHandlerTests
 			})
 			.ReturnsAsync(true);
 
-		GlobalExceptionHandler handler = _setup.CreateHandler();
+		var handler = _setup.CreateHandler();
 
 		// Act
-		bool handled = await handler.TryHandleAsync(context, validationEx, CancellationToken.None);
+		var handled = await handler.TryHandleAsync(context, validationEx, CancellationToken.None);
 
 		// Assert
 		handled.Should().BeTrue();
@@ -160,12 +160,12 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_BadHttpRequestException_Returns400()
 	{
 		// Arrange
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		BadHttpRequestException exception = new("Bad request body");
-		GlobalExceptionHandler handler = _setup.WithProblemDetailsWrite().CreateHandler();
+		var handler = _setup.WithProblemDetailsWrite().CreateHandler();
 
 		// Act
-		bool handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
+		var handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
 
 		// Assert
 		handled.Should().BeTrue();
@@ -178,7 +178,7 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_ArgumentException_PassesCorrectTypeUrn()
 	{
 		// Arrange
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		ArgumentException exception = new(ExceptionHandlerConstants.TestExceptionMessage);
 		ProblemDetailsContext? capturedContext = null;
 
@@ -186,7 +186,7 @@ public sealed class ExceptionHandlerTests
 			.Callback<ProblemDetailsContext>(ctx => capturedContext = ctx)
 			.ReturnsAsync(true);
 
-		GlobalExceptionHandler handler = _setup.CreateHandler();
+		var handler = _setup.CreateHandler();
 
 		// Act
 		await handler.TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
@@ -201,7 +201,7 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_KeyNotFoundException_PassesCorrectTypeUrn()
 	{
 		// Arrange
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		KeyNotFoundException exception = new(ExceptionHandlerConstants.TestExceptionMessage);
 		ProblemDetailsContext? capturedContext = null;
 
@@ -209,7 +209,7 @@ public sealed class ExceptionHandlerTests
 			.Callback<ProblemDetailsContext>(ctx => capturedContext = ctx)
 			.ReturnsAsync(true);
 
-		GlobalExceptionHandler handler = _setup.CreateHandler();
+		var handler = _setup.CreateHandler();
 
 		// Act
 		await handler.TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
@@ -224,7 +224,7 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_PassesHttpContextToWriter()
 	{
 		// Arrange
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		InvalidOperationException exception = new(ExceptionHandlerConstants.TestExceptionMessage);
 		ProblemDetailsContext? capturedContext = null;
 
@@ -232,7 +232,7 @@ public sealed class ExceptionHandlerTests
 			.Callback<ProblemDetailsContext>(ctx => capturedContext = ctx)
 			.ReturnsAsync(true);
 
-		GlobalExceptionHandler handler = _setup.CreateHandler();
+		var handler = _setup.CreateHandler();
 
 		// Act
 		await handler.TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
@@ -246,7 +246,7 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_PassesExceptionToWriter()
 	{
 		// Arrange
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		InvalidOperationException exception = new(ExceptionHandlerConstants.TestExceptionMessage);
 		ProblemDetailsContext? capturedContext = null;
 
@@ -254,7 +254,7 @@ public sealed class ExceptionHandlerTests
 			.Callback<ProblemDetailsContext>(ctx => capturedContext = ctx)
 			.ReturnsAsync(true);
 
-		GlobalExceptionHandler handler = _setup.CreateHandler();
+		var handler = _setup.CreateHandler();
 
 		// Act
 		await handler.TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
@@ -268,7 +268,7 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_NonValidationException_SetsProblemDetailsStatus()
 	{
 		// Arrange
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		TimeoutException exception = new(ExceptionHandlerConstants.TestExceptionMessage);
 		ProblemDetailsContext? capturedContext = null;
 
@@ -276,7 +276,7 @@ public sealed class ExceptionHandlerTests
 			.Callback<ProblemDetailsContext>(ctx => capturedContext = ctx)
 			.ReturnsAsync(true);
 
-		GlobalExceptionHandler handler = _setup.CreateHandler();
+		var handler = _setup.CreateHandler();
 
 		// Act
 		await handler.TryHandleAsync(context, exception, TestContext.Current.CancellationToken);
@@ -290,7 +290,7 @@ public sealed class ExceptionHandlerTests
 	public async Task TryHandleAsync_ValidationException_SetsValidationType()
 	{
 		// Arrange
-		HttpContext context = _setup.CreateHttpContext();
+		var context = _setup.CreateHttpContext();
 		ValidationException validationEx = new(new ValidationResult(ExceptionHandlerConstants.NameRequiredError, [ExceptionHandlerConstants.PropertyName]), null, null);
 		ProblemDetailsContext? capturedContext = null;
 
@@ -298,7 +298,7 @@ public sealed class ExceptionHandlerTests
 			.Callback<ProblemDetailsContext>(ctx => capturedContext = ctx)
 			.ReturnsAsync(true);
 
-		GlobalExceptionHandler handler = _setup.CreateHandler();
+		var handler = _setup.CreateHandler();
 
 		// Act
 		await handler.TryHandleAsync(context, validationEx, TestContext.Current.CancellationToken);

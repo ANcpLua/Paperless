@@ -33,8 +33,8 @@ public static class DocumentEndpoints
 	/// <returns>The endpoint route builder for chaining.</returns>
 	public static IEndpointRouteBuilder MapDocumentEndpoints(this IEndpointRouteBuilder app)
 	{
-		IVersionedEndpointRouteBuilder api = app.NewVersionedApi("Documents");
-		RouteGroupBuilder v1docs = api.MapGroup("/api/v{version:apiVersion}/documents")
+		var api = app.NewVersionedApi("Documents");
+		var v1docs = api.MapGroup("/api/v{version:apiVersion}/documents")
 			.HasApiVersion(1, 0)
 			.WithTags("Documents");
 
@@ -102,7 +102,7 @@ public static class DocumentEndpoints
 		IDocumentService documentService,
 		CancellationToken cancellationToken)
 	{
-		(List<Document> items, bool hasMore) = await documentService
+		(var items, var hasMore) = await documentService
 			.GetDocumentsPagedAsync(pagination.PageSize, pagination.Cursor, cancellationToken);
 
 		PaginatedDocumentsResponse response = new()
@@ -133,7 +133,7 @@ public static class DocumentEndpoints
 		IDocumentService documentService,
 		CancellationToken cancellationToken)
 	{
-		List<DocumentSearchResultDto> results = await documentService
+		var results = await documentService
 			.SearchDocumentsAsync(search.Query, search.Limit, cancellationToken)
 			.Select(r => r.ToDocumentSearchResultDto())
 			.ToListAsync(cancellationToken);
@@ -167,7 +167,7 @@ public static class DocumentEndpoints
 		IDocumentService documentService,
 		CancellationToken cancellationToken)
 	{
-		ErrorOr<Document> result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
+		var result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
 		return result.ToOkOr404(doc => doc.ToDocumentDto());
 	}
 
@@ -192,7 +192,7 @@ public static class DocumentEndpoints
 		IDocumentService documentService,
 		CancellationToken cancellationToken)
 	{
-		ErrorOr<Document> result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
+		var result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
 		return result.ToOkOr404(doc => new SummaryDto { Summary = doc.Summary });
 	}
 

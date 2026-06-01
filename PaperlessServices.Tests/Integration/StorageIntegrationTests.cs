@@ -9,10 +9,10 @@ public class StorageIntegrationTests(SharedContainerFixture fixture)
 	public async Task UploadAndDownload_RoundTripSuccess()
 	{
 		// Arrange
-		string storagePath = await fixture.UploadPdfAsync("Storage round trip test");
+		var storagePath = await fixture.UploadPdfAsync("Storage round trip test");
 
 		// Act
-		await using Stream stream = await Storage.DownloadAsync(storagePath, TestContext.Current.CancellationToken);
+		await using var stream = await Storage.DownloadAsync(storagePath, TestContext.Current.CancellationToken);
 
 		// Assert
 		stream.Should().NotBeNull();

@@ -100,8 +100,8 @@ public sealed class Document
 	/// </remarks>
 	public static Document CreateFromUpload(string fileName, TimeProvider timeProvider)
 	{
-		DateTimeOffset now = timeProvider.GetUtcNow();
-		Guid id = Guid.CreateVersion7();
+		var now = timeProvider.GetUtcNow();
+		var id = Guid.CreateVersion7();
 
 		return new Document
 		{

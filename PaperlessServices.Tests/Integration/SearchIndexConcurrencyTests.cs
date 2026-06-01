@@ -63,10 +63,10 @@ public class SearchIndexConcurrencyTests(SharedContainerFixture fixture)
 		var indexName = $"test-{Guid.NewGuid():N}";
 		FakeLogCollector collector = new();
 		FakeLogger<SearchIndexService> logger = new(collector);
-		using SearchIndexService sut = BuildSut(ElasticClient, indexName, logger);
+		using var sut = BuildSut(ElasticClient, indexName, logger);
 
-		Guid firstId = Guid.NewGuid();
-		Guid secondId = Guid.NewGuid();
+		var firstId = Guid.NewGuid();
+		var secondId = Guid.NewGuid();
 
 		// Act — launch two indexing calls in parallel; both call InitializeAsync.
 		Task[] tasks =
@@ -96,16 +96,16 @@ public class SearchIndexConcurrencyTests(SharedContainerFixture fixture)
 	{
 		// Arrange — pre-create the index out-of-band, before any SearchIndexService touches it.
 		var indexName = $"test-{Guid.NewGuid():N}";
-		Elastic.Clients.Elasticsearch.IndexManagement.CreateIndexResponse preCreate = await ElasticClient.Indices
+		var preCreate = await ElasticClient.Indices
 			.CreateAsync(indexName, TestContext.Current.CancellationToken);
 		preCreate.IsValidResponse.Should().BeTrue("pre-creating the index out-of-band is a precondition for this test");
 
 		FakeLogCollector collector = new();
 		FakeLogger<SearchIndexService> logger = new(collector);
-		using SearchIndexService sut = BuildSut(ElasticClient, indexName, logger);
+		using var sut = BuildSut(ElasticClient, indexName, logger);
 
 		// Act — first call into the freshly-constructed service triggers InitializeAsync.
-		Guid documentId = Guid.NewGuid();
+		var documentId = Guid.NewGuid();
 		await sut.IndexDocumentAsync(documentId, "exists.pdf", "Already there",
 			TimeProvider.System.GetUtcNow(), TestContext.Current.CancellationToken);
 
@@ -116,7 +116,7 @@ public class SearchIndexConcurrencyTests(SharedContainerFixture fixture)
 		// Document was still indexed successfully into the SUT's pre-created index.
 		// We query that index directly — fixture.WaitForDocumentAsync uses the client's
 		// DefaultIndex, which is the shared fixture index, not this test's per-test index.
-		GetResponse<JsonElement> response = await ElasticClient.GetAsync<JsonElement>(
+		var response = await ElasticClient.GetAsync<JsonElement>(
 			documentId.ToString(),
 			g => g.Index(indexName),
 			TestContext.Current.CancellationToken);
@@ -135,15 +135,15 @@ public class SearchIndexConcurrencyTests(SharedContainerFixture fixture)
 	public async Task IndexDocumentAsync_WithNullCreatedAt_DoesNotFakeTimestamp()
 	{
 		// Arrange
-		Guid documentId = Guid.NewGuid();
-		ISearchIndexService searchIndex = fixture.Services.GetRequiredService<ISearchIndexService>();
+		var documentId = Guid.NewGuid();
+		var searchIndex = fixture.Services.GetRequiredService<ISearchIndexService>();
 
 		// Act — createdAt is deliberately null; production must not substitute a fallback.
 		await searchIndex.IndexDocumentAsync(documentId, "no-date.pdf", "no date provided",
 			createdAt: null, TestContext.Current.CancellationToken);
 
 		// Assert — document is indexed, processedAt is set, createdAt is absent.
-		GetResponse<JsonElement> response = await fixture.WaitForDocumentAsync<JsonElement>(
+		var response = await fixture.WaitForDocumentAsync<JsonElement>(
 			documentId.ToString(), TestContext.Current.CancellationToken);
 
 		response.Found.Should().BeTrue();

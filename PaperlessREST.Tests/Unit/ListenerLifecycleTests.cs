@@ -29,7 +29,7 @@ public sealed class ListenerLifecycleTests
 	{
 		// Arrange
 		GenAiHarness h = new();
-		Guid documentId = Guid.CreateVersion7();
+		var documentId = Guid.CreateVersion7();
 		GenAIEvent evt = new(documentId, "summary text", TimeProvider.System.GetUtcNow(), null);
 
 		TaskCompletionSource disposed = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -50,7 +50,7 @@ public sealed class ListenerLifecycleTests
 		h.SseStream.Setup(s => s.Publish(evt));
 		h.Consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		using GenAiResultListener sut = h.CreateSut();
+		using var sut = h.CreateSut();
 		using CancellationTokenSource cts = new();
 
 		// Act
@@ -59,7 +59,7 @@ public sealed class ListenerLifecycleTests
 		await sut.StopAsync(CancellationToken.None);
 
 		// Assert
-		IReadOnlyList<FakeLogRecord> logs = h.LogCollector.GetSnapshot();
+		var logs = h.LogCollector.GetSnapshot();
 		logs.Should().Contain(l =>
 			l.Level == LogLevel.Information &&
 			l.Message.Contains("GenAI Result Listener started", StringComparison.OrdinalIgnoreCase));
@@ -84,7 +84,7 @@ public sealed class ListenerLifecycleTests
 		h.ConsumerFactory.Setup(f => f.CreateConsumerAsync<GenAIEvent>())
 			.ThrowsAsync(noQueue);
 
-		using GenAiResultListener sut = h.CreateSut();
+		using var sut = h.CreateSut();
 		using CancellationTokenSource cts = new();
 
 		// Act
@@ -126,14 +126,14 @@ public sealed class ListenerLifecycleTests
 		h.ConsumerFactory.Setup(f => f.CreateConsumerAsync<GenAIEvent>())
 			.ThrowsAsync(connectionLost);
 
-		using GenAiResultListener sut = h.CreateSut();
+		using var sut = h.CreateSut();
 		using CancellationTokenSource cts = new();
 
 		// Act — BackgroundService captures the ExecuteAsync task; the throw is surfaced
 		// via ExecuteTask, not StartAsync (which only awaits the first yield-point).
 		await sut.StartAsync(cts.Token);
 
-		Func<Task> awaitExecute = () => sut.ExecuteTask!;
+		var awaitExecute = () => sut.ExecuteTask!;
 		(await awaitExecute.Should().ThrowAsync<OperationInterruptedException>())
 			.Which.Message.Should().Contain("connection lost");
 
@@ -163,14 +163,14 @@ public sealed class ListenerLifecycleTests
 		h.Consumer.Setup(c => c.ConsumeAsync(It.IsAny<CancellationToken>()))
 			.Returns(ThrowingStream<GenAIEvent>(new InvalidOperationException("rabbit died")));
 
-		using GenAiResultListener sut = h.CreateSut();
+		using var sut = h.CreateSut();
 		using CancellationTokenSource cts = new();
 
 		// Act
 		await sut.StartAsync(cts.Token);
 
 		// The exception surfaces on the captured ExecuteTask, not on StartAsync.
-		Func<Task> awaitExecute = () => sut.ExecuteTask!;
+		var awaitExecute = () => sut.ExecuteTask!;
 		(await awaitExecute.Should().ThrowAsync<InvalidOperationException>())
 			.Which.Message.Should().Be("rabbit died");
 
@@ -188,9 +188,9 @@ public sealed class ListenerLifecycleTests
 		// The test cancels the stoppingToken before releasing the gate, which trips
 		// `if (stoppingToken.IsCancellationRequested) break;` on the next iteration boundary.
 		GenAiHarness h = new();
-		Guid id1 = Guid.CreateVersion7();
-		Guid id2 = Guid.CreateVersion7();
-		Guid id3 = Guid.CreateVersion7();
+		var id1 = Guid.CreateVersion7();
+		var id2 = Guid.CreateVersion7();
+		var id3 = Guid.CreateVersion7();
 		GenAIEvent e1 = new(id1, "first", TimeProvider.System.GetUtcNow(), null);
 		GenAIEvent e2 = new(id2, "second", TimeProvider.System.GetUtcNow(), null);
 		GenAIEvent e3 = new(id3, "third", TimeProvider.System.GetUtcNow(), null);
@@ -216,7 +216,7 @@ public sealed class ListenerLifecycleTests
 		h.Consumer.Setup(c => c.AckAsync())
 			.Returns(() => { firstAckObserved.TrySetResult(); return Task.CompletedTask; });
 
-		using GenAiResultListener sut = h.CreateSut();
+		using var sut = h.CreateSut();
 		using CancellationTokenSource cts = new();
 
 		// Act
@@ -252,8 +252,8 @@ public sealed class ListenerLifecycleTests
 		// gated/throwing iterators cannot reach because they all surface OCE before re-entering
 		// the body. The clean "stopped" log proves the loop exited via `break`, not via throw.
 		GenAiHarness h = new();
-		Guid id1 = Guid.CreateVersion7();
-		Guid id2 = Guid.CreateVersion7();
+		var id1 = Guid.CreateVersion7();
+		var id2 = Guid.CreateVersion7();
 		GenAIEvent e1 = new(id1, "first", TimeProvider.System.GetUtcNow(), null);
 		GenAIEvent e2 = new(id2, "second", TimeProvider.System.GetUtcNow(), null);
 
@@ -278,7 +278,7 @@ public sealed class ListenerLifecycleTests
 		h.Consumer.Setup(c => c.AckAsync())
 			.Returns(() => { firstAckObserved.TrySetResult(); return Task.CompletedTask; });
 
-		using GenAiResultListener sut = h.CreateSut();
+		using var sut = h.CreateSut();
 
 		// Act
 		await sut.StartAsync(cts.Token);
@@ -294,7 +294,7 @@ public sealed class ListenerLifecycleTests
 		h.Consumer.Verify(c => c.AckAsync(), Times.Once);
 		h.SseStream.Verify(s => s.Publish(e2), Times.Never);
 
-		IReadOnlyList<FakeLogRecord> logs = h.LogCollector.GetSnapshot();
+		var logs = h.LogCollector.GetSnapshot();
 		logs.Should().Contain(l =>
 			l.Level == LogLevel.Information &&
 			l.Message.Contains("GenAI Result Listener stopped", StringComparison.OrdinalIgnoreCase));
@@ -309,7 +309,7 @@ public sealed class ListenerLifecycleTests
 	public async Task Ocr_ExecuteAsync_HappyPath_LogsStartedAndStopped()
 	{
 		OcrHarness h = new();
-		Guid jobId = Guid.CreateVersion7();
+		var jobId = Guid.CreateVersion7();
 		OcrEvent evt = new(jobId, "Completed", "extracted text", TimeProvider.System.GetUtcNow());
 
 		TaskCompletionSource disposed = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -330,14 +330,14 @@ public sealed class ListenerLifecycleTests
 		h.SseStream.Setup(s => s.Publish(evt));
 		h.Consumer.Setup(c => c.AckAsync()).Returns(Task.CompletedTask);
 
-		using OcrResultListener sut = h.CreateSut();
+		using var sut = h.CreateSut();
 		using CancellationTokenSource cts = new();
 
 		await sut.StartAsync(cts.Token);
 		await disposed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 		await sut.StopAsync(CancellationToken.None);
 
-		IReadOnlyList<FakeLogRecord> logs = h.LogCollector.GetSnapshot();
+		var logs = h.LogCollector.GetSnapshot();
 		logs.Should().Contain(l =>
 			l.Level == LogLevel.Information &&
 			l.Message.Contains("OCR Result Listener started", StringComparison.OrdinalIgnoreCase));
@@ -361,12 +361,12 @@ public sealed class ListenerLifecycleTests
 		h.Consumer.Setup(c => c.ConsumeAsync(It.IsAny<CancellationToken>()))
 			.Returns(ThrowingStream<OcrEvent>(new InvalidOperationException("ocr stream died")));
 
-		using OcrResultListener sut = h.CreateSut();
+		using var sut = h.CreateSut();
 		using CancellationTokenSource cts = new();
 
 		await sut.StartAsync(cts.Token);
 
-		Func<Task> awaitExecute = () => sut.ExecuteTask!;
+		var awaitExecute = () => sut.ExecuteTask!;
 		(await awaitExecute.Should().ThrowAsync<InvalidOperationException>())
 			.Which.Message.Should().Be("ocr stream died");
 
@@ -387,12 +387,12 @@ public sealed class ListenerLifecycleTests
 		h.ConsumerFactory.Setup(f => f.CreateConsumerAsync<OcrEvent>())
 			.ThrowsAsync(new InvalidOperationException("factory exploded"));
 
-		using OcrResultListener sut = h.CreateSut();
+		using var sut = h.CreateSut();
 		using CancellationTokenSource cts = new();
 
 		await sut.StartAsync(cts.Token);
 
-		Func<Task> awaitExecute = () => sut.ExecuteTask!;
+		var awaitExecute = () => sut.ExecuteTask!;
 		(await awaitExecute.Should().ThrowAsync<InvalidOperationException>())
 			.Which.Message.Should().Be("factory exploded");
 
@@ -416,7 +416,7 @@ public sealed class ListenerLifecycleTests
 		IEnumerable<T> items,
 		[EnumeratorCancellation] CancellationToken ct = default)
 	{
-		foreach (T item in items)
+		foreach (var item in items)
 		{
 			ct.ThrowIfCancellationRequested();
 			await Task.Yield();
@@ -479,7 +479,7 @@ public sealed class ListenerLifecycleTests
 		Func<FakeLogRecord, bool> predicate,
 		CancellationToken ct)
 	{
-		using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		timeout.CancelAfter(TimeSpan.FromSeconds(5));
 
 		while (!timeout.IsCancellationRequested)

@@ -63,7 +63,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		ValidationException exception = new(new ValidationResult(FieldError, [FieldName]), null, null);
 
 		// Act
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Assert
 		info.StatusCode.Should().Be(Status400BadRequest);
@@ -79,7 +79,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		var exception = (Exception)Activator.CreateInstance(exceptionType, TestMessage)!;
 
 		// Act
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Assert
 		info.StatusCode.Should().Be(Status400BadRequest);
@@ -106,7 +106,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		BadHttpRequestException exception = new(BadRequestMessage);
 
 		// Act
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Assert
 		info.StatusCode.Should().Be(Status400BadRequest);
@@ -120,7 +120,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		UnauthorizedAccessException exception = new();
 
 		// Act
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Assert
 		info.StatusCode.Should().Be(Status403Forbidden);
@@ -136,7 +136,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		var exception = (Exception)Activator.CreateInstance(exceptionType, NotFoundMessage)!;
 
 		// Act
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Assert
 		info.StatusCode.Should().Be(Status404NotFound);
@@ -159,7 +159,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		OperationCanceledException exception = new();
 
 		// Act
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Assert
 		info.StatusCode.Should().Be(Status499ClientClosedRequest);
@@ -174,7 +174,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		TaskCanceledException exception = new();
 
 		// Act
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Assert
 		info.StatusCode.Should().Be(Status499ClientClosedRequest);
@@ -189,7 +189,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		TimeoutException exception = new();
 
 		// Act
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Assert
 		info.StatusCode.Should().Be(Status504GatewayTimeout);
@@ -204,7 +204,7 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		NotSupportedException exception = new();
 
 		// Act
-		ExceptionInfo info = ExceptionInfo.FromException(exception);
+		var info = ExceptionInfo.FromException(exception);
 
 		// Assert
 		info.StatusCode.Should().Be(Status500InternalServerError);
@@ -219,12 +219,12 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		using CancellationTokenSource cts = new();
 		await cts.CancelAsync();
 
-		DefaultHttpContext httpContext = CreateHttpContext();
-		Mock<IProblemDetailsService> strictMock = _mocks.Create<IProblemDetailsService>();
+		var httpContext = CreateHttpContext();
+		var strictMock = _mocks.Create<IProblemDetailsService>();
 		GlobalExceptionHandler sut = new(strictMock.Object, _logger);
 
 		// Act
-		bool result = await sut.TryHandleAsync(httpContext, new OperationCanceledException(), cts.Token);
+		var result = await sut.TryHandleAsync(httpContext, new OperationCanceledException(), cts.Token);
 
 		// Assert
 		result.Should().BeTrue();
@@ -236,12 +236,12 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	public async Task TryHandleAsync_OperationCanceledWithoutCancellationRequested_CallsProblemDetails()
 	{
 		// Arrange
-		DefaultHttpContext httpContext = CreateHttpContext();
+		var httpContext = CreateHttpContext();
 		SetupProblemDetailsService();
-		GlobalExceptionHandler sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
-		bool result = await sut.TryHandleAsync(httpContext, new OperationCanceledException(),
+		var result = await sut.TryHandleAsync(httpContext, new OperationCanceledException(),
 			TestContext.Current.CancellationToken);
 
 		// Assert
@@ -254,11 +254,11 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	{
 		// Arrange
 		ValidationException exception = new(new ValidationResult(EmailRequiredError, [EmailFieldName]), null, null);
-		DefaultHttpContext httpContext = CreateHttpContext();
+		var httpContext = CreateHttpContext();
 
 		ProblemDetailsContext? captured = null;
 		SetupProblemDetailsServiceWithCapture(ctx => captured = ctx);
-		GlobalExceptionHandler sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
 		await sut.TryHandleAsync(httpContext, exception, TestContext.Current.CancellationToken);
@@ -276,10 +276,10 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	public async Task TryHandleAsync_NonValidationException_CreatesStandardProblemDetails()
 	{
 		// Arrange
-		DefaultHttpContext httpContext = CreateHttpContext();
+		var httpContext = CreateHttpContext();
 		ProblemDetailsContext? captured = null;
 		SetupProblemDetailsServiceWithCapture(ctx => captured = ctx);
-		GlobalExceptionHandler sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
 		await sut.TryHandleAsync(httpContext, new KeyNotFoundException(NotFoundMessage),
@@ -295,9 +295,9 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	public async Task TryHandleAsync_LogsWithCorrectLevelAndCode()
 	{
 		// Arrange
-		DefaultHttpContext httpContext = CreateHttpContext();
+		var httpContext = CreateHttpContext();
 		SetupProblemDetailsService();
-		GlobalExceptionHandler sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
 		await sut.TryHandleAsync(httpContext, new KeyNotFoundException(DocNotFoundMessage),
@@ -316,9 +316,9 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		// Arrange
 		using var activity = new Activity(TestActivityName);
 		activity.Start();
-		DefaultHttpContext httpContext = CreateHttpContext();
+		var httpContext = CreateHttpContext();
 		SetupProblemDetailsService();
-		GlobalExceptionHandler sut = CreateSut();
+		var sut = CreateSut();
 
 		// Act
 		await sut.TryHandleAsync(httpContext, new InvalidOperationException(), TestContext.Current.CancellationToken);
@@ -334,14 +334,14 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		// Arrange — Activity.Current is AsyncLocal-backed and leaks across tests in
 		// the same async context if not restored. Wrap the override in try/finally
 		// so a future test in this class doesn't inherit a null Activity unexpectedly.
-		Activity? savedActivity = Activity.Current;
+		var savedActivity = Activity.Current;
 		Activity.Current = null;
 		try
 		{
-			DefaultHttpContext httpContext = CreateHttpContext();
+			var httpContext = CreateHttpContext();
 			httpContext.TraceIdentifier = TestTraceId;
 			SetupProblemDetailsService();
-			GlobalExceptionHandler sut = CreateSut();
+			var sut = CreateSut();
 
 			// Act
 			await sut.TryHandleAsync(httpContext, new InvalidOperationException(), TestContext.Current.CancellationToken);
@@ -440,7 +440,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange
 		using var activity = new Activity(TestActivityName);
 		activity.Start();
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext();
+		(var sut, var context) = CreateSutAndContext();
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -454,7 +454,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	{
 		// Arrange
 		Activity.Current = null;
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(traceIdentifier: TestTraceId);
+		(var sut, var context) = CreateSutAndContext(traceIdentifier: TestTraceId);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -467,7 +467,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	public void Enrich_AddsTimestamp()
 	{
 		// Arrange
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext();
+		(var sut, var context) = CreateSutAndContext();
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -480,7 +480,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	public void Enrich_WithRouteEndpoint_AddsRoutePattern()
 	{
 		// Arrange
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) =
+		(var sut, var context) =
 			CreateSutAndContext(routePattern: RoutePatternDocumentsId);
 
 		// Act
@@ -495,7 +495,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	public void Enrich_WithoutEndpoint_DoesNotAddRoute()
 	{
 		// Arrange
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext();
+		(var sut, var context) = CreateSutAndContext();
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -512,7 +512,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		{
 			[Field1Name] = [Error1, Error2], [Field2Name] = [Error3]
 		});
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(validationPd);
+		(var sut, var context) = CreateSutAndContext(validationPd);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -527,7 +527,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
 		InvalidOperationException exception = new(DetailedDevError);
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(exception: exception);
+		(var sut, var context) = CreateSutAndContext(exception: exception);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -542,7 +542,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
 		ProblemDetails pd = new() { Status = Status500 };
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(pd);
+		(var sut, var context) = CreateSutAndContext(pd);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -558,7 +558,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
 		ProblemDetails pd = new() { Status = Status404 };
 		KeyNotFoundException exception = new(DocumentNotFoundMessage);
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(pd, exception);
+		(var sut, var context) = CreateSutAndContext(pd, exception);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -573,7 +573,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
 		ProblemDetails pd = new() { Status = Status400, Detail = OriginalDetailMessage };
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(pd);
+		(var sut, var context) = CreateSutAndContext(pd);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -588,7 +588,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange - Covers Errors.Count is 0 branch
 		HttpValidationProblemDetails validationPd = new(); // Empty errors
 		InvalidOperationException exception = new(DetailedDevError);
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(
+		(var sut, var context) = CreateSutAndContext(
 			validationPd, exception);
 
 		// Act
@@ -605,7 +605,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
 		ProblemDetails pd = new() { Status = Status500 };
 		InvalidOperationException exception = new(DetailedDevError);
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(
+		(var sut, var context) = CreateSutAndContext(
 			pd, exception);
 
 		// Act
@@ -621,7 +621,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange - Covers the default "_ => pd.Detail" branch
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
 		ProblemDetails pd = new() { Status = Status404, Detail = OriginalDetailMessage };
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(pd);
+		(var sut, var context) = CreateSutAndContext(pd);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -636,7 +636,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange - Status 500 without exception in production
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
 		ProblemDetails pd = new() { Status = Status500 };
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(pd);
+		(var sut, var context) = CreateSutAndContext(pd);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -651,7 +651,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange - Status > 500 without exception in production (covers >= 500 branch)
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
 		ProblemDetails pd = new() { Status = Status503ServiceUnavailable };
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(pd);
+		(var sut, var context) = CreateSutAndContext(pd);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -666,7 +666,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange - Status < 500 (just below threshold) in production
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
 		ProblemDetails pd = new() { Status = Status499ClientClosed, Detail = OriginalDetailMessage };
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(pd);
+		(var sut, var context) = CreateSutAndContext(pd);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -681,7 +681,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange - ProblemDetails with null status (edge case)
 		ProblemDetails pd = new() { Status = null };
 		InvalidOperationException exception = new(DetailedDevError);
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(
+		(var sut, var context) = CreateSutAndContext(
 			pd, exception);
 
 		// Act
@@ -696,8 +696,8 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	{
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
-		Exception exception = CaptureExceptionWithStackTrace();
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(exception: exception);
+		var exception = CaptureExceptionWithStackTrace();
+		(var sut, var context) = CreateSutAndContext(exception: exception);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -712,7 +712,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
 		InvalidOperationException exception = new(OuterExceptionMessage, new ArgumentException(InnerExceptionMessage));
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(exception: exception);
+		(var sut, var context) = CreateSutAndContext(exception: exception);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -726,9 +726,9 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	{
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
-		Exception exception = CaptureExceptionWithStackTrace();
+		var exception = CaptureExceptionWithStackTrace();
 		ProblemDetails pd = new() { Status = Status404 };
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(pd, exception);
+		(var sut, var context) = CreateSutAndContext(pd, exception);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -744,7 +744,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
 		// Exception created without throw has no stack trace
 		InvalidOperationException exception = new(TestExceptionMessage);
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(exception: exception);
+		(var sut, var context) = CreateSutAndContext(exception: exception);
 
 		// Act
 		InvokeEnrich(sut, context);
@@ -758,14 +758,14 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	{
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
-		Exception exception = CaptureExceptionWithStackTrace();
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(exception: exception);
+		var exception = CaptureExceptionWithStackTrace();
+		(var sut, var context) = CreateSutAndContext(exception: exception);
 
 		// Act
 		InvokeEnrich(sut, context);
 
 		// Assert
-		object debugInfo = context.ProblemDetails.Extensions[ExtensionKeyDebug]!;
+		var debugInfo = context.ProblemDetails.Extensions[ExtensionKeyDebug]!;
 		dynamic debug = debugInfo;
 		string exceptionType = debug.exception_type;
 		exceptionType.Should().Be(typeof(InvalidOperationException).FullName);
@@ -776,14 +776,14 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	{
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
-		Exception exception = CaptureExceptionWithStackTrace();
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(exception: exception);
+		var exception = CaptureExceptionWithStackTrace();
+		(var sut, var context) = CreateSutAndContext(exception: exception);
 
 		// Act
 		InvokeEnrich(sut, context);
 
 		// Assert
-		object debugInfo = context.ProblemDetails.Extensions[ExtensionKeyDebug]!;
+		var debugInfo = context.ProblemDetails.Extensions[ExtensionKeyDebug]!;
 		dynamic debug = debugInfo;
 		string? stackTrace = debug.stack_trace;
 		stackTrace.Should().NotBeNullOrEmpty();
@@ -796,13 +796,13 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
 		InvalidOperationException exception = new(OuterExceptionMessage, new ArgumentException(InnerExceptionMessage));
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(exception: exception);
+		(var sut, var context) = CreateSutAndContext(exception: exception);
 
 		// Act
 		InvokeEnrich(sut, context);
 
 		// Assert
-		object debugInfo = context.ProblemDetails.Extensions[ExtensionKeyDebug]!;
+		var debugInfo = context.ProblemDetails.Extensions[ExtensionKeyDebug]!;
 		dynamic debug = debugInfo;
 		string? innerMessage = debug.inner_exception;
 		innerMessage.Should().Be(InnerExceptionMessage);
@@ -813,14 +813,14 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	{
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
-		Exception exception = CaptureExceptionWithStackTrace();
-		(ProblemDetailsEnricher sut, ProblemDetailsContext context) = CreateSutAndContext(exception: exception);
+		var exception = CaptureExceptionWithStackTrace();
+		(var sut, var context) = CreateSutAndContext(exception: exception);
 
 		// Act
 		InvokeEnrich(sut, context);
 
 		// Assert
-		object debugInfo = context.ProblemDetails.Extensions[ExtensionKeyDebug]!;
+		var debugInfo = context.ProblemDetails.Extensions[ExtensionKeyDebug]!;
 		dynamic debug = debugInfo;
 		string? innerMessage = debug.inner_exception;
 		innerMessage.Should().BeNull();
@@ -855,7 +855,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 			Exception = exception
 		};
 
-		ProblemDetailsEnricher sut = CreateSut();
+		var sut = CreateSut();
 		return (sut, context);
 	}
 

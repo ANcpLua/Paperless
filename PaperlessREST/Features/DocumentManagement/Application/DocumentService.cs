@@ -93,12 +93,12 @@ public sealed class DocumentService(
 		UploadDocumentRequest request,
 		CancellationToken cancellationToken = default)
 	{
-		Document document = Document.CreateFromUpload(request.File.FileName, timeProvider);
+		var document = Document.CreateFromUpload(request.File.FileName, timeProvider);
 
 		// Storage upload - catch infrastructure exceptions and map to domain errors
 		try
 		{
-			await using Stream stream = request.File.OpenReadStream();
+			await using var stream = request.File.OpenReadStream();
 			await storage.UploadAsync(stream, document.StoragePath, request.File.Length, cancellationToken);
 		}
 		catch (Exception ex)
@@ -114,7 +114,7 @@ public sealed class DocumentService(
 			// Unrecognized exception - let it propagate to GlobalExceptionHandler
 		}
 
-		Document savedDocument = await repository.AddAsync(document, cancellationToken);
+		var savedDocument = await repository.AddAsync(document, cancellationToken);
 
 		OcrCommand ocrRequest = new(
 			savedDocument.Id,
@@ -133,14 +133,14 @@ public sealed class DocumentService(
 		string? content,
 		CancellationToken cancellationToken = default)
 	{
-		Document? document = await repository.GetByIdAsync(id, cancellationToken);
+		var document = await repository.GetByIdAsync(id, cancellationToken);
 		if (document is null)
 		{
 			logger.LogWarning("Document {DocumentId} not found for OCR result", id);
 			return DocumentErrors.NotFound(id);
 		}
 
-		ErrorOr<Success> transitionResult = status is "Completed" && content is not null
+		var transitionResult = status is "Completed" && content is not null
 			? document.MarkAsCompleted(content, timeProvider)
 			: document.MarkAsFailed(timeProvider);
 
@@ -162,7 +162,7 @@ public sealed class DocumentService(
 		DateTimeOffset generatedAt,
 		CancellationToken cancellationToken = default)
 	{
-		bool updated = await repository.UpdateSummaryAsync(id, summary, generatedAt, cancellationToken);
+		var updated = await repository.UpdateSummaryAsync(id, summary, generatedAt, cancellationToken);
 		if (!updated)
 		{
 			logger.LogWarning("Document {DocumentId} not found for GenAI summary update", id);
@@ -190,7 +190,7 @@ public sealed class DocumentService(
 		Guid id,
 		CancellationToken cancellationToken = default)
 	{
-		Document? document = await repository.GetByIdAsync(id, cancellationToken);
+		var document = await repository.GetByIdAsync(id, cancellationToken);
 		return document is null
 			? DocumentErrors.NotFound(id)
 			: document;
@@ -200,8 +200,7 @@ public sealed class DocumentService(
 		Guid id,
 		CancellationToken cancellationToken = default)
 	{
-		Document? document = await repository.GetByIdAsync(id, cancellationToken);
-		if (document is null)
+		if (await repository.GetByIdAsync(id, cancellationToken) is not { } document)
 		{
 			return DocumentErrors.NotFound(id);
 		}

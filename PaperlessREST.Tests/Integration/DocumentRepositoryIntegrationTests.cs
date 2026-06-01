@@ -52,12 +52,12 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task AddAsync_ValidDocument_PersistsToDatabase()
 	{
 		// Arrange
-		Document document = new DocumentBuilder()
+		var document = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-add-{Guid.NewGuid():N}.pdf")
 			.Build();
 
 		// Act
-		Document saved = await Repository.AddAsync(document, TestContext.Current.CancellationToken);
+		var saved = await Repository.AddAsync(document, TestContext.Current.CancellationToken);
 
 		// Assert
 		saved.Id.Should().Be(document.Id);
@@ -65,9 +65,9 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		saved.Status.Should().Be(DocumentStatus.Pending);
 
 		// Verify in database directly
-		await using DocumentPersistence db = await _fixture.ContextFactory.CreateDbContextAsync(
+		await using var db = await _fixture.ContextFactory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
-		DocumentEntity? entity = await db.Documents.FindAsync(
+		var entity = await db.Documents.FindAsync(
 			[saved.Id],
 			TestContext.Current.CancellationToken);
 
@@ -80,19 +80,19 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task AddAsync_SetsStoragePath()
 	{
 		// Arrange
-		Document document = new DocumentBuilder()
+		var document = new DocumentBuilder()
 			.WithStoragePath(StoragePath)
 			.Build();
 
 		// Act
-		Document saved = await Repository.AddAsync(document, TestContext.Current.CancellationToken);
+		var saved = await Repository.AddAsync(document, TestContext.Current.CancellationToken);
 
 		// Assert
 		saved.StoragePath.Should().Be(StoragePath);
 
-		await using DocumentPersistence db = await _fixture.ContextFactory.CreateDbContextAsync(
+		await using var db = await _fixture.ContextFactory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
-		DocumentEntity? entity = await db.Documents.FindAsync(
+		var entity = await db.Documents.FindAsync(
 			[saved.Id],
 			TestContext.Current.CancellationToken);
 		entity!.StoragePath.Should().Be(StoragePath);
@@ -106,7 +106,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task GetByIdAsync_ExistingDocument_ReturnsWithAllProperties()
 	{
 		// Arrange
-		Document original = new DocumentBuilder()
+		var original = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-getbyid-{Guid.NewGuid():N}.pdf")
 			.WithContent(OcrContent)
 			.WithSummary(AiSummary)
@@ -115,7 +115,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		await Repository.AddAsync(original, TestContext.Current.CancellationToken);
 
 		// Act
-		Document? found = await Repository.GetByIdAsync(original.Id, TestContext.Current.CancellationToken);
+		var found = await Repository.GetByIdAsync(original.Id, TestContext.Current.CancellationToken);
 
 		// Assert
 		found.Should().NotBeNull();
@@ -128,10 +128,10 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task GetByIdAsync_NonExistent_ReturnsNull()
 	{
 		// Arrange
-		Guid nonExistentId = Guid.CreateVersion7();
+		var nonExistentId = Guid.CreateVersion7();
 
 		// Act
-		Document? result = await Repository.GetByIdAsync(nonExistentId, TestContext.Current.CancellationToken);
+		var result = await Repository.GetByIdAsync(nonExistentId, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.Should().BeNull();
@@ -145,23 +145,23 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task UpdateAsync_MarkAsCompleted_UpdatesStatusAndContent()
 	{
 		// Arrange
-		Document original = new DocumentBuilder()
+		var original = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-update-{Guid.NewGuid():N}.pdf")
 			.Build();
-		Document saved = await Repository.AddAsync(original, TestContext.Current.CancellationToken);
+		var saved = await Repository.AddAsync(original, TestContext.Current.CancellationToken);
 
 		saved.MarkAsCompleted(OcrContent, TimeProvider.System);
 
 		// Act
-		bool updated = await Repository.UpdateAsync(saved, TestContext.Current.CancellationToken);
+		var updated = await Repository.UpdateAsync(saved, TestContext.Current.CancellationToken);
 
 		// Assert
 		updated.Should().BeTrue();
 
 		// Verify in database
-		await using DocumentPersistence db = await _fixture.ContextFactory.CreateDbContextAsync(
+		await using var db = await _fixture.ContextFactory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
-		DocumentEntity entity = await db.Documents.FirstAsync(
+		var entity = await db.Documents.FirstAsync(
 			d => d.Id == saved.Id,
 			TestContext.Current.CancellationToken);
 		entity.Status.Should().Be(DocumentStatus.Completed);
@@ -173,23 +173,23 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task UpdateAsync_MarkAsFailed_UpdatesStatus()
 	{
 		// Arrange
-		Document original = new DocumentBuilder()
+		var original = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-fail-{Guid.NewGuid():N}.pdf")
 			.Build();
-		Document saved = await Repository.AddAsync(original, TestContext.Current.CancellationToken);
+		var saved = await Repository.AddAsync(original, TestContext.Current.CancellationToken);
 
 		saved.MarkAsFailed(TimeProvider.System);
 
 		// Act
-		bool updated = await Repository.UpdateAsync(saved, TestContext.Current.CancellationToken);
+		var updated = await Repository.UpdateAsync(saved, TestContext.Current.CancellationToken);
 
 		// Assert
 		updated.Should().BeTrue();
 
 		// Verify in database
-		await using DocumentPersistence db = await _fixture.ContextFactory.CreateDbContextAsync(
+		await using var db = await _fixture.ContextFactory.CreateDbContextAsync(
 			TestContext.Current.CancellationToken);
-		DocumentEntity entity = await db.Documents.FirstAsync(
+		var entity = await db.Documents.FirstAsync(
 			d => d.Id == saved.Id,
 			TestContext.Current.CancellationToken);
 		entity.Status.Should().Be(DocumentStatus.Failed);
@@ -201,12 +201,12 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task UpdateAsync_NonExistent_ReturnsFalse()
 	{
 		// Arrange
-		Document document = new DocumentBuilder()
+		var document = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-ghost-{Guid.NewGuid():N}.pdf")
 			.Build();
 
 		// Act
-		bool result = await Repository.UpdateAsync(document, TestContext.Current.CancellationToken);
+		var result = await Repository.UpdateAsync(document, TestContext.Current.CancellationToken);
 
 		// Assert
 		result.Should().BeFalse();
@@ -220,18 +220,18 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task DeleteAsync_ExistingDocument_RemovesFromDatabase()
 	{
 		// Arrange
-		Document document = new DocumentBuilder()
+		var document = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-delete-{Guid.NewGuid():N}.pdf")
 			.Build();
 		await Repository.AddAsync(document, TestContext.Current.CancellationToken);
 
 		// Act
-		bool deleted = await Repository.DeleteAsync(document.Id, TestContext.Current.CancellationToken);
+		var deleted = await Repository.DeleteAsync(document.Id, TestContext.Current.CancellationToken);
 
 		// Assert
 		deleted.Should().BeTrue();
 
-		Document? found = await Repository.GetByIdAsync(document.Id, TestContext.Current.CancellationToken);
+		var found = await Repository.GetByIdAsync(document.Id, TestContext.Current.CancellationToken);
 		found.Should().BeNull();
 	}
 
@@ -239,10 +239,10 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task DeleteAsync_NonExistent_ReturnsFalse()
 	{
 		// Arrange
-		Guid nonExistentId = Guid.CreateVersion7();
+		var nonExistentId = Guid.CreateVersion7();
 
 		// Act
-		bool deleted = await Repository.DeleteAsync(nonExistentId, TestContext.Current.CancellationToken);
+		var deleted = await Repository.DeleteAsync(nonExistentId, TestContext.Current.CancellationToken);
 
 		// Assert
 		deleted.Should().BeFalse();
@@ -256,16 +256,16 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task UpdateSummaryAsync_ExistingDocument_UpdatesOnlySummaryFields()
 	{
 		// Arrange
-		Document document = new DocumentBuilder()
+		var document = new DocumentBuilder()
 			.WithFileName($"{TestFilePrefix}-summary-{Guid.NewGuid():N}.pdf")
 			.AsCompleted(OcrContent)
 			.Build();
 		await Repository.AddAsync(document, TestContext.Current.CancellationToken);
 
-		DateTimeOffset generatedAt = TimeProvider.System.GetUtcNow();
+		var generatedAt = TimeProvider.System.GetUtcNow();
 
 		// Act
-		bool updated = await Repository.UpdateSummaryAsync(
+		var updated = await Repository.UpdateSummaryAsync(
 			document.Id,
 			AiSummary,
 			generatedAt,
@@ -274,7 +274,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		// Assert
 		updated.Should().BeTrue();
 
-		Document? found = await Repository.GetByIdAsync(document.Id, TestContext.Current.CancellationToken);
+		var found = await Repository.GetByIdAsync(document.Id, TestContext.Current.CancellationToken);
 		found.Should().NotBeNull();
 		found!.Summary.Should().Be(AiSummary);
 		found.SummaryGeneratedAt.Should().BeCloseTo(generatedAt, TimeSpan.FromSeconds(1));
@@ -287,10 +287,10 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 	public async Task UpdateSummaryAsync_NonExistent_ReturnsFalse()
 	{
 		// Arrange
-		Guid nonExistentId = Guid.CreateVersion7();
+		var nonExistentId = Guid.CreateVersion7();
 
 		// Act
-		bool updated = await Repository.UpdateSummaryAsync(
+		var updated = await Repository.UpdateSummaryAsync(
 			nonExistentId,
 			AiSummary,
 			TimeProvider.System.GetUtcNow(),
@@ -311,22 +311,22 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		var testPrefix = $"{TestFilePrefix}-paged-{Guid.NewGuid():N}";
 
 		// Add documents with slight delays to ensure distinct GUIDv7s
-		Document oldest = new DocumentBuilder().WithFileName($"{testPrefix}-old.pdf").Build();
+		var oldest = new DocumentBuilder().WithFileName($"{testPrefix}-old.pdf").Build();
 		await Repository.AddAsync(oldest, TestContext.Current.CancellationToken);
 		await Task.Delay(10, TestContext.Current.CancellationToken);
 
-		Document middle = new DocumentBuilder().WithFileName($"{testPrefix}-mid.pdf").Build();
+		var middle = new DocumentBuilder().WithFileName($"{testPrefix}-mid.pdf").Build();
 		await Repository.AddAsync(middle, TestContext.Current.CancellationToken);
 		await Task.Delay(10, TestContext.Current.CancellationToken);
 
-		Document newest = new DocumentBuilder().WithFileName($"{testPrefix}-new.pdf").Build();
+		var newest = new DocumentBuilder().WithFileName($"{testPrefix}-new.pdf").Build();
 		await Repository.AddAsync(newest, TestContext.Current.CancellationToken);
 
 		// Act
-		(List<Document> results, bool hasMore) = await Repository
+		(var results, var hasMore) = await Repository
 			.GetDocumentsPagedAsync(50, null, TestContext.Current.CancellationToken);
 
-		List<Document> filtered = results.Where(d => d.FileName.StartsWith(testPrefix, StringComparison.Ordinal)).ToList();
+		var filtered = results.Where(d => d.FileName.StartsWith(testPrefix, StringComparison.Ordinal)).ToList();
 
 		// Assert - GUIDv7 ordering means newest first (highest GUID value)
 		filtered.Should().HaveCount(3);
@@ -350,7 +350,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		}
 
 		// Act
-		(List<Document> results, bool hasMore) = await Repository
+		(var results, var hasMore) = await Repository
 			.GetDocumentsPagedAsync(3, null, TestContext.Current.CancellationToken);
 
 		// Assert
@@ -367,19 +367,19 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 
 		for (var i = 0; i < 5; i++)
 		{
-			Document doc = new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build();
-			Document added = await Repository.AddAsync(doc, TestContext.Current.CancellationToken);
+			var doc = new DocumentBuilder().WithFileName($"{testPrefix}-{i}.pdf").Build();
+			var added = await Repository.AddAsync(doc, TestContext.Current.CancellationToken);
 			addedDocs.Add(added);
 			await Task.Delay(5, TestContext.Current.CancellationToken);
 		}
 
 		// Act - Get first page
-		(List<Document> firstPage, bool hasMoreFirst) = await Repository
+		(var firstPage, var hasMoreFirst) = await Repository
 			.GetDocumentsPagedAsync(2, null, TestContext.Current.CancellationToken);
 
 		// Get second page using cursor from first page
-		Guid cursor = firstPage[^1].Id;
-		(List<Document> secondPage, bool hasMoreSecond) = await Repository
+		var cursor = firstPage[^1].Id;
+		(var secondPage, var hasMoreSecond) = await Repository
 			.GetDocumentsPagedAsync(2, cursor, TestContext.Current.CancellationToken);
 
 		// Assert
@@ -405,7 +405,7 @@ public sealed class DocumentRepositoryIntegrationTests : IClassFixture<DatabaseF
 		}
 
 		// Act - Request more than available
-		(List<Document> results, bool hasMore) = await Repository
+		(var results, var hasMore) = await Repository
 			.GetDocumentsPagedAsync(100, null, TestContext.Current.CancellationToken);
 
 		// Assert

@@ -78,7 +78,7 @@ public class SharedContainerFixture : IAsyncLifetime
 			.Build();
 		await minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_bucketName));
 
-		HostApplicationBuilder builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
+		var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
 		builder.Configuration.Sources.Clear();
 		builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
 		{
@@ -134,12 +134,12 @@ public class SharedContainerFixture : IAsyncLifetime
 	public async Task<string> UploadPdfAsync(string content)
 	{
 		var fileName = $"test-{Guid.NewGuid():N}.pdf";
-		string pdfPath = await Pdf.Create(Dye.White).AddText(content).SaveAsync(fileName);
+		var pdfPath = await Pdf.Create(Dye.White).AddText(content).SaveAsync(fileName);
 
 		var storageKey = $"documents/{TimeProvider.System.GetUtcNow():yyyy-MM}/{Guid.NewGuid():N}/{fileName}";
-		IMinioClient client = Services.GetRequiredService<IMinioClient>();
+		var client = Services.GetRequiredService<IMinioClient>();
 
-		await using FileStream stream = File.OpenRead(pdfPath);
+		await using var stream = File.OpenRead(pdfPath);
 		await client.PutObjectAsync(new PutObjectArgs()
 			.WithBucket(_bucketName)
 			.WithObject(storageKey)
@@ -163,14 +163,14 @@ public class SharedContainerFixture : IAsyncLifetime
 		timeout ??= TimeSpan.FromSeconds(10);
 		pollInterval ??= TimeSpan.FromMilliseconds(100);
 
-		ElasticsearchClient client = Services.GetRequiredService<ElasticsearchClient>();
+		var client = Services.GetRequiredService<ElasticsearchClient>();
 		using CancellationTokenSource cts = new(timeout.Value);
-		using CancellationTokenSource linked =
+		using var linked =
 			CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
 
 		while (!linked.Token.IsCancellationRequested)
 		{
-			GetResponse<T> response = await client.GetAsync<T>(
+			var response = await client.GetAsync<T>(
 				documentId,
 				g => g.Index(client.ElasticsearchClientSettings.DefaultIndex),
 				linked.Token);
@@ -205,9 +205,9 @@ public class SharedContainerFixture : IAsyncLifetime
 		timeout ??= TimeSpan.FromSeconds(30);
 		pollInterval ??= TimeSpan.FromMilliseconds(100);
 
-		ElasticsearchClient client = Services.GetRequiredService<ElasticsearchClient>();
+		var client = Services.GetRequiredService<ElasticsearchClient>();
 		using CancellationTokenSource overallCts = new(timeout.Value);
-		using CancellationTokenSource overallLinked =
+		using var overallLinked =
 			CancellationTokenSource.CreateLinkedTokenSource(overallCts.Token, cancellationToken);
 
 		// Force an index-level refresh up front. SearchIndexService writes documents
@@ -232,7 +232,7 @@ public class SharedContainerFixture : IAsyncLifetime
 		{
 			try
 			{
-				SearchResponse<T> response = await client.SearchAsync<T>(configureSearch, overallLinked.Token);
+				var response = await client.SearchAsync<T>(configureSearch, overallLinked.Token);
 
 				if (response.Documents.Count > 0)
 				{
@@ -268,7 +268,7 @@ public class SharedContainerFixture : IAsyncLifetime
 		{
 			try
 			{
-				HttpResponseMessage response = await http.GetAsync($"{elasticUri}_cluster/health");
+				var response = await http.GetAsync($"{elasticUri}_cluster/health");
 				if (response.IsSuccessStatusCode)
 				{
 					return;
