@@ -19,13 +19,6 @@ insert_final_newline = true
 
 #### .NET Coding Conventions ####
 dotnet_diagnostic.IDE0051.severity = suggestion
-# EOE034 (ErrorOrX: DataAnnotations validation uses reflection) is an AOT/trimming advisory:
-# it fires because [AsParameters] DTOs like PaginationQuery carry validation attributes (e.g.
-# [Range] on PageSize), so the generated endpoint calls Validator.TryValidateObject (reflection).
-# This app is not published with NativeAOT or trimming (no PublishAot/PublishTrimmed anywhere),
-# so the trim warnings it guards against can never occur; the declarative DataAnnotations
-# validation is the intended boundary layer here. Info-severity and not applicable to this repo.
-dotnet_diagnostic.EOE034.severity = none
 # Organize usings
 dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = false
