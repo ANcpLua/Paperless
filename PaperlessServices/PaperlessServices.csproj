@@ -22,7 +22,7 @@
 		<PackageReference Include="CreatePdf.NET"/>
 		<PackageReference Include="DotNetEnv"/>
 		<PackageReference Include="Elastic.Clients.Elasticsearch"/>
-		<PackageReference Include="ErrorOr"/>
+		<PackageReference Include="ErrorOrX"/>
 		<PackageReference Include="Microsoft.Extensions.Hosting"/>
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
 		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations"/>

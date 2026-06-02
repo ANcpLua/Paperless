@@ -15,7 +15,7 @@ public sealed class ReportProcessor(
 		var parseResult = await ParseAndValidateXmlAsync(path);
 		if (parseResult.IsError)
 		{
-			return parseResult.Errors;
+			return parseResult.Errors.ToArray();
 		}
 
 		var (dto, date) = parseResult.Value;

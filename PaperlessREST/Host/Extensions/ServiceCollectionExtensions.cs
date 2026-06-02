@@ -45,7 +45,7 @@ public static class ServiceCollectionExtensions
 			app.MapHealthChecks("/health");
 			app.MapOcrEventStream();
 			app.MapGenAIEventStream();
-			app.MapDocumentEndpoints();
+			app.MapErrorOrEndpoints();
 		}
 
 		public async Task InitializeApplicationAsync()
@@ -345,6 +345,12 @@ public static class ServiceCollectionExtensions
 					return Task.CompletedTask;
 				});
 			});
+
+			// ErrorOrX generates the endpoint registrations from the [Get]/[Post]/… attributes;
+			// camelCase + ignore-null JSON keeps the wire format identical to the previous API.
+			services.AddErrorOrEndpoints()
+				.WithCamelCase()
+				.WithIgnoreNulls();
 
 			services.AddApiVersioning(static v =>
 			{

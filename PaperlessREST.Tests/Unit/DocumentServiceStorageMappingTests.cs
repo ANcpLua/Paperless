@@ -54,8 +54,9 @@ public sealed class DocumentServiceStorageMappingTests : IDisposable
 			TestContext.Current.CancellationToken);
 
 		result.IsError.Should().BeTrue();
-		result.FirstError.Type.Should().Be(ErrorType.Unexpected);
+		((int)result.FirstError.Type).Should().Be(503); // transient → Error.Custom(503), not Unexpected
 		result.FirstError.Code.Should().Be("Document.StorageTimeout");
+		result.FirstError.Metadata.Should().ContainKey("retryAfter");
 		_logCollector.GetSnapshot().Should().Contain(l =>
 			l.Level == LogLevel.Warning && l.Message.Contains("StorageTimeout", StringComparison.OrdinalIgnoreCase));
 	}
@@ -70,7 +71,7 @@ public sealed class DocumentServiceStorageMappingTests : IDisposable
 			TestContext.Current.CancellationToken);
 
 		result.IsError.Should().BeTrue();
-		result.FirstError.Type.Should().Be(ErrorType.Unexpected);
+		((int)result.FirstError.Type).Should().Be(503); // transient → Error.Custom(503), not Unexpected
 		result.FirstError.Code.Should().Be("Document.StorageServerError");
 		result.FirstError.Description.Should().Contain("502");
 	}

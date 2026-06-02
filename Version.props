@@ -39,8 +39,7 @@
     <CreatePdfNETVersion>3.0.4</CreatePdfNETVersion>
     <DotNetEnvVersion>3.2.0</DotNetEnvVersion>
     <ElasticClientsElasticsearchVersion>9.4.0</ElasticClientsElasticsearchVersion>
-    <ErrorOrVersion>2.1.1</ErrorOrVersion>
-    <ErrorOrAspNetCoreExtensionsVersion>2.0.1</ErrorOrAspNetCoreExtensionsVersion>
+    <ErrorOrXVersion>5.1.1</ErrorOrXVersion>
     <HangfireVersion>1.8.23</HangfireVersion>
     <HangfirePostgreSqlVersion>1.21.1</HangfirePostgreSqlVersion>
     <HangfireMemoryStorageVersion>1.8.1.2</HangfireMemoryStorageVersion>

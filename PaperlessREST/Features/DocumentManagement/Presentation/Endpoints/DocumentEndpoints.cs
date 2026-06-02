@@ -1,270 +1,122 @@
-using PaperlessREST.Features.DocumentManagement.Presentation.Filters;
-using PaperlessREST.Host.Extensions;
-
 namespace PaperlessREST.Features.DocumentManagement.Presentation.Endpoints;
 
 /// <summary>
-///     API endpoints for document management operations.
+///     Document management endpoints. ErrorOrX's source generator turns these attributed static
+///     handlers into versioned Minimal API routes (via <c>MapErrorOrEndpoints()</c>) and maps each
+///     handler's <see cref="ErrorOr{T}" /> result to the correct HTTP response.
 /// </summary>
 /// <remarks>
-///     <para>
-///         Documents progress through states: <see cref="DocumentStatus.Pending" /> →
-///         <see cref="DocumentStatus.Completed" /> or <see cref="DocumentStatus.Failed" />.
-///     </para>
-///     <para>
-///         OCR processing happens asynchronously via RabbitMQ after upload.
-///         AI summarization occurs after OCR completes.
-///     </para>
-///     <para>
-///         Rate limiting policies:
-///         <list type="bullet">
-///             <item>Read operations: 100 req/min</item>
-///             <item>Write operations: 20 req/min</item>
-///             <item>Search operations: 60 req/min</item>
-///         </list>
-///     </para>
+///     <see cref="RouteGroupAttribute" /> + <see cref="Asp.Versioning.ApiVersionAttribute" /> reproduce
+///     the eShop <c>NewVersionedApi().MapGroup("/api/v{version:apiVersion}/documents")</c> pattern, so
+///     the URL-segment contract (<c>/api/v1/documents</c>) is preserved. Rate-limit policies:
+///     read 100/min, write 20/min, search 60/min. OCR runs async via RabbitMQ after upload.
 /// </remarks>
+[ApiVersion("1.0")]
+[RouteGroup("/api/v{version:apiVersion}/documents", ApiName = "Documents")]
 public static class DocumentEndpoints
 {
-	/// <summary>
-	///     Maps all document management endpoints to the application.
-	/// </summary>
-	/// <param name="app">The endpoint route builder.</param>
-	/// <returns>The endpoint route builder for chaining.</returns>
-	public static IEndpointRouteBuilder MapDocumentEndpoints(this IEndpointRouteBuilder app)
-	{
-		var api = app.NewVersionedApi("Documents");
-		var v1docs = api.MapGroup("/api/v{version:apiVersion}/documents")
-			.HasApiVersion(1, 0)
-			.WithTags("Documents");
-
-		v1docs.MapGet("/", GetDocuments)
-			.WithName(nameof(GetDocuments))
-			.RequireRateLimiting(RateLimitPolicies.ReadOperations)
-			.CacheOutput(CachePolicies.DocumentList);
-
-		v1docs.MapGet("/search", SearchDocuments)
-			.WithName(nameof(SearchDocuments))
-			.RequireRateLimiting(RateLimitPolicies.SearchOperations);
-
-		v1docs.MapGet("/{id:guid}", GetDocumentById)
-			.WithName(nameof(GetDocumentById))
-			.RequireRateLimiting(RateLimitPolicies.ReadOperations)
-			.CacheOutput(CachePolicies.DocumentById)
-			.ProducesGetByIdErrors();
-
-		v1docs.MapGet("/{id:guid}/summary", GetSummary)
-			.WithName(nameof(GetSummary))
-			.RequireRateLimiting(RateLimitPolicies.ReadOperations)
-			.CacheOutput(CachePolicies.DocumentById)
-			.ProducesNotFound();
-
-		v1docs.MapPost("/", UploadDocument)
-			.WithName(nameof(UploadDocument))
-			.Accepts<IFormFile>("multipart/form-data")
-			.DisableAntiforgery()
-			.RequireRateLimiting(RateLimitPolicies.WriteOperations)
-			.ValidatePdfUpload()
-			.ProducesDocumentUploadErrors();
-
-		v1docs.MapDelete("/{id:guid}", DeleteDocument)
-			.WithName(nameof(DeleteDocument))
-			.RequireRateLimiting(RateLimitPolicies.WriteOperations)
-			.ProducesDeleteErrors();
-
-		return app;
-	}
-
-	// ═══════════════════════════════════════════════════════════════════════════
-	// Simple queries - no ErrorOr (can't fail meaningfully)
-	// ═══════════════════════════════════════════════════════════════════════════
-
-	/// <summary>
-	///     Retrieves documents with cursor-based pagination.
-	/// </summary>
-	/// <param name="pagination">Pagination parameters (pageSize, cursor).</param>
-	/// <param name="documentService">The document service for data access.</param>
-	/// <param name="cancellationToken">Cancellation token for the operation.</param>
-	/// <returns>A paginated response with documents and next page cursor.</returns>
-	/// <remarks>
-	///     <para>
-	///         Uses GUIDv7-based cursor pagination for efficient traversal.
-	///         Pass the last document's ID as cursor to get the next page.
-	///     </para>
-	///     <para>
-	///         Retrieves documents directly from PostgreSQL, bypassing Elasticsearch.
-	///         Returns metadata only (no content) for performance.
-	///     </para>
-	/// </remarks>
-	/// <response code="200">Returns paginated documents with cursor for next page.</response>
-	public static async Task<Ok<PaginatedDocumentsResponse>> GetDocuments(
+	/// <summary>Lists documents with GUIDv7 cursor pagination (metadata only, straight from Postgres).</summary>
+	[Get("/")]
+	[EnableRateLimiting(RateLimitPolicies.ReadOperations)]
+	[OutputCache(PolicyName = CachePolicies.DocumentList)]
+	public static async Task<ErrorOr<PaginatedDocumentsResponse>> GetDocuments(
 		[AsParameters] PaginationQuery pagination,
 		IDocumentService documentService,
 		CancellationToken cancellationToken)
 	{
-		(var items, var hasMore) = await documentService
+		var (items, hasMore) = await documentService
 			.GetDocumentsPagedAsync(pagination.PageSize, pagination.Cursor, cancellationToken);
 
-		PaginatedDocumentsResponse response = new()
+		return new PaginatedDocumentsResponse
 		{
 			Items = items.ConvertAll(static d => d.ToDocumentDto()),
 			HasMore = hasMore,
 			NextCursor = hasMore && items.Count > 0 ? items[^1].Id : null
 		};
-
-		return TypedResults.Ok(response);
 	}
 
 	/// <summary>
-	///     Searches documents by content using full-text search.
+	///     Full-text search over OCR content via Elasticsearch. <c>query</c>/<c>limit</c> bind from the
+	///     query string directly (ErrorOrX's <c>[AsParameters]</c> binder doesn't set <c>required</c>
+	///     init-only members, so the <c>SearchQuery</c> DTO can't be used as the bind target here).
 	/// </summary>
-	/// <param name="search">Search parameters including query text and result limit.</param>
-	/// <param name="documentService">The document service for search operations.</param>
-	/// <param name="cancellationToken">Cancellation token for the operation.</param>
-	/// <returns>A list of documents matching the search query.</returns>
-	/// <remarks>
-	///     Performs full-text search on OCR-extracted content using Elasticsearch.
-	///     Supports fuzzy matching across all indexed fields.
-	///     Only documents that have completed OCR processing are searchable.
-	/// </remarks>
-	/// <response code="200">Returns matching documents.</response>
-	public static async Task<Ok<List<DocumentSearchResultDto>>> SearchDocuments(
-		[AsParameters] SearchQuery search,
+	[Get("/search")]
+	[EnableRateLimiting(RateLimitPolicies.SearchOperations)]
+	public static async Task<ErrorOr<List<DocumentSearchResultDto>>> SearchDocuments(
+		string query,
 		IDocumentService documentService,
-		CancellationToken cancellationToken)
-	{
-		var results = await documentService
-			.SearchDocumentsAsync(search.Query, search.Limit, cancellationToken)
+		CancellationToken cancellationToken,
+		int limit = SearchConstraints.DefaultResultLimit) =>
+		await documentService
+			.SearchDocumentsAsync(query, limit, cancellationToken)
 			.Select(static r => r.ToDocumentSearchResultDto())
 			.ToListAsync(cancellationToken);
 
-		return TypedResults.Ok(results);
-	}
-
-	// ═══════════════════════════════════════════════════════════════════════════
-	// Queries with NotFound - use ToOkOr404
-	// Domain error: DocumentErrors.NotFound → ErrorType.NotFound → 404
-	// ═══════════════════════════════════════════════════════════════════════════
-
-	/// <summary>
-	///     Retrieves a specific document by its unique identifier.
-	/// </summary>
-	/// <param name="id" example="550e8400-e29b-41d4-a716-446655440000">The unique document identifier.</param>
-	/// <param name="documentService">The document service for data access.</param>
-	/// <param name="cancellationToken">Cancellation token for the operation.</param>
-	/// <returns>The document metadata including OCR content if available.</returns>
-	/// <remarks>
-	///     Queries PostgreSQL directly; does not depend on Elasticsearch availability.
-	///     Returns full document metadata including OCR-extracted content.
-	/// </remarks>
-	/// <response code="200">Returns the requested document.</response>
-	/// <response code="404">
-	///     Document with the specified ID does not exist.
-	///     Domain error: <c>DocumentErrors.NotFound</c>
-	/// </response>
-	public static async Task<Results<Ok<DocumentDto>, NotFound>> GetDocumentById(
+	/// <summary>Gets a document by id. <c>DocumentErrors.NotFound</c> → 404.</summary>
+	[Get("/{id:guid}")]
+	[EnableRateLimiting(RateLimitPolicies.ReadOperations)]
+	[OutputCache(PolicyName = CachePolicies.DocumentById)]
+	public static async Task<ErrorOr<DocumentDto>> GetDocumentById(
 		Guid id,
 		IDocumentService documentService,
 		CancellationToken cancellationToken)
 	{
 		var result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
-		return result.ToOkOr404(static doc => doc.ToDocumentDto());
+		return result.Then(static doc => doc.ToDocumentDto());
 	}
 
-	/// <summary>
-	///     Retrieves the AI-generated summary for a document.
-	/// </summary>
-	/// <param name="id" example="550e8400-e29b-41d4-a716-446655440000">The unique document identifier.</param>
-	/// <param name="documentService">The document service for data access.</param>
-	/// <param name="cancellationToken">Cancellation token for the operation.</param>
-	/// <returns>The AI-generated summary, or null if not yet generated.</returns>
-	/// <remarks>
-	///     Summaries are generated asynchronously by the GenAI microservice after OCR completes.
-	///     A null summary indicates the document exists but hasn't been summarized yet.
-	/// </remarks>
-	/// <response code="200">Returns the document summary (may be null if not yet generated).</response>
-	/// <response code="404">
-	///     Document with the specified ID does not exist.
-	///     Domain error: <c>DocumentErrors.NotFound</c>
-	/// </response>
-	public static async Task<Results<Ok<SummaryDto>, NotFound>> GetSummary(
+	/// <summary>Gets a document's AI summary (null until generated). <c>DocumentErrors.NotFound</c> → 404.</summary>
+	[Get("/{id:guid}/summary")]
+	[EnableRateLimiting(RateLimitPolicies.ReadOperations)]
+	[OutputCache(PolicyName = CachePolicies.DocumentById)]
+	public static async Task<ErrorOr<SummaryDto>> GetSummary(
 		Guid id,
 		IDocumentService documentService,
 		CancellationToken cancellationToken)
 	{
 		var result = await documentService.GetDocumentByIdAsync(id, cancellationToken);
-		return result.ToOkOr404(static doc => new SummaryDto { Summary = doc.Summary });
+		return result.Then(static doc => new SummaryDto { Summary = doc.Summary });
 	}
 
-	// ═══════════════════════════════════════════════════════════════════════════
-	// Commands - use ToAcceptedAtRouteOrProblem / ToNoContentOr404
-	// Domain errors:
-	//   - DocumentErrors.StorageFailed → ErrorType.Failure → 500
-	//   - DocumentErrors.NotFound → ErrorType.NotFound → 404
-	// ═══════════════════════════════════════════════════════════════════════════
-
 	/// <summary>
-	///     Uploads a PDF document for OCR processing.
+	///     Uploads a PDF for OCR processing → 202 Accepted. PDF size/content-type validation is inline
+	///     (ErrorOrX has no endpoint-filter hook); a bad file → <see cref="ErrorType.Validation" /> → 400.
+	///     Transient storage failures surface as 503 + Retry-After (declared via <see cref="ProducesErrorAttribute" />);
+	///     permanent ones propagate to the global handler as 500.
 	/// </summary>
-	/// <param name="request">The upload request containing the PDF file.</param>
-	/// <param name="documentService">The document service for upload operations.</param>
-	/// <param name="cancellationToken">Cancellation token for the operation.</param>
-	/// <returns>The created document metadata with a Location header pointing to the new resource.</returns>
-	/// <remarks>
-	///     <para>
-	///         Workflow: Validates PDF → Stores in MinIO → Creates DB record → Publishes OCR message.
-	///     </para>
-	///     <para>
-	///         Returns 202 Accepted immediately. OCR processing happens asynchronously via RabbitMQ.
-	///         The OCR microservice extracts text and indexes it in Elasticsearch.
-	///     </para>
-	/// </remarks>
-	/// <response code="202">
-	///     Document accepted for processing. Location header contains the URL to check status.
-	/// </response>
-	/// <response code="422">
-	///     Validation failed. File must be a PDF and not exceed 10MB.
-	///     Domain error: <c>ErrorType.Validation</c>
-	/// </response>
-	/// <response code="500">
-	///     Permanent server error during storage (disk full, permissions).
-	///     Domain error: <c>DocumentErrors.StorageFailed</c>
-	/// </response>
-	/// <response code="503">
-	///     Infrastructure temporarily unavailable (MinIO, RabbitMQ). Retry after delay.
-	///     Domain error: <c>DocumentErrors.StorageUnavailable</c>
-	/// </response>
-	public static Task<Results<AcceptedAtRoute<CreateDocumentResponse>, ValidationProblem, ProblemHttpResult>>
-		UploadDocument(
-			[AsParameters] UploadDocumentRequest request,
-			IDocumentService documentService,
-			CancellationToken cancellationToken) =>
-		documentService.UploadDocumentAsync(request, cancellationToken)
-			.ToAcceptedAtRouteOrProblem(
-static doc => doc.ToCreateDocumentResponse(),
-				nameof(GetDocumentById),
-static d => new { id = d.Id });
+	[Post("/")]
+	[AcceptedResponse]
+	[ProducesError(503, "ServiceUnavailable")]
+	[EnableRateLimiting(RateLimitPolicies.WriteOperations)]
+	public static async Task<ErrorOr<CreateDocumentResponse>> UploadDocument(
+		IFormFile file,
+		IDocumentService documentService,
+		CancellationToken cancellationToken)
+	{
+		if (file.Length > FileUploadConstraints.MaxFileSizeBytes)
+		{
+			return Error.Validation("File",
+				$"File size cannot exceed {FileUploadConstraints.MaxFileSizeBytes / FileUploadConstraints.BytesPerMegabyte:F0} MB");
+		}
 
-	/// <summary>
-	///     Deletes a document from all storage systems.
-	/// </summary>
-	/// <param name="id" example="550e8400-e29b-41d4-a716-446655440000">The unique document identifier.</param>
-	/// <param name="documentService">The document service for delete operations.</param>
-	/// <param name="cancellationToken">Cancellation token for the operation.</param>
-	/// <returns>No content on successful deletion.</returns>
-	/// <remarks>
-	///     Removes document from: PostgreSQL database, MinIO object storage, and Elasticsearch index.
-	///     Elasticsearch deletion is best-effort; operation succeeds even if search index removal fails.
-	/// </remarks>
-	/// <response code="204">Document successfully deleted from all storage systems.</response>
-	/// <response code="404">
-	///     Document with the specified ID does not exist.
-	///     Domain error: <c>DocumentErrors.NotFound</c>
-	/// </response>
-	public static Task<Results<NoContent, NotFound>> DeleteDocument(
+		var contentType = file.ContentType?.Split(';')[0].Trim() ?? "";
+		if (!contentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
+		{
+			return Error.Validation("File", "Only PDF files are allowed");
+		}
+
+		var result = await documentService.UploadDocumentAsync(
+			new UploadDocumentRequest { File = file }, cancellationToken);
+
+		return result.Then(static doc => doc.ToCreateDocumentResponse());
+	}
+
+	/// <summary>Deletes a document from Postgres, MinIO, and Elasticsearch. <c>DocumentErrors.NotFound</c> → 404.</summary>
+	[Delete("/{id:guid}")]
+	[EnableRateLimiting(RateLimitPolicies.WriteOperations)]
+	public static Task<ErrorOr<Deleted>> DeleteDocument(
 		Guid id,
 		IDocumentService documentService,
 		CancellationToken cancellationToken) =>
-		documentService.DeleteDocumentAsync(id, cancellationToken)
-			.ToNoContentOr404();
+		documentService.DeleteDocumentAsync(id, cancellationToken);
 }
