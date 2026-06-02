@@ -24,8 +24,9 @@ public static class DocumentEndpoints
 		IDocumentService documentService,
 		CancellationToken cancellationToken)
 	{
+		var pageSize = pagination.PageSize ?? PaginationConstraints.DefaultPageSize;
 		var (items, hasMore) = await documentService
-			.GetDocumentsPagedAsync(pagination.PageSize, pagination.Cursor, cancellationToken);
+			.GetDocumentsPagedAsync(pageSize, pagination.Cursor, cancellationToken);
 
 		return new PaginatedDocumentsResponse
 		{

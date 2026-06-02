@@ -10,6 +10,11 @@ namespace PaperlessREST.Contracts.DocumentManagement;
 /// <remarks>
 ///     Uses cursor-based pagination with GUIDv7 (time-ordered) document IDs.
 ///     Pass the last document's ID as <see cref="Cursor"/> to get the next page.
+///     Both members are nullable so ErrorOrX's <c>[AsParameters]</c> binder treats them as optional
+///     (ASP.NET Core PropertyAsParameterInfo: a property is optional only when nullable — a field
+///     initializer is NOT a binding default). An absent <c>pageSize</c> surfaces as null; the handler
+///     applies <see cref="PaginationConstraints.DefaultPageSize"/>. <see cref="RangeAttribute"/> still
+///     enforces the bounds when a value is supplied.
 /// </remarks>
 [ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]
 public sealed record PaginationQuery
@@ -17,7 +22,7 @@ public sealed record PaginationQuery
 	[Range(PaginationConstraints.MinPageSize, PaginationConstraints.MaxPageSize,
 		ErrorMessage = "Page size must be between 1 and 100")]
 	[Description("Number of documents to return per page")]
-	public int PageSize { get; init; } = PaginationConstraints.DefaultPageSize;
+	public int? PageSize { get; init; }
 
 	[Description("Cursor for pagination (last document ID from previous page)")]
 	public Guid? Cursor { get; init; }
