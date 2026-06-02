@@ -19,11 +19,6 @@ insert_final_newline = true
 
 #### .NET Coding Conventions ####
 dotnet_diagnostic.IDE0051.severity = suggestion
-# AL1210 (Use StringComparison extension) is meant for Roslyn-analyzer projects: its
-# EndsWithOrdinal/EqualsOrdinal/etc. live in the internal ANcpLua.Roslyn.Utilities source
-# package, which this app does not (and should not) reference. The BCL StringComparison
-# overloads are correct here, so the rule is not applicable to this repo.
-dotnet_diagnostic.AL1210.severity = none
 # EOE034 (ErrorOrX: DataAnnotations validation uses reflection) is an AOT/trimming advisory:
 # it fires because [AsParameters] DTOs like PaginationQuery carry validation attributes (e.g.
 # [Range] on PageSize), so the generated endpoint calls Validator.TryValidateObject (reflection).
