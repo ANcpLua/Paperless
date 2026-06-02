@@ -48,6 +48,7 @@ public interface IDocumentService
 	// Queries - fallible (resource may not exist)
 	// ═══════════════════════════════════════════════════════════════════════════
 
+	[ReturnsError(ErrorType.NotFound, "Document.NotFound")]
 	ValueTask<ErrorOr<Document>> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -78,6 +79,7 @@ public interface IDocumentService
 	// Commands - deletion (Deleted = resource removed)
 	// ═══════════════════════════════════════════════════════════════════════════
 
+	[ReturnsError(ErrorType.NotFound, "Document.NotFound")]
 	Task<ErrorOr<Deleted>> DeleteDocumentAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
@@ -147,7 +149,7 @@ public sealed class DocumentService(
 		{
 			logger.LogWarning("Document {DocumentId} state transition failed: {Error}",
 				id, transitionResult.FirstError.Description);
-			return transitionResult.Errors;
+			return transitionResult.Errors.ToArray();
 		}
 
 		await repository.UpdateAsync(document, cancellationToken);
@@ -229,19 +231,25 @@ public sealed class DocumentService(
 	/// <returns>Domain error for known infrastructure failures, null for unknown exceptions.</returns>
 	private static Error? TryMapStorageException(Exception ex, string storagePath) => ex switch
 	{
-		TimeoutException => Error.Unexpected(
+		// Transient storage failures → 503 + Retry-After. Error.Custom(503, …) carries the status
+		// in Error.Type and the retry hint in metadata; ErrorOrX renders a 503 ProblemDetails with
+		// a "retryAfter" extension. (Previously Error.Unexpected → 503 via the hand-rolled glue.)
+		TimeoutException => Error.Custom(503,
 			"Document.StorageTimeout",
-			$"Storage timeout while processing {storagePath}"),
+			$"Storage timeout while processing {storagePath}",
+			new Dictionary<string, object> { ["retryAfter"] = 30 }),
 
 		HttpRequestException { StatusCode: { } code and >= HttpStatusCode.InternalServerError } =>
-			Error.Unexpected(
+			Error.Custom(503,
 				"Document.StorageServerError",
-				$"Storage service returned {(int)code} for {storagePath}"),
+				$"Storage service returned {(int)code} for {storagePath}",
+				new Dictionary<string, object> { ["retryAfter"] = 30 }),
 
 		IOException { InnerException: SocketException } =>
-			Error.Unexpected(
+			Error.Custom(503,
 				"Document.StorageConnectionFailed",
-				$"Cannot connect to storage service for {storagePath}"),
+				$"Cannot connect to storage service for {storagePath}",
+				new Dictionary<string, object> { ["retryAfter"] = 30 }),
 
 		_ => null
 	};

@@ -20,7 +20,7 @@ public class OcrProcessor(
 		ErrorOr<Stream> streamResult = await DownloadAsync(command.FilePath, cancellationToken);
 		if (streamResult.IsError)
 		{
-			return streamResult.Errors;
+			return streamResult.Errors.ToArray();
 		}
 
 		await using Stream stream = streamResult.Value;
@@ -29,7 +29,7 @@ public class OcrProcessor(
 		ErrorOr<string> textResult = await pdfExtractor.ExtractTextAsync(stream, cancellationToken);
 		if (textResult.IsError)
 		{
-			return textResult.Errors;
+			return textResult.Errors.ToArray();
 		}
 
 		string text = textResult.Value;

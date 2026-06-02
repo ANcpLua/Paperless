@@ -64,8 +64,8 @@
     <PackageVersion Include="CreatePdf.NET" Version="$(CreatePdfNETVersion)" />
     <PackageVersion Include="DotNetEnv" Version="$(DotNetEnvVersion)" />
     <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="$(ElasticClientsElasticsearchVersion)" />
-    <PackageVersion Include="ErrorOr" Version="$(ErrorOrVersion)" />
-    <PackageVersion Include="ErrorOrAspNetCoreExtensions" Version="$(ErrorOrAspNetCoreExtensionsVersion)" />
+    <PackageVersion Include="ErrorOrX" Version="$(ErrorOrXVersion)" />
+    <PackageVersion Include="ErrorOrX.Generators" Version="$(ErrorOrXVersion)" />
     <PackageVersion Include="Hangfire" Version="$(HangfireVersion)" />
     <PackageVersion Include="Hangfire.AspNetCore" Version="$(HangfireVersion)" />
     <PackageVersion Include="Hangfire.MemoryStorage" Version="$(HangfireMemoryStorageVersion)" />
