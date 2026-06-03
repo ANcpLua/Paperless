@@ -8,8 +8,8 @@
     <MicrosoftExtensionsVersion>10.0.8</MicrosoftExtensionsVersion>
     <!-- Testing/telemetry extensions follow a faster cadence than the runtime -->
     <MicrosoftExtensionsTestingVersion>10.6.0</MicrosoftExtensionsTestingVersion>
-    <NpgsqlVersion>10.0.2</NpgsqlVersion>
-    <NpgsqlEntityFrameworkCoreVersion>10.0.1</NpgsqlEntityFrameworkCoreVersion>
+    <NpgsqlVersion>10.0.3</NpgsqlVersion>
+    <NpgsqlEntityFrameworkCoreVersion>10.0.2</NpgsqlEntityFrameworkCoreVersion>
 
     <!-- API versioning -->
     <AspVersioningHttpClientVersion>10.0.0</AspVersioningHttpClientVersion>
