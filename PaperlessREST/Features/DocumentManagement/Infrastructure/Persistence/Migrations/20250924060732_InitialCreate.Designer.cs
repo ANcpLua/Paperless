@@ -1,14 +1,7 @@
-﻿
-using System;
-using Microsoft.EntityFrameworkCore;
+﻿#nullable disable
+
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using PaperlessREST.Features.DocumentManagement.Application;
-using PaperlessREST.Features.DocumentManagement.Infrastructure.Persistence;
-
-#nullable disable
 
 namespace PaperlessREST.Features.DocumentManagement.Infrastructure.Persistence.Migrations
 {

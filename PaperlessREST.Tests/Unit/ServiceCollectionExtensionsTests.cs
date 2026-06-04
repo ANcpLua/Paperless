@@ -1,12 +1,14 @@
-using System.Diagnostics;
-using System.Reflection;
-using System.Text.Json.Serialization.Metadata;
 using Asp.Versioning.ApiExplorer;
 using Hangfire.Common;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 using PaperlessREST.Host.Extensions;
 using Scalar.AspNetCore;
+using System.Collections;
+using System.Diagnostics;
+using System.Reflection;
+using System.Text.Json.Serialization.Metadata;
 
 namespace PaperlessREST.Tests.Unit;
 
@@ -525,7 +527,7 @@ public sealed class ServiceCollectionExtensionsTests
 
 		var transformersField = typeof(OpenApiOptions).GetField("DocumentTransformers",
 			BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)!;
-		var transformers = (System.Collections.IList)transformersField.GetValue(opts)!;
+		var transformers = (IList)transformersField.GetValue(opts)!;
 		transformers.Count.Should().Be(1);
 
 		var delegateTransformer = transformers[0]!;
@@ -540,7 +542,7 @@ public sealed class ServiceCollectionExtensionsTests
 		OpenApiDocumentTransformerContext ctx = new()
 		{
 			DocumentName = "v1",
-			DescriptionGroups = Array.Empty<Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescriptionGroup>(),
+			DescriptionGroups = Array.Empty<ApiDescriptionGroup>(),
 			ApplicationServices = new ServiceCollection().BuildServiceProvider()
 		};
 
