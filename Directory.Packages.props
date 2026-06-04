@@ -78,6 +78,9 @@
     <PackageVersion Include="Scalar.AspNetCore" Version="$(ScalarAspNetCoreVersion)" />
     <PackageVersion Include="SWEN3.Paperless.RabbitMq" Version="$(SwenPaperlessRabbitMqVersion)" />
 
+    <!-- Out-of-band System.* packages (not in the .NET 10 shared framework) -->
+    <PackageVersion Include="System.Net.ServerSentEvents" Version="10.0.8" />
+
     <!-- Transitive security overrides: close GHSA-g4vj-cjjj-v7hg (NuGet.Packaging 6.12.1
          pulled by Nuke.Common) and GHSA-37gx-xxp4-5rgx / GHSA-w3x6-4m5h-cxqf
          (System.Security.Cryptography.Xml 9.0.0). Effective because the SDK turns on
