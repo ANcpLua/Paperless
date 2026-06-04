@@ -75,13 +75,11 @@ public class SharedContainerFixture : ContainerFixtureBase
 
 	public async Task<string> UploadPdfAsync(string content)
 	{
-		var fileName = $"test-{Guid.NewGuid():N}.pdf";
-		var pdfPath = await Pdf.Create(Dye.White).AddText(content).SaveAsync(fileName);
-
-		var storageKey = $"documents/{TimeProvider.System.GetUtcNow():yyyy-MM}/{Guid.NewGuid():N}/{fileName}";
+		var storageKey =
+			$"documents/{TimeProvider.System.GetUtcNow():yyyy-MM}/{Guid.NewGuid():N}/test-{Guid.NewGuid():N}.pdf";
 		var client = Services.GetRequiredService<IMinioClient>();
 
-		await using var stream = File.OpenRead(pdfPath);
+		await using var stream = new MemoryStream(await TestPdf.BytesAsync(content));
 		await client.PutObjectAsync(new PutObjectArgs()
 			.WithBucket(BucketName)
 			.WithObject(storageKey)

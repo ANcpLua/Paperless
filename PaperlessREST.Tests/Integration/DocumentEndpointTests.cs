@@ -166,39 +166,15 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 	}
 
 	[SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
-		Justification = "ByteArrayContent ownership transfers to MultipartFormDataContent on Add(); "
-		                + "the inner try/catch covers the pre-transfer window. Standard .NET HttpClient pattern.")]
-	private async Task<MultipartFormDataContent> CreatePdfUploadAsync(string fileName)
+		Justification = "The ByteArrayContent's ownership transfers to the returned MultipartFormDataContent, "
+		                + "which every caller disposes via 'using var content = ...'.")]
+	private static async Task<MultipartFormDataContent> CreatePdfUploadAsync(string fileName)
 	{
-		var tempPath = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid():N}.pdf");
-		var pdfPath = await Pdf.Create(Dye.White).AddText("Test Document").SaveAsync(tempPath);
-
-		var pdfBytes = await File.ReadAllBytesAsync(pdfPath, TestContext.Current.CancellationToken);
-
-		File.Delete(pdfPath);
-
-		var content = new MultipartFormDataContent();
-		try
+		var pdf = new ByteArrayContent(await TestPdf.BytesAsync("Test Document"))
 		{
-			var fileContent = new ByteArrayContent(pdfBytes);
-			try
-			{
-				fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(ContentTypePdf);
-				content.Add(fileContent, "file", fileName);
-			}
-			catch
-			{
-				fileContent.Dispose();
-				throw;
-			}
-
-			return content;
-		}
-		catch
-		{
-			content.Dispose();
-			throw;
-		}
+			Headers = { ContentType = MediaTypeHeaderValue.Parse(ContentTypePdf) }
+		};
+		return new MultipartFormDataContent { { pdf, "file", fileName } };
 	}
 
 	#endregion
