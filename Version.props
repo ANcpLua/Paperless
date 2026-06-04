@@ -6,6 +6,8 @@
     <MicrosoftAspNetCoreVersion>10.0.8</MicrosoftAspNetCoreVersion>
     <MicrosoftAspNetCoreMvcTestingVersion>10.0.8</MicrosoftAspNetCoreMvcTestingVersion>
     <MicrosoftExtensionsVersion>10.0.8</MicrosoftExtensionsVersion>
+    <!-- Http.Resilience (Polly v8 integration) — own cadence; 10.0.0 is the .NET 10 GA release -->
+    <MicrosoftExtensionsHttpResilienceVersion>10.0.0</MicrosoftExtensionsHttpResilienceVersion>
     <!-- Testing/telemetry extensions follow a faster cadence than the runtime -->
     <MicrosoftExtensionsTestingVersion>10.6.0</MicrosoftExtensionsTestingVersion>
     <NpgsqlVersion>10.0.3</NpgsqlVersion>
