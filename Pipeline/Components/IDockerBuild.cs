@@ -2,6 +2,7 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Serilog;
+using System;
 using System.Collections.Generic;
 
 namespace Build.Components;
@@ -101,7 +102,7 @@ internal interface IDockerBuild : IHasSolution
 		process.AssertWaitForExit();
 
 		if (process.ExitCode != 0)
-			throw new System.InvalidOperationException($"docker build failed for {name}");
+			throw new InvalidOperationException($"docker build failed for {name}");
 
 		Log.Information("Image built: {Tag}", tag);
 	}
@@ -119,6 +120,6 @@ internal interface IDockerBuild : IHasSolution
 		process.AssertWaitForExit();
 
 		if (process.ExitCode != 0)
-			throw new System.InvalidOperationException($"docker push failed for {tag}");
+			throw new InvalidOperationException($"docker push failed for {tag}");
 	}
 }

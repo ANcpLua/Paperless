@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace PaperlessREST.Configuration;
 
 [ExcludeFromCodeCoverage(Justification = "Record - compiler-generated members; validated via integration tests")]

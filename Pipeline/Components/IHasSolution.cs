@@ -1,6 +1,7 @@
 using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
+using System;
 using System.Linq;
 
 namespace Build.Components;
@@ -32,5 +33,5 @@ internal interface IHasSolution : INukeBuild
 	/// <summary>Safe accessor for Solution.Path with fallback.</summary>
 	AbsolutePath GetSolutionPath() =>
 		Solution.Path ?? RootDirectory.GlobFiles("*.sln").FirstOrDefault()
-		?? throw new System.InvalidOperationException("Unable to locate solution (.sln) file");
+		?? throw new InvalidOperationException("Unable to locate solution (.sln) file");
 }

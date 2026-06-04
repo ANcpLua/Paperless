@@ -19,12 +19,12 @@ public sealed class Document
 	/// <summary>
 	///     Gets or sets the unique <see cref="Guid" /> identifier for the document.
 	/// </summary>
-	public required Guid Id { get; set; }
+	public required Guid Id { get; init; }
 
 	/// <summary>
 	///     Gets or sets the original filename of the uploaded PDF.
 	/// </summary>
-	public required string FileName { get; set; }
+	public required string FileName { get; init; }
 
 	/// <summary>
 	///     Gets or sets the current <see cref="DocumentStatus" /> of the document.
@@ -34,7 +34,7 @@ public sealed class Document
 	/// <summary>
 	///     Gets or sets the UTC <see cref="DateTimeOffset" /> when the document was uploaded.
 	/// </summary>
-	public required DateTimeOffset CreatedAt { get; set; }
+	public required DateTimeOffset CreatedAt { get; init; }
 
 	/// <summary>
 	///     Gets or sets the MinIO object storage path where the PDF file is stored.
@@ -43,7 +43,7 @@ public sealed class Document
 	///     Internal storage detail - not exposed in public API responses for security.
 	///     Format: "documents/{yyyy-MM}/{guid}.pdf"
 	/// </remarks>
-	public required string StoragePath { get; set; }
+	public required string StoragePath { get; init; }
 
 	/// <summary>
 	///     Gets or sets the OCR-extracted text content from the PDF.

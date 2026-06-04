@@ -256,7 +256,7 @@ public class SharedContainerFixture : IAsyncLifetime
 
 		// Final attempt with the caller's token only so the assertion sees real
 		// "found nothing" data rather than a TaskCanceledException at the wait boundary.
-		return await client.SearchAsync<T>(configureSearch, cancellationToken);
+		return await client.SearchAsync(configureSearch, cancellationToken);
 	}
 
 	private async Task WaitForElasticsearchAsync()

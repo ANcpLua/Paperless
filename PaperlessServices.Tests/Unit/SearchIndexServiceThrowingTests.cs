@@ -23,7 +23,7 @@ public sealed class SearchIndexServiceThrowingTests : IDisposable
 		_settings = new ElasticsearchClientSettings(new Uri(UnreachableHost))
 			.DefaultIndex(TestIndexName)
 			.RequestTimeout(TimeSpan.FromMilliseconds(50))
-			.ThrowExceptions(true);
+			.ThrowExceptions();
 
 		ElasticsearchClient client = new(_settings);
 		IOptions<ElasticsearchOptions> options = Options.Create(new ElasticsearchOptions
