@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using PaperlessUI.Blazor.Models
 @using PaperlessUI.Blazor.Services
+@using Polly.Timeout
 @inject PaperlessApiClient Api
 @inject DocumentEventStream Events
 @implements IAsyncDisposable
@@ -119,6 +120,11 @@
         catch (HttpRequestException ex)
         {
             // Transient network/HTTP fault — surface as toast, keep the existing list.
+            Notify($"Failed to load documents: {ex.Message}", "danger");
+        }
+        catch (TimeoutRejectedException ex)
+        {
+            // Resilience pipeline timed out (commonly: API still starting up on first load).
             Notify($"Failed to load documents: {ex.Message}", "danger");
         }
     }
