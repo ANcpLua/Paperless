@@ -1,4 +1,5 @@
 using System.Net.ServerSentEvents;
+using Polly.Timeout;
 
 namespace PaperlessUI.Blazor.Services;
 
@@ -53,20 +54,23 @@ public sealed class DocumentEventStream(IHttpClientFactory factory, ILogger<Docu
             {
                 break;
             }
-            catch (HttpRequestException ex)
-            {
-                if (isPrimary) { Connected = false; OnChanged?.Invoke(this, EventArgs.Empty); }
-                logger.LogWarning(ex, "SSE {Path} HTTP error; reconnecting in {Seconds}s", path, retry.TotalSeconds);
-                try { await Task.Delay(retry, ct); }
-                catch (OperationCanceledException) { break; }
-            }
-            catch (IOException ex)
-            {
-                if (isPrimary) { Connected = false; OnChanged?.Invoke(this, EventArgs.Empty); }
-                logger.LogWarning(ex, "SSE {Path} stream I/O error; reconnecting in {Seconds}s", path, retry.TotalSeconds);
-                try { await Task.Delay(retry, ct); }
-                catch (OperationCanceledException) { break; }
-            }
+            // Only known transient transport faults are caught — each one specifically. Anything else
+            // (bug, OOM, …) fails loud: it propagates out and surfaces via the awaited task in DisposeAsync.
+            catch (HttpRequestException ex) { if (await ReconnectAfterAsync(ex)) break; }     // connection refused / 5xx
+            catch (IOException ex) { if (await ReconnectAfterAsync(ex)) break; }              // mid-stream read failure
+            catch (TimeoutRejectedException ex) { if (await ReconnectAfterAsync(ex)) break; } // resilience connect-timeout
+        }
+
+        return;
+
+        // Signals disconnect, logs the transient fault, and backs off before the loop reconnects.
+        // Returns true when the backoff wait itself was cancelled (caller should stop the loop).
+        async Task<bool> ReconnectAfterAsync(Exception ex)
+        {
+            if (isPrimary) { Connected = false; OnChanged?.Invoke(this, EventArgs.Empty); }
+            logger.LogWarning(ex, "SSE {Path} dropped; reconnecting in {Seconds}s", path, retry.TotalSeconds);
+            try { await Task.Delay(retry, ct); return false; }
+            catch (OperationCanceledException) { return true; }
         }
     }
 
