@@ -631,6 +631,20 @@ Add one `<Project>` line (flat — consistent with the existing layout). Order i
 
 ## 4. `PaperlessREST.Tests/Integration/SharedRestContainerFixture.cs` (MODIFY)
 
+> **⚠ Implementation correction (post-validation).** The "remove ALL `Environment.SetEnvironmentVariable`
+> and feed config via `ConfigureAppConfiguration` in-memory" plan below **does not work for this WAF
+> fixture** and was reverted. `WebApplicationFactory<Program>` (minimal hosting) builds the app's own
+> configuration, whose environment-variable source — populated process-globally by `.env.test`
+> (`TestEnv.Load`) — outranks anything the factory adds via `ConfigureAppConfiguration`; even
+> `config.Sources.Clear()` only touches the host-config layer. Result: the REST host bound
+> `RABBITMQ__URI=localhost:5672` and **every endpoint 500'd (`BrokerUnreachable`)** — caught by the
+> integration suite, not by build/unit tests. The shipped fixture therefore sets the infra **env vars**
+> to the Testcontainers endpoints in `ConfigureSutAsync` (the original, proven mechanism — the only
+> thing the WAF host reads). The env-var-mutation removal **succeeds for the Services fixture** (a plain
+> `Host.CreateApplicationBuilder` where `Configuration.Sources.Clear()` genuinely controls app config);
+> it is **not achievable for the minimal-hosting WAF**. Sections 4.1/4.2 below describe the abandoned
+> in-memory approach and are kept for the record.
+
 ### 4.1 What changes
 
 - Class derives from `ContainerFixtureBase` instead of implementing `IAsyncLifetime` directly. Stays `public sealed`.

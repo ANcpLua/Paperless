@@ -20,15 +20,26 @@ public sealed class SharedRestContainerFixture : ContainerFixtureBase
 
 	protected override async ValueTask ConfigureSutAsync()
 	{
-		_factory = new ConfiguredWebApplicationFactory(
-			PostgresConnectionString,
-			RabbitConnectionString,
-			MinioEndpoint,
-			MinioAccessKey,
-			MinioSecretKey,
-			BucketName,
-			ElasticsearchUri,
-			IndexName);
+		// Point the REST host's infra config at the Testcontainers endpoints via environment
+		// variables. This is deliberate, not a regression: WebApplicationFactory + minimal hosting
+		// builds the app's own configuration (including the environment-variable source that
+		// `.env.test` populates process-globally), and that source OUTRANKS anything the factory adds
+		// via ConfigureAppConfiguration — even Sources.Clear() only touches the host-config layer, so
+		// an in-memory override is silently beaten by `.env.test`'s RABBITMQ__URI=localhost:5672 and
+		// every endpoint 500s (BrokerUnreachable). Setting the env vars to the real container values is
+		// the only thing the WAF host actually reads. (The Services fixture, a plain Host builder, can
+		// and does use Sources.Clear()+AddInMemoryCollection — minimal-hosting WAF cannot.)
+		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__PAPERLESSDB", PostgresConnectionString);
+		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__HANGFIRE", PostgresConnectionString);
+		Environment.SetEnvironmentVariable("RABBITMQ__URI", RabbitConnectionString);
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__ENDPOINT", MinioEndpoint);
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__ACCESSKEY", MinioAccessKey);
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__SECRETKEY", MinioSecretKey);
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__BUCKETNAME", BucketName);
+		Environment.SetEnvironmentVariable("ELASTICSEARCH__URI", ElasticsearchUri);
+		Environment.SetEnvironmentVariable("ELASTICSEARCH__DEFAULTINDEX", IndexName);
+
+		_factory = new ConfiguredWebApplicationFactory(PostgresConnectionString);
 
 		Client = _factory.CreateClient();
 		Services = _factory.Services;
@@ -44,44 +55,12 @@ public sealed class SharedRestContainerFixture : ContainerFixtureBase
 			await _factory.DisposeAsync();
 	}
 
-	private sealed class ConfiguredWebApplicationFactory(
-		string postgresConnectionString,
-		string rabbitConnectionString,
-		string minioEndpoint,
-		string minioAccessKey,
-		string minioSecretKey,
-		string bucketName,
-		string elasticsearchUri,
-		string indexName)
+	private sealed class ConfiguredWebApplicationFactory(string postgresConnectionString)
 		: WebApplicationFactory<Program>
 	{
 		protected override void ConfigureWebHost(IWebHostBuilder builder)
 		{
-			// Replaces the old Environment.SetEnvironmentVariable(...) global mutation.
-			// WebApplicationFactory reads these via the host's IConfiguration just like
-			// the Services fixture's AddInMemoryCollection. Colon-keyed to match the
-			// option binding (ConnectionStrings:*, Storage:Minio:*, Elasticsearch:*).
 			builder.UseEnvironment("Test");
-			builder.ConfigureAppConfiguration((_, config) =>
-			{
-				config.AddInMemoryCollection(new Dictionary<string, string?>
-				{
-					["ConnectionStrings:PaperlessDb"] = postgresConnectionString,
-					["ConnectionStrings:Hangfire"] = postgresConnectionString,
-					["RabbitMQ:Uri"] = rabbitConnectionString,
-					["Storage:Minio:Endpoint"] = minioEndpoint,
-					["Storage:Minio:AccessKey"] = minioAccessKey,
-					["Storage:Minio:SecretKey"] = minioSecretKey,
-					["Storage:Minio:BucketName"] = bucketName,
-					["Storage:Minio:UseSsl"] = "false",
-					["Elasticsearch:Uri"] = elasticsearchUri,
-					// [Required] + ValidateOnStart on ElasticsearchOptions.DefaultIndex → the REST host
-					// throws at CreateClient() without it. Thread base IndexName through the factory ctor
-					// so env-var dependence is TRULY removed — not silently satisfied by .env.test's
-					// ELASTICSEARCH__DEFAULTINDEX process env.
-					["Elasticsearch:DefaultIndex"] = indexName
-				});
-			});
 
 			builder.ConfigureTestServices(services =>
 			{
