@@ -1,5 +1,4 @@
 using System.Net.ServerSentEvents;
-using Polly.Timeout;
 
 namespace PaperlessUI.Blazor.Services;
 
@@ -38,9 +37,14 @@ public sealed class DocumentEventStream(IHttpClientFactory factory, ILogger<Docu
         {
             try
             {
+                // Mark connected at the start of the attempt: this SSE endpoint withholds response
+                // headers until the first event is published, so gating "connected" on GetAsync
+                // returning would falsely show the disconnect banner while idle. A real transport
+                // failure flips it back to false in the catch handlers below.
+                if (isPrimary) SetConnected(true);
+
                 using var resp = await client.GetAsync(path, HttpCompletionOption.ResponseHeadersRead, ct);
                 resp.EnsureSuccessStatusCode();
-                if (isPrimary) { Connected = true; OnChanged?.Invoke(this, EventArgs.Empty); }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(ct);
                 var parser = SseParser.Create(stream);
@@ -56,9 +60,8 @@ public sealed class DocumentEventStream(IHttpClientFactory factory, ILogger<Docu
             }
             // Only known transient transport faults are caught — each one specifically. Anything else
             // (bug, OOM, …) fails loud: it propagates out and surfaces via the awaited task in DisposeAsync.
-            catch (HttpRequestException ex) { if (await ReconnectAfterAsync(ex)) break; }     // connection refused / 5xx
-            catch (IOException ex) { if (await ReconnectAfterAsync(ex)) break; }              // mid-stream read failure
-            catch (TimeoutRejectedException ex) { if (await ReconnectAfterAsync(ex)) break; } // resilience connect-timeout
+            catch (HttpRequestException ex) { if (await ReconnectAfterAsync(ex)) break; }  // connection refused / 5xx
+            catch (IOException ex) { if (await ReconnectAfterAsync(ex)) break; }           // mid-stream read failure
         }
 
         return;
@@ -67,11 +70,20 @@ public sealed class DocumentEventStream(IHttpClientFactory factory, ILogger<Docu
         // Returns true when the backoff wait itself was cancelled (caller should stop the loop).
         async Task<bool> ReconnectAfterAsync(Exception ex)
         {
-            if (isPrimary) { Connected = false; OnChanged?.Invoke(this, EventArgs.Empty); }
+            if (isPrimary) SetConnected(false);
             logger.LogWarning(ex, "SSE {Path} dropped; reconnecting in {Seconds}s", path, retry.TotalSeconds);
             try { await Task.Delay(retry, ct); return false; }
             catch (OperationCanceledException) { return true; }
         }
+    }
+
+    // Updates the banner state, raising OnChanged only on an actual transition so a (re)connect or
+    // drop triggers exactly one refetch + re-render, not one per loop iteration.
+    private void SetConnected(bool value)
+    {
+        if (Connected == value) return;
+        Connected = value;
+        OnChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async ValueTask DisposeAsync()
