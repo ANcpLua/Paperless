@@ -14,6 +14,8 @@
 		<PackageReference Include="DotNetEnv"/>
 		<PackageReference Include="Minio"/>
 		<PackageReference Include="Elastic.Clients.Elasticsearch"/>
+		<!-- Fluent test-PDF builder (TestPdf) shared by both integration suites. -->
+		<PackageReference Include="CreatePdf.NET"/>
 		<!-- DI.Abstractions (IServiceProvider/IServiceScope helpers) flows transitively via
 		     Diagnostics.Testing/Testcontainers — no explicit ref (avoids an unpinned CPM entry). -->
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.Testing"/>
