@@ -101,3 +101,6 @@ global using PaperlessREST.Features.EventProcessing.Presentation;
 // Test project namespace
 global using PaperlessREST.Tests;
 global using PaperlessREST.Tests.Integration;
+
+// Shared test support
+global using Paperless.TestSupport;

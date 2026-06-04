@@ -59,3 +59,6 @@ global using PaperlessServices.Features.OcrProcessing.Presentation;
 // Test project namespace
 global using PaperlessServices.Tests;
 global using PaperlessServices.Tests.Integration;
+
+// Shared test support
+global using Paperless.TestSupport;

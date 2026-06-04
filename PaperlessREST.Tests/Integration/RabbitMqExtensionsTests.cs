@@ -2,10 +2,7 @@ namespace PaperlessREST.Tests.Integration;
 
 public class RabbitMqExtensionsTests
 {
-	static RabbitMqExtensionsTests()
-	{
-		Env.TraversePath().Load(".env.test");
-	}
+	static RabbitMqExtensionsTests() => TestEnv.Load();
 
 	private static string GetRabbitMqConnectionString() =>
 		Environment.GetEnvironmentVariable("RABBITMQ__URI")!;

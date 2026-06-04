@@ -5,137 +5,63 @@ using PaperlessREST.Host;
 
 namespace PaperlessREST.Tests.Integration;
 
-public sealed class SharedRestContainerFixture : IAsyncLifetime
+public sealed class SharedRestContainerFixture : ContainerFixtureBase
 {
-	#region Static Constructor
+	static SharedRestContainerFixture() => TestEnv.Load();
 
-	static SharedRestContainerFixture()
-	{
-		Env.TraversePath().Load(".env.test");
-	}
+	protected override bool UsesPostgres => true;
 
-	#endregion
-
-	#region Constructor
-
-	public SharedRestContainerFixture()
-	{
-		var postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:17-alpine";
-		var rabbitImage = Environment.GetEnvironmentVariable("RABBITMQ_IMAGE") ?? "rabbitmq:4.3.0-management";
-		var minioImage = Environment.GetEnvironmentVariable("MINIO_IMAGE") ??
-		                 "minio/minio:RELEASE.2025-09-07T16-13-09Z";
-		var elasticImage = Environment.GetEnvironmentVariable("ELASTIC_IMAGE") ??
-		                   "docker.elastic.co/elasticsearch/elasticsearch:9.1.3";
-
-		_postgres = new PostgreSqlBuilder(postgresImage)
-			.WithWaitStrategy(Wait.ForUnixContainer()
-				.UntilMessageIsLogged("database system is ready to accept connections"))
-			.Build();
-
-		_rabbit = new RabbitMqBuilder(rabbitImage)
-			.Build();
-
-		_minio = new MinioBuilder(minioImage)
-			.Build();
-
-		_elastic = new ElasticsearchBuilder(elasticImage)
-			.WithEnvironment("discovery.type", "single-node")
-			.WithEnvironment("xpack.security.enabled", "false")
-			.WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-			.WithEnvironment("bootstrap.memory_lock", "false")
-			.WithWaitStrategy(Wait.ForUnixContainer()
-				.UntilMessageIsLogged("started"))
-			.Build();
-	}
-
-	#endregion
-
-	#region Public Methods
+	public HttpClient Client { get; private set; } = null!;
+	public IDbContextFactory<DocumentPersistence> DbFactory { get; private set; } = null!;
 
 	public AsyncServiceScope CreateAsyncScope() => Services.CreateAsyncScope();
 
-	#endregion
-
-	#region Fields
-
-	private readonly string _bucketName = $"test-{Guid.NewGuid():N}";
-	private readonly ElasticsearchContainer _elastic;
-	private readonly MinioContainer _minio;
-	private readonly PostgreSqlContainer _postgres;
-	private readonly RabbitMqContainer _rabbit;
-
 	private WebApplicationFactory<Program>? _factory;
-	private WebApplicationFactory<Program> Factory => _factory ?? throw new InvalidOperationException("Factory not initialized.");
 
-	#endregion
-
-	#region Properties
-
-	public HttpClient Client { get; private set; } = null!;
-	public IServiceProvider Services { get; private set; } = null!;
-	public IDbContextFactory<DocumentPersistence> DbFactory { get; private set; } = null!;
-
-	#endregion
-
-	#region IAsyncLifetime
-
-	public async ValueTask InitializeAsync()
+	protected override async ValueTask ConfigureSutAsync()
 	{
-		await Task.WhenAll(
-			_postgres.StartAsync(),
-			_rabbit.StartAsync(),
-			_minio.StartAsync(),
-			_elastic.StartAsync()
-		);
+		// Point the REST host's infra config at the Testcontainers endpoints via environment
+		// variables. This is deliberate, not a regression: WebApplicationFactory + minimal hosting
+		// builds the app's own configuration (including the environment-variable source that
+		// `.env.test` populates process-globally), and that source OUTRANKS anything the factory adds
+		// via ConfigureAppConfiguration — even Sources.Clear() only touches the host-config layer, so
+		// an in-memory override is silently beaten by `.env.test`'s RABBITMQ__URI=localhost:5672 and
+		// every endpoint 500s (BrokerUnreachable). Setting the env vars to the real container values is
+		// the only thing the WAF host actually reads. (The Services fixture, a plain Host builder, can
+		// and does use Sources.Clear()+AddInMemoryCollection — minimal-hosting WAF cannot.)
+		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__PAPERLESSDB", PostgresConnectionString);
+		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__HANGFIRE", PostgresConnectionString);
+		Environment.SetEnvironmentVariable("RABBITMQ__URI", RabbitConnectionString);
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__ENDPOINT", MinioEndpoint);
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__ACCESSKEY", MinioAccessKey);
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__SECRETKEY", MinioSecretKey);
+		Environment.SetEnvironmentVariable("STORAGE__MINIO__BUCKETNAME", BucketName);
+		Environment.SetEnvironmentVariable("ELASTICSEARCH__URI", ElasticsearchUri);
+		Environment.SetEnvironmentVariable("ELASTICSEARCH__DEFAULTINDEX", IndexName);
 
-		Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Test");
-		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__PAPERLESSDB", _postgres.GetConnectionString());
-		Environment.SetEnvironmentVariable("CONNECTIONSTRINGS__HANGFIRE", _postgres.GetConnectionString());
-		Environment.SetEnvironmentVariable("RABBITMQ__URI", _rabbit.GetConnectionString());
-		var minioEndpoint = $"{_minio.Hostname}:{_minio.GetMappedPublicPort(9000)}";
-		Environment.SetEnvironmentVariable("STORAGE__MINIO__ENDPOINT", minioEndpoint);
-		Environment.SetEnvironmentVariable("STORAGE__MINIO__ACCESSKEY", _minio.GetAccessKey());
-		Environment.SetEnvironmentVariable("STORAGE__MINIO__SECRETKEY", _minio.GetSecretKey());
-		Environment.SetEnvironmentVariable("STORAGE__MINIO__BUCKETNAME", _bucketName);
-		Environment.SetEnvironmentVariable("ELASTICSEARCH__URI",
-			$"http://{_elastic.Hostname}:{_elastic.GetMappedPublicPort(9200)}");
+		_factory = new ConfiguredWebApplicationFactory(PostgresConnectionString);
 
-		using MinioClient minioClient = new();
-		minioClient
-			.WithEndpoint(minioEndpoint)
-			.WithCredentials(_minio.GetAccessKey(), _minio.GetSecretKey())
-			.Build();
-		await minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_bucketName));
-
-		_factory = new ConfiguredWebApplicationFactory(_postgres.GetConnectionString());
-
-		Client = Factory.CreateClient();
-		Services = Factory.Services;
+		Client = _factory.CreateClient();
+		Services = _factory.Services;
 		DbFactory = Services.GetRequiredService<IDbContextFactory<DocumentPersistence>>();
 
 		await using var db = await DbFactory.CreateDbContextAsync();
 		await db.Database.MigrateAsync();
 	}
 
-	public async ValueTask DisposeAsync()
+	protected override async ValueTask DisposeSutAsync()
 	{
 		if (_factory is not null)
 			await _factory.DisposeAsync();
-		await Task.WhenAll(
-			_postgres.DisposeAsync().AsTask(),
-			_rabbit.DisposeAsync().AsTask(),
-			_minio.DisposeAsync().AsTask(),
-			_elastic.DisposeAsync().AsTask()
-		);
 	}
-
-	#endregion
 
 	private sealed class ConfiguredWebApplicationFactory(string postgresConnectionString)
 		: WebApplicationFactory<Program>
 	{
 		protected override void ConfigureWebHost(IWebHostBuilder builder)
 		{
+			builder.UseEnvironment("Test");
+
 			builder.ConfigureTestServices(services =>
 			{
 				services.RemoveAll<IHostedService>();

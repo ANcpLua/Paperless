@@ -7,6 +7,15 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 	public DocumentEndpointTests(SharedRestContainerFixture fixture)
 	{
 		_fixture = fixture;
+		_cleanup = new AsyncCleanup(async () =>
+		{
+			if (_createdDocIds.Count == 0) return;
+			await using var scope = _fixture.CreateAsyncScope();
+			var factory =
+				scope.ServiceProvider.GetRequiredService<IDbContextFactory<DocumentPersistence>>();
+			await using var db = await factory.CreateDbContextAsync();
+			await db.Documents.Where(d => _createdDocIds.Contains(d.Id)).ExecuteDeleteAsync();
+		});
 	}
 
 	#endregion
@@ -124,6 +133,7 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 
 	private readonly SharedRestContainerFixture _fixture;
 	private readonly List<Guid> _createdDocIds = [];
+	private readonly AsyncCleanup _cleanup;
 
 	#endregion
 
@@ -131,17 +141,7 @@ public sealed class DocumentEndpointTests : IClassFixture<SharedRestContainerFix
 
 	public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
-	public async ValueTask DisposeAsync()
-	{
-		if (_createdDocIds.Count > 0)
-		{
-			await using var scope = _fixture.CreateAsyncScope();
-			var factory =
-				scope.ServiceProvider.GetRequiredService<IDbContextFactory<DocumentPersistence>>();
-			await using var db = await factory.CreateDbContextAsync();
-			await db.Documents.Where(d => _createdDocIds.Contains(d.Id)).ExecuteDeleteAsync();
-		}
-	}
+	public ValueTask DisposeAsync() => _cleanup.DisposeAsync();
 
 	#endregion
 

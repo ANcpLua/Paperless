@@ -10,10 +10,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
 
 	#region Static Constructor
 
-	static DatabaseFixture()
-	{
-		Env.TraversePath().Load(".env.test");
-	}
+	static DatabaseFixture() => TestEnv.Load();
 
 	#endregion
 
@@ -21,12 +18,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
 
 	public DatabaseFixture()
 	{
-		var postgresImage = Environment.GetEnvironmentVariable("POSTGRES_IMAGE") ?? "postgres:17-alpine";
-
-		_container = new PostgreSqlBuilder(postgresImage)
-			.WithWaitStrategy(Wait.ForUnixContainer()
-				.UntilMessageIsLogged("database system is ready to accept connections"))
-			.Build();
+		_container = TestContainers.Postgres();
 	}
 
 	#endregion
