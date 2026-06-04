@@ -16,9 +16,9 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 	private const string Summary = "AI summary of the uploaded document.";
 	private const long FileSize = 2_048;
 
-	private static readonly DateTimeOffset UploadedAt = FixedInstant;
-	private static readonly DateTimeOffset OcrProcessedAt = new(2026, 06, 03, 10, 17, 00, TimeSpan.Zero);
-	private static readonly DateTimeOffset SummaryGeneratedAt = new(2026, 06, 03, 10, 20, 00, TimeSpan.Zero);
+	private static readonly DateTimeOffset s_uploadedAt = FixedInstant;
+	private static readonly DateTimeOffset s_ocrProcessedAt = new(2026, 06, 03, 10, 17, 00, TimeSpan.Zero);
+	private static readonly DateTimeOffset s_summaryGeneratedAt = new(2026, 06, 03, 10, 20, 00, TimeSpan.Zero);
 
 	// ── UploadDocumentAsync ───────────────────────────────────────────────
 
@@ -65,11 +65,11 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 		using AssertionScope _ = new();
 		result.IsError.Should().BeFalse();
 		Document saved = result.Value;
-		string expectedStoragePath = $"documents/{UploadedAt.UtcDateTime:yyyy-MM}/{saved.Id}.pdf";
+		string expectedStoragePath = $"documents/{s_uploadedAt.UtcDateTime:yyyy-MM}/{saved.Id}.pdf";
 
 		saved.FileName.Should().Be(FileName);
 		saved.Status.Should().Be(DocumentStatus.Pending);
-		saved.CreatedAt.Should().Be(UploadedAt);
+		saved.CreatedAt.Should().Be(s_uploadedAt);
 		saved.StoragePath.Should().Be(expectedStoragePath);
 		saved.Content.Should().BeNull();
 		saved.ProcessedAt.Should().BeNull();
@@ -84,7 +84,7 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 
 		routingKeyGivenToPublisher.Should().NotBeNullOrWhiteSpace();
 		commandGivenToPublisher.Should().BeEquivalentTo(
-			new OcrCommand(saved.Id, FileName, expectedStoragePath, UploadedAt));
+			new OcrCommand(saved.Id, FileName, expectedStoragePath, s_uploadedAt));
 
 		ShouldHaveLog(LogLevel.Information, "uploaded successfully", saved.Id.ToString());
 	}
@@ -173,7 +173,7 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 		string incomingStatus, string? incomingContent, DocumentStatus expectedStatus, string? expectedContent)
 	{
 		CancellationToken ct = TestContext.Current.CancellationToken;
-		Clock.SetUtcNow(OcrProcessedAt);
+		Clock.SetUtcNow(s_ocrProcessedAt);
 		Document document = new DocumentBuilder().AsPending().Build();
 		Document? documentGivenToRepository = null;
 
@@ -191,7 +191,7 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 		documentGivenToRepository.Should().NotBeNull();
 		documentGivenToRepository!.Status.Should().Be(expectedStatus);
 		documentGivenToRepository.Content.Should().Be(expectedContent);
-		documentGivenToRepository.ProcessedAt.Should().Be(OcrProcessedAt);
+		documentGivenToRepository.ProcessedAt.Should().Be(s_ocrProcessedAt);
 	}
 
 	public static IEnumerable<TheoryDataRow<DocumentStatus, string, string?, string>> InvalidOcrTransitions()
@@ -272,9 +272,9 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 		CancellationToken ct = TestContext.Current.CancellationToken;
 		Guid id = Guid.CreateVersion7();
 
-		Repository.Setup(r => r.UpdateSummaryAsync(id, Summary, SummaryGeneratedAt, ct)).ReturnsAsync(true);
+		Repository.Setup(r => r.UpdateSummaryAsync(id, Summary, s_summaryGeneratedAt, ct)).ReturnsAsync(true);
 
-		ErrorOr<Updated> result = await CreateSut().UpdateDocumentSummaryAsync(id, Summary, SummaryGeneratedAt, ct);
+		ErrorOr<Updated> result = await CreateSut().UpdateDocumentSummaryAsync(id, Summary, s_summaryGeneratedAt, ct);
 
 		using AssertionScope _ = new();
 		result.IsError.Should().BeFalse();
@@ -288,9 +288,9 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 		CancellationToken ct = TestContext.Current.CancellationToken;
 		Guid missingId = Guid.CreateVersion7();
 
-		Repository.Setup(r => r.UpdateSummaryAsync(missingId, Summary, SummaryGeneratedAt, ct)).ReturnsAsync(false);
+		Repository.Setup(r => r.UpdateSummaryAsync(missingId, Summary, s_summaryGeneratedAt, ct)).ReturnsAsync(false);
 
-		ErrorOr<Updated> result = await CreateSut().UpdateDocumentSummaryAsync(missingId, Summary, SummaryGeneratedAt, ct);
+		ErrorOr<Updated> result = await CreateSut().UpdateDocumentSummaryAsync(missingId, Summary, s_summaryGeneratedAt, ct);
 
 		using AssertionScope _ = new();
 		result.IsError.Should().BeTrue();
@@ -410,12 +410,12 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 			new()
 			{
 				Id = Guid.CreateVersion7(), FileName = "first.pdf",
-				Status = DocumentStatus.Completed.ToString(), CreatedAt = UploadedAt, Content = "first"
+				Status = DocumentStatus.Completed.ToString(), CreatedAt = s_uploadedAt, Content = "first"
 			},
 			new()
 			{
 				Id = Guid.CreateVersion7(), FileName = "second.pdf",
-				Status = DocumentStatus.Completed.ToString(), CreatedAt = UploadedAt, Content = "second"
+				Status = DocumentStatus.Completed.ToString(), CreatedAt = s_uploadedAt, Content = "second"
 			}
 		];
 
