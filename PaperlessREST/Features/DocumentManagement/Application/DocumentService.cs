@@ -152,7 +152,12 @@ public sealed class DocumentService(
 			return transitionResult.Errors.ToArray();
 		}
 
-		await repository.UpdateAsync(document, cancellationToken);
+		if (!await repository.UpdateAsync(document, cancellationToken))
+		{
+			logger.LogWarning("Document {DocumentId} not found for OCR result update", id);
+			return DocumentErrors.NotFound(id);
+		}
+
 		logger.LogInformation("Document {DocumentId} processed with status {Status}", id, document.Status);
 		return Result.Updated;
 	}
