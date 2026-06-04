@@ -652,7 +652,8 @@ git commit -m "feat(blazor): document card component"
     private void ToggleTheme() => _theme = _theme == "dark" ? "light" : "dark";
 
     // SSE callback — runs off the render thread, so marshal onto the circuit.
-    private void HandleChanged() => _ = InvokeAsync(async () =>
+    // Signature matches DocumentEventStream's `event EventHandler? OnChanged` (CA1003-clean).
+    private void HandleChanged(object? sender, EventArgs e) => _ = InvokeAsync(async () =>
     {
         await ReloadAsync();
         StateHasChanged();
