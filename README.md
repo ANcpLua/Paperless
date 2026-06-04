@@ -3,7 +3,7 @@
 # Paperless
 
 **Document management with OCR, AI summarization, and full-text search.**
-.NET 10 backend · React + Angular frontends (Blazor scaffold WIP) · NUKE + xUnit v3 + Testcontainers.
+.NET 10 backend · Blazor demo UI (behind nginx) + React/Angular frontends · NUKE + xUnit v3 + Testcontainers.
 
 <a href="https://github.com/ANcpLua/Paperless/actions/workflows/ci.yml">
   <img src="https://github.com/ANcpLua/Paperless/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI">
@@ -24,20 +24,21 @@ Paperless.slnx                          # MSBuild slnx (modern format)
 ├── PaperlessServices/                  # Background worker (OCR + GenAI)
 ├── PaperlessREST.Tests/                # xUnit v3 (unit + integration via Testcontainers)
 ├── PaperlessServices.Tests/            # xUnit v3 (unit + integration)
-├── PaperlessREST/wwwroot/              # Vanilla Bootstrap SPA — production demo UI served by nginx
+├── Paperless.TestSupport/              # Shared test lib (ContainerFixtureBase + builders + TestPdf + AsyncCleanup)
+├── PaperlessREST/wwwroot/              # Original vanilla Bootstrap SPA (served via UseStaticFiles); Blazor took over nginx /
+├── PaperlessUI.Blazor/                 # Blazor Web App (Interactive Server) — production demo UI behind nginx /; in slnx, built by CI
+│   └── PaperlessUI.Blazor.csproj
 ├── PaperlessUI.React/                  # Frontend variant — Vite 8 + React 19 + TypeScript (canonical)
 │   └── PaperlessUI.React.esproj
 ├── PaperlessUI.Angular/                # Frontend variant — Angular 21 + pnpm (parallel impl)
 │   └── PaperlessUI.Angular.esproj
-├── PaperlessUI.Blazor/                 # Frontend variant — Blazor Web App scaffold (WIP, not in slnx, not built by CI)
-│   └── PaperlessUI.Blazor.csproj
 ├── Pipeline/                           # NUKE build (`./build.sh <Target>`)
 ├── docker/                             # nginx config (single file: docker/nginx.conf)
 ├── PaperlessREST/sample-data/          # XML batch fixtures (input/archive/error), mounted by compose
 └── compose.yaml                        # Local stack (postgres, minio, rabbitmq, elastic)
 ```
 
-The production demo today is the vanilla SPA at `PaperlessREST/wwwroot/` (mounted by nginx in `compose.yaml`). React and Angular are parallel SDK-stack implementations consuming the same `/api/*` surface; Blazor is on-disk but not currently building.
+The production demo UI is **PaperlessUI.Blazor** (Interactive Server), which nginx serves at `/` in `compose.yaml` — a vanilla-Blazor port of the original `PaperlessREST/wwwroot/` SPA that it replaced at the root. React and Angular are parallel SDK-stack implementations consuming the same `/api/*` surface (built/validated in CI, not deployed in compose). The `wwwroot/` SPA still ships via `UseStaticFiles`.
 
 Contributor & agent conventions live in [`AGENTS.md`](AGENTS.md) (`CLAUDE.md` is a symlink to it).
 
@@ -63,8 +64,8 @@ cd PaperlessUI.React   && pnpm install --frozen-lockfile && pnpm dev
 # Angular — parallel implementation
 cd PaperlessUI.Angular && pnpm install --frozen-lockfile && pnpm start
 
-# Blazor scaffold (WIP, not currently in Paperless.slnx)
-# dotnet run --project PaperlessUI.Blazor
+# Blazor — deployed demo UI (in slnx; also compiled by ./build.sh Compile)
+dotnet run --project PaperlessUI.Blazor
 ```
 
 ## Architecture
@@ -73,12 +74,12 @@ cd PaperlessUI.Angular && pnpm install --frozen-lockfile && pnpm start
 %%{init: {'theme':'dark'}}%%
 flowchart LR
     subgraph Clients
-      wwwroot[PaperlessREST/wwwroot<br/>vanilla SPA — production]
+      Blazor[PaperlessUI.Blazor<br/>demo UI — nginx /]
       React[PaperlessUI.React<br/>canonical]
       Angular[PaperlessUI.Angular<br/>parallel impl]
-      Blazor[PaperlessUI.Blazor<br/>WIP scaffold]
+      wwwroot[PaperlessREST/wwwroot<br/>original SPA — UseStaticFiles]
     end
-    wwwroot & React & Angular & Blazor -->|HTTPS / SSE| REST[PaperlessREST<br/>ASP.NET Core]
+    Blazor & React & Angular & wwwroot -->|HTTPS / SSE| REST[PaperlessREST<br/>ASP.NET Core]
     REST -->|EF Core| PG[(PostgreSQL)]
     REST -->|S3| MIN[(MinIO)]
     REST -->|HTTP| ES[(Elasticsearch)]
@@ -92,7 +93,7 @@ flowchart LR
 
 ## CI + Coverage
 
-`Build & Test` (gate): backend unit + integration + coverage gate + Codecov upload.
+`Build & Test` (gate): backend unit + integration + coverage gate + Codecov upload (also compiles `PaperlessUI.Blazor`, which is in the slnx).
 Two non-gating jobs build the Angular and React apps via `pnpm`.
 
 Coverage uploads to https://codecov.io/gh/ANcpLua/Paperless via tokenless OIDC.
@@ -105,7 +106,7 @@ The course rubric in [`docs/99_Reference/Rating-Matrix/`](docs/99_Reference/Rati
 | Category | Where it lives |
 |---|---|
 | **Use Cases / REST API** | `PaperlessREST/Features/DocumentManagement/Presentation/Endpoints/DocumentEndpoints.cs` |
-| **Web Frontend** | `PaperlessREST/wwwroot/` (vanilla SPA, production demo) + `PaperlessUI.React/` (canonical) + `PaperlessUI.Angular/` (parallel impl). `PaperlessUI.Blazor/` is a WIP scaffold, currently out of build. |
+| **Web Frontend** | `PaperlessUI.Blazor/` (Interactive Server) — the production demo UI nginx serves at `/` + `PaperlessUI.React/` (canonical) + `PaperlessUI.Angular/` (parallel impl). The original `PaperlessREST/wwwroot/` SPA still ships via `UseStaticFiles`. |
 | **Queues** | `SWEN3.Paperless.RabbitMq` package consumed by REST + Services |
 | **Logging** | `Microsoft.Extensions.Logging` everywhere; `FakeLogger` in tests |
 | **Validation** | Mapster + DataAnnotations + FluentValidation at the boundary |
@@ -125,7 +126,7 @@ The course rubric in [`docs/99_Reference/Rating-Matrix/`](docs/99_Reference/Rati
 
 | Backend | Frontends | Infra |
 |---|---|---|
-| .NET 10, ASP.NET Core, EF Core 10.0.x, Mapster, ErrorOr, Hangfire 1.8.23, Polly | React 19.2 + Vite 8 + TypeScript 6 (canonical), Angular 21 + pnpm 10 (parallel), Blazor Web App scaffold (WIP) | PostgreSQL 17, RabbitMQ 4.3, MinIO (date-pinned), Elasticsearch 9.1, nginx |
+| .NET 10, ASP.NET Core, EF Core 10.0.x, Mapster, ErrorOr, Hangfire 1.8.23, Polly | Blazor Web App / Interactive Server (deployed demo UI), React 19.2 + Vite 8 + TypeScript 6 (canonical), Angular 21 + pnpm 10 (parallel) | PostgreSQL 17, RabbitMQ 4.3, MinIO (date-pinned), Elasticsearch 9.1, nginx |
 | xUnit v3.2.x, MTP v2, Testcontainers, AwesomeAssertions, Moq | – | OrbStack / Docker Compose |
 
 (Exact pin values live in `Version.props` and `Directory.Packages.props` — the table is commentary.)

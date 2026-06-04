@@ -106,9 +106,9 @@ jobs:
                     path: TestResults/
                     if-no-files-found: warn
 
-            # PaperlessUI.Blazor is currently a scaffold-only project (no
-            # Paperless code). Once a real Paperless page is implemented,
-            # re-add it to Paperless.slnx and reintroduce the build step here.
+            # PaperlessUI.Blazor is in Paperless.slnx, so it's compiled as part
+            # of the NUKE build above — no separate step needed. Its Dockerfile +
+            # paperless-blazor compose service serve it behind nginx at /.
 
     frontend-angular:
         name: Build (PaperlessUI.Angular)

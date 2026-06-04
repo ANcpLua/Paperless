@@ -1,6 +1,6 @@
 # Paperless — repo guide for Claude
 
-Document management with OCR, AI summarization, and full-text search. .NET 10 backend. Frontend story: React is the canonical/priority implementation, Angular is a parallel implementation kept for comparison, Blazor is currently a WIP scaffold. The production demo UI today is the vanilla SPA at `PaperlessREST/wwwroot/` which nginx serves from `compose.yaml`.
+Document management with OCR, AI summarization, and full-text search. .NET 10 backend. Frontend story: the production demo UI served by `compose.yaml`/nginx (at `/`) is **PaperlessUI.Blazor** — an Interactive-Server Blazor port of the original `PaperlessREST/wwwroot/` SPA, which it replaced at the nginx root (drag-drop upload, live OCR + AI-summary over SSE, SignalR circuit). React is the canonical/priority frontend implementation and Angular a parallel one kept for stack comparison; both consume the same `/api/*` backend and are built/validated in CI but are not the deployed compose UI. The `wwwroot/` SPA still ships (served by the REST app's `UseStaticFiles`) as the original Blazor ported from.
 
 This file is the on-disk source of truth for working in this repo. Read it before touching anything.
 
@@ -13,20 +13,21 @@ This file is the on-disk source of truth for working in this repo. Read it befor
 ```
 Paperless.slnx                       # modern slnx; flat — NUKE 10 doesn't traverse <Folder> wrappers
 ├── PaperlessREST/                   # ASP.NET Core API (REST + SSE)
-│   ├── wwwroot/                     # Vanilla Bootstrap SPA — production demo UI mounted by nginx
+│   ├── wwwroot/                     # Original vanilla Bootstrap SPA (still served via UseStaticFiles); Blazor is the port that took over nginx /
 │   └── sample-data/                 # XML batch fixtures (input/archive/error), mounted by compose
 ├── PaperlessServices/               # BackgroundService worker (OCR + GenAI)
 ├── PaperlessREST.Tests/             # xUnit v3 + Testcontainers
 ├── PaperlessServices.Tests/         # xUnit v3 + Testcontainers
+├── Paperless.TestSupport/           # Shared test lib — ContainerFixtureBase (template-method) + builders + TestPdf + AsyncCleanup
+├── PaperlessUI.Blazor/              # Blazor Web App (Interactive Server) — production demo UI behind nginx /; in slnx, compiled by backend CI, has Dockerfile + paperless-blazor compose service
 ├── PaperlessUI.React/               # Vite + React 19 + TS  (canonical frontend)  — PaperlessUI.React.esproj
 ├── PaperlessUI.Angular/             # Angular 21 + pnpm     (parallel implementation) — PaperlessUI.Angular.esproj
-├── PaperlessUI.Blazor/              # Blazor Web App scaffold — WIP, NOT in Paperless.slnx, NOT built by CI
 ├── Pipeline/                        # NUKE build (Build.csproj)
 ├── docker/, compose.yaml
 └── docs/99_Reference/Rating-Matrix/ # course grading rubric (PDF + xlsx)
 ```
 
-React + Angular share the backend so the same use-cases can be compared across stacks. Blazor is on-disk but not building until a Paperless page is implemented (add back to Paperless.slnx + ci.yml when it does).
+React + Angular share the backend so the same use-cases can be compared across stacks. Blazor is the deployed demo UI (a vanilla port of the wwwroot SPA): it's in `Paperless.slnx`, compiled by the backend CI job, and its Dockerfile + `paperless-blazor` compose service sit behind nginx at `/`.
 
 ## Build & test
 
@@ -43,12 +44,12 @@ NUKE-based, single entry point. Targets compose via `Pipeline/Components/*.cs` (
 The `ReportCoverage` gate is report-only (thresholds 0/0). CI publishes the markdown
 summary and Codecov diff; regressions surface in PR review, not as a hard build fail.
 
-UI projects build via their respective toolchains, never via NUKE:
+The React/Angular UIs are `esproj` and build via their pnpm toolchains, never via NUKE. Blazor is a `.csproj` in the slnx, so `./build.sh Compile` builds it like any backend project:
 
 ```bash
 cd PaperlessUI.React   && pnpm install --frozen-lockfile && pnpm dev       # canonical
 cd PaperlessUI.Angular && pnpm install --frozen-lockfile && pnpm start     # parallel impl
-# Blazor scaffold: dotnet run --project PaperlessUI.Blazor (WIP, not in slnx)
+dotnet run --project PaperlessUI.Blazor                                    # deployed demo UI (also compiled by ./build.sh Compile)
 ```
 
 ## CI
@@ -60,6 +61,8 @@ cd PaperlessUI.Angular && pnpm install --frozen-lockfile && pnpm start     # par
 | `Build & Test (backend)` | **required** | NUKE UnitTests → IntegrationTests → Coverage → markdown summary (no hard gate) → Codecov upload |
 | `Build (PaperlessUI.Angular)` | non-blocking | `pnpm install --frozen-lockfile && pnpm run build` (ng's default config is production — do NOT pass `--configuration production` after `--`; pnpm 10 passes `--` literally to scripts) |
 | `Build (PaperlessUI.React)` | non-blocking | `pnpm install --frozen-lockfile && pnpm run build` |
+
+`PaperlessUI.Blazor` is a `.csproj` in the slnx, so the backend job compiles it as part of the NUKE build — there is no separate Blazor CI job; its Dockerfile + `paperless-blazor` compose service serve it behind nginx at `/`.
 
 The workflow declares `concurrency:` (cancel-in-progress on PRs only) and least-privilege `permissions:` (read defaults; codecov/check annotations escalate as needed).
 
@@ -107,7 +110,7 @@ Anti-patterns that fail the self-check:
 | Category | Where |
 |---|---|
 | Use Cases / REST API | `PaperlessREST/Features/DocumentManagement/Presentation/Endpoints/` |
-| Web Frontend | React (`PaperlessUI.React/`, canonical) + Angular (`PaperlessUI.Angular/`, parallel impl) + the vanilla SPA at `PaperlessREST/wwwroot/` that nginx serves in production. Blazor (`PaperlessUI.Blazor/`) is a WIP scaffold, not currently built. |
+| Web Frontend | **Blazor** (`PaperlessUI.Blazor/`) — the production demo UI nginx serves at `/` (Interactive-Server port of the wwwroot SPA). React (`PaperlessUI.React/`, canonical) + Angular (`PaperlessUI.Angular/`, parallel impl) share the backend for stack comparison. The original `PaperlessREST/wwwroot/` SPA still ships via `UseStaticFiles`. |
 | Queues | `SWEN3.Paperless.RabbitMq` consumed by REST + Services |
 | Logging | `Microsoft.Extensions.Logging`; `FakeLogger` in tests |
 | Validation | Mapster + DataAnnotations + FluentValidation at the boundary |
