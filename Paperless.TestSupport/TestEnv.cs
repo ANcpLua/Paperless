@@ -7,8 +7,8 @@ namespace Paperless.TestSupport;
 /// </summary>
 public static class TestEnv
 {
-	private static readonly Lock Gate = new();
-	private static bool _loaded;
+	private static readonly Lock s_gate = new();
+	private static bool s_loaded;
 
 	/// <summary>
 	///     Loads <c>.env.test</c> exactly once per process via
@@ -17,12 +17,12 @@ public static class TestEnv
 	/// </summary>
 	public static void Load()
 	{
-		if (_loaded) return;
-		lock (Gate)
+		if (s_loaded) return;
+		lock (s_gate)
 		{
-			if (_loaded) return;
+			if (s_loaded) return;
 			Env.TraversePath().Load(".env.test");
-			_loaded = true;
+			s_loaded = true;
 		}
 	}
 
