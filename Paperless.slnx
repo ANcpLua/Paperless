@@ -3,6 +3,7 @@
   <Project Path="PaperlessServices/PaperlessServices.csproj" />
   <Project Path="PaperlessREST.Tests/PaperlessREST.Tests.csproj" />
   <Project Path="PaperlessServices.Tests/PaperlessServices.Tests.csproj" />
+  <Project Path="Paperless.TestSupport/Paperless.TestSupport.csproj" />
   <Project Path="PaperlessUI.Angular/PaperlessUI.Angular.esproj" />
   <Project Path="PaperlessUI.Blazor/PaperlessUI.Blazor.csproj" />
   <Project Path="PaperlessUI.React/PaperlessUI.React.esproj" />

@@ -1,0 +1,32 @@
+<Project Sdk="ANcpLua.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<RootNamespace>Paperless.TestSupport</RootNamespace>
+		<!-- Support library for the two test assemblies. Not a test project itself:
+		     no MTP runner, no [Fact]s. xUnit primitives (IAsyncLifetime,
+		     CollectionDefinition) come from the xunit.v3 package reference below. -->
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Infrastructure only. MUST NOT reference PaperlessREST or PaperlessServices. -->
+		<PackageReference Include="DotNetEnv"/>
+		<PackageReference Include="Minio"/>
+		<PackageReference Include="Elastic.Clients.Elasticsearch"/>
+		<!-- DI.Abstractions (IServiceProvider/IServiceScope helpers) flows transitively via
+		     Diagnostics.Testing/Testcontainers — no explicit ref (avoids an unpinned CPM entry). -->
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.Testing"/>
+		<PackageReference Include="Testcontainers.Elasticsearch"/>
+		<PackageReference Include="Testcontainers.Minio"/>
+		<PackageReference Include="Testcontainers.PostgreSql"/>
+		<PackageReference Include="Testcontainers.RabbitMq"/>
+		<!-- IAsyncLifetime + [CollectionDefinition]/ICollectionFixture + Assert come from
+		     xunit.v3.extensibility.core — the runner-free core. The .mtp-v2 *runner* targets reject a
+		     class library (they require OutputType=Exe; this is a support lib, not a test runner), and
+		     bare xunit.v3 has no CPM PackageVersion (NU1604) and would pull a second xunit core lineage.
+		     extensibility.core shares the .mtp-v2 version (3.2.2), so there is exactly one xunit lineage. -->
+		<PackageReference Include="xunit.v3.extensibility.core"/>
+	</ItemGroup>
+
+</Project>

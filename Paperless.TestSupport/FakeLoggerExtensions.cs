@@ -1,9 +1,9 @@
-namespace PaperlessServices.Tests;
+namespace Paperless.TestSupport;
 
 public static class FakeLoggerExtensions
 {
 	/// <summary>
-	/// Gets full log text from the collector with optional formatting.
+	///     Gets full log text from the collector with optional formatting.
 	/// </summary>
 	public static string GetFullLoggerText(
 		this FakeLogCollector source,
@@ -22,8 +22,8 @@ public static class FakeLoggerExtensions
 	}
 
 	/// <summary>
-	/// Waits for a log condition to be met, polling at regular intervals.
-	/// Returns true if condition was met, false if timeout expired.
+	///     Waits for a log condition to be met, polling at regular intervals.
+	///     Returns true if condition was met, false if timeout expired.
 	/// </summary>
 	public static async Task<bool> WaitForLogAsync(
 		this FakeLogCollector source,
@@ -35,7 +35,8 @@ public static class FakeLoggerExtensions
 		timeout ??= TimeSpan.FromSeconds(5);
 		pollInterval ??= TimeSpan.FromMilliseconds(25);
 
-		using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+		using CancellationTokenSource cts =
+			CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 		cts.CancelAfter(timeout.Value);
 
 		try
@@ -59,7 +60,7 @@ public static class FakeLoggerExtensions
 	}
 
 	/// <summary>
-	/// Waits for a specific number of log messages matching a predicate.
+	///     Waits for a specific number of log messages matching a predicate.
 	/// </summary>
 	public static Task<bool> WaitForLogCountAsync(
 		this FakeLogCollector source,

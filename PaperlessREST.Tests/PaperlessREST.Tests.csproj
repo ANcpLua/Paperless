@@ -60,6 +60,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\PaperlessREST\PaperlessREST.csproj"/>
+		<ProjectReference Include="..\Paperless.TestSupport\Paperless.TestSupport.csproj"/>
 	</ItemGroup>
 
 
