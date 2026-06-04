@@ -1,6 +1,7 @@
 using Nuke.Common;
 using Nuke.Common.Tooling;
 using Serilog;
+using System;
 
 namespace Build.Components;
 
@@ -121,6 +122,6 @@ internal interface IDockerCompose : IHasSolution
 		process.AssertWaitForExit();
 
 		if (process.ExitCode != 0)
-			throw new System.InvalidOperationException($"docker {arguments} failed with exit code {process.ExitCode}");
+			throw new InvalidOperationException($"docker {arguments} failed with exit code {process.ExitCode}");
 	}
 }

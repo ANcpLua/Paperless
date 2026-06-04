@@ -1,5 +1,3 @@
-using PaperlessREST.Features.BatchProcessing.Application;
-
 namespace PaperlessREST.Tests.Unit;
 
 /// <summary>

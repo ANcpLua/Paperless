@@ -134,7 +134,7 @@ public sealed class SharedRestContainerFixture : IAsyncLifetime
 	private sealed class ConfiguredWebApplicationFactory(string postgresConnectionString)
 		: WebApplicationFactory<Program>
 	{
-		protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+		protected override void ConfigureWebHost(IWebHostBuilder builder)
 		{
 			builder.ConfigureTestServices(services =>
 			{

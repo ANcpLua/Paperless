@@ -1,8 +1,6 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
-using PaperlessREST.Features.DocumentManagement.Application;
+﻿#nullable disable
 
-#nullable disable
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PaperlessREST.Features.DocumentManagement.Infrastructure.Persistence.Migrations
 {

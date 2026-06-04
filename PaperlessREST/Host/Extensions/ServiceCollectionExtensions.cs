@@ -138,7 +138,7 @@ public static class ServiceCollectionExtensions
 
 			services.AddExceptionHandler<GlobalExceptionHandler>();
 			services.AddProblemDetails(static options =>
-				options.CustomizeProblemDetails = ctx =>
+				options.CustomizeProblemDetails = static ctx =>
 				{
 					ctx.ProblemDetails.Extensions["trace_id"] = Activity.Current?.Id ?? ctx.HttpContext.TraceIdentifier;
 					ctx.ProblemDetails.Extensions["instance"] =
@@ -186,13 +186,13 @@ public static class ServiceCollectionExtensions
 			services.AddOutputCache(static options =>
 			{
 				// Document list: cache for 10 seconds, vary by query params
-				options.AddPolicy(CachePolicies.DocumentList, builder =>
+				options.AddPolicy(CachePolicies.DocumentList, static builder =>
 					builder.Expire(TimeSpan.FromSeconds(10))
 						.SetVaryByQuery("pageSize", "cursor")
 						.Tag("documents"));
 
 				// Document by ID: cache for 30 seconds, vary by route
-				options.AddPolicy(CachePolicies.DocumentById, builder =>
+				options.AddPolicy(CachePolicies.DocumentById, static builder =>
 					builder.Expire(TimeSpan.FromSeconds(30))
 						.SetVaryByRouteValue("id")
 						.Tag("documents"));
@@ -336,8 +336,8 @@ public static class ServiceCollectionExtensions
 			services.AddOpenApi(static o =>
 			{
 				o.CreateSchemaReferenceId =
-					t => t.Type.IsEnum ? null : OpenApiOptions.CreateDefaultSchemaReferenceId(t);
-				o.AddDocumentTransformer((doc, _, _) =>
+					static t => t.Type.IsEnum ? null : OpenApiOptions.CreateDefaultSchemaReferenceId(t);
+				o.AddDocumentTransformer(static (doc, _, _) =>
 				{
 					doc.Info.Title = "Paperless OCR API";
 					doc.Info.Version = "v1";

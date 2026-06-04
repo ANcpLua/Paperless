@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace PaperlessServices.Tests;
 
 public static class FakeLoggerExtensions

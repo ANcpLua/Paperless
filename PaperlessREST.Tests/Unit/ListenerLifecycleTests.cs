@@ -11,10 +11,10 @@
 // true. Completion is signalled via TaskCompletionSource set inside the fake consumer's
 // DisposeAsync (which only fires after `await using` unwinds — i.e. after the foreach loop).
 
-using System.Runtime.CompilerServices;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
+using System.Runtime.CompilerServices;
 
 namespace PaperlessREST.Tests.Unit;
 
@@ -30,7 +30,7 @@ public sealed class ListenerLifecycleTests
 		// Arrange
 		GenAiHarness h = new();
 		var documentId = Guid.CreateVersion7();
-		GenAIEvent evt = new(documentId, "summary text", TimeProvider.System.GetUtcNow(), null);
+		GenAIEvent evt = new(documentId, "summary text", TimeProvider.System.GetUtcNow());
 
 		TaskCompletionSource disposed = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -191,9 +191,9 @@ public sealed class ListenerLifecycleTests
 		var id1 = Guid.CreateVersion7();
 		var id2 = Guid.CreateVersion7();
 		var id3 = Guid.CreateVersion7();
-		GenAIEvent e1 = new(id1, "first", TimeProvider.System.GetUtcNow(), null);
-		GenAIEvent e2 = new(id2, "second", TimeProvider.System.GetUtcNow(), null);
-		GenAIEvent e3 = new(id3, "third", TimeProvider.System.GetUtcNow(), null);
+		GenAIEvent e1 = new(id1, "first", TimeProvider.System.GetUtcNow());
+		GenAIEvent e2 = new(id2, "second", TimeProvider.System.GetUtcNow());
+		GenAIEvent e3 = new(id3, "third", TimeProvider.System.GetUtcNow());
 
 		TaskCompletionSource firstAckObserved = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -254,8 +254,8 @@ public sealed class ListenerLifecycleTests
 		GenAiHarness h = new();
 		var id1 = Guid.CreateVersion7();
 		var id2 = Guid.CreateVersion7();
-		GenAIEvent e1 = new(id1, "first", TimeProvider.System.GetUtcNow(), null);
-		GenAIEvent e2 = new(id2, "second", TimeProvider.System.GetUtcNow(), null);
+		GenAIEvent e1 = new(id1, "first", TimeProvider.System.GetUtcNow());
+		GenAIEvent e2 = new(id2, "second", TimeProvider.System.GetUtcNow());
 
 		TaskCompletionSource firstAckObserved = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		TaskCompletionSource disposed = new(TaskCreationOptions.RunContinuationsAsynchronously);
