@@ -10,18 +10,18 @@ public sealed class PaperlessApiClient(HttpClient http)
 {
     public const long MaxUploadBytes = 50L * 1024 * 1024; // matches nginx client_max_body_size 50m
 
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions s_json = new(JsonSerializerDefaults.Web);
 
     public async Task<IReadOnlyList<DocumentDto>> GetDocumentsAsync(CancellationToken ct = default)
     {
-        var page = await http.GetFromJsonAsync<PaginatedDocumentsResponse>("/api/v1/documents", Json, ct);
+        var page = await http.GetFromJsonAsync<PaginatedDocumentsResponse>("/api/v1/documents", s_json, ct);
         return page?.Items ?? [];
     }
 
     public async Task<IReadOnlyList<DocumentDto>> SearchAsync(string query, int limit = 50, CancellationToken ct = default)
     {
         var url = $"/api/v1/documents/search?query={Uri.EscapeDataString(query)}&limit={limit}";
-        var hits = await http.GetFromJsonAsync<List<DocumentSearchResultDto>>(url, Json, ct);
+        var hits = await http.GetFromJsonAsync<List<DocumentSearchResultDto>>(url, s_json, ct);
         return hits?.ConvertAll(static h => new DocumentDto
         {
             Id = h.Id,
@@ -44,7 +44,7 @@ public sealed class PaperlessApiClient(HttpClient http)
         using var resp = await http.PostAsync("/api/v1/documents", content, ct);
         if (resp.IsSuccessStatusCode)
         {
-            var created = await resp.Content.ReadFromJsonAsync<CreateDocumentResponse>(Json, ct);
+            var created = await resp.Content.ReadFromJsonAsync<CreateDocumentResponse>(s_json, ct);
             return (created, null);
         }
 
