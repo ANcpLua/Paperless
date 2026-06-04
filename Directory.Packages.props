@@ -35,6 +35,7 @@
 
     <!-- Microsoft.Extensions.* runtime line (10.0.x cadence) -->
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="$(MicrosoftExtensionsHttpResilienceVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="$(MicrosoftExtensionsVersion)" />
     <!-- Testing/telemetry extensions track a faster 10.6.x cadence -->

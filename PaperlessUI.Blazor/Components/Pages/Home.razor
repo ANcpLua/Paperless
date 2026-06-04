@@ -1,7 +1,216 @@
-﻿@page "/"
+@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Forms
+@using PaperlessUI.Blazor.Models
+@using PaperlessUI.Blazor.Services
+@using Polly.Timeout
+@inject PaperlessApiClient Api
+@inject DocumentEventStream Events
+@implements IAsyncDisposable
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Paperless OCR System</PageTitle>
 
-<h1>Hello, world!</h1>
+<div data-bs-theme="@_theme" class="container-xl py-4">
+    <button class="btn btn-outline-secondary position-fixed top-0 end-0 m-3" style="z-index:1050"
+            title="Toggle light / dark" @onclick="ToggleTheme">
+        <i class="bi @(_theme == "dark" ? "bi-sun" : "bi-moon")"></i>
+    </button>
 
-Welcome to your new app.
+    @if (!Events.Connected)
+    {
+        <div class="alert alert-danger position-fixed top-0 end-0 m-3" style="margin-top:60px!important">
+            <i class="bi bi-wifi-off"></i> Live Updates Disconnected
+        </div>
+    }
+
+    <h1 class="text-center mb-4"><i class="bi bi-file-earmark-text"></i> Paperless OCR System</h1>
+
+    <div class="border border-2 border-primary rounded p-4 text-center bg-body-tertiary mb-4 position-relative">
+        <i class="bi bi-cloud-upload fs-1 text-primary"></i>
+        <h4 class="mt-3 text-body">Upload PDF Documents</h4>
+        <p class="text-body-secondary">Drag and drop PDF files here or click to browse</p>
+        <InputFile OnChange="OnFilesSelected" multiple accept=".pdf"
+                   class="position-absolute top-0 start-0 w-100 h-100 opacity-0"
+                   style="cursor:pointer" />
+    </div>
+
+    <div class="input-group mb-4">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input class="form-control" placeholder="Search documents…" @bind="_searchText"
+               @bind:event="oninput" @onkeydown="OnSearchKey" />
+        <button class="btn btn-outline-primary" @onclick="RunSearch">Search</button>
+        <button class="btn btn-outline-secondary" @onclick="ClearSearch">Clear</button>
+    </div>
+
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Batch Processing:</strong> Monitor batch jobs via the
+        <a class="alert-link" href="/hangfire">Hangfire Dashboard</a>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Documents</h3>
+        <button class="btn btn-sm btn-outline-primary" @onclick="Refresh">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+
+    @if (_documents.Count == 0)
+    {
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1"></i>
+            <p>@(string.IsNullOrEmpty(_activeSearch) ? "No documents uploaded yet" : "No documents match your search")</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var doc in _documents)
+        {
+            <DocumentCard Doc="doc" OnDelete="Delete" />
+        }
+    }
+</div>
+
+<div class="position-fixed bottom-0 end-0 m-3" style="z-index:1050; max-width:350px">
+    @foreach (var toast in _toasts)
+    {
+        <div class="alert alert-@toast.Level alert-dismissible show mb-2">
+            @toast.Message
+            <button class="btn-close" @onclick="() => _toasts.Remove(toast)"></button>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly List<DocumentDto> _documents = [];
+    private readonly List<Toast> _toasts = [];
+    private string _searchText = "";
+    private string _activeSearch = "";
+    private string _theme = "light";
+
+    private sealed record Toast(string Message, string Level);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Events.OnChanged += HandleChanged;
+        Events.Start();
+        await ReloadAsync();
+    }
+
+    private void ToggleTheme() => _theme = _theme == "dark" ? "light" : "dark";
+
+    // SSE callback — runs off the render thread, so marshal onto the circuit.
+    // Signature matches DocumentEventStream's `event EventHandler? OnChanged` (CA1003-clean).
+    private void HandleChanged(object? sender, EventArgs e) => _ = InvokeAsync(async () =>
+    {
+        await ReloadAsync();
+        StateHasChanged();
+    });
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            var docs = string.IsNullOrEmpty(_activeSearch)
+                ? await Api.GetDocumentsAsync()
+                : await Api.SearchAsync(_activeSearch);
+            _documents.Clear();
+            _documents.AddRange(docs);
+        }
+        catch (HttpRequestException ex)
+        {
+            // Transient network/HTTP fault — surface as toast, keep the existing list.
+            Notify($"Failed to load documents: {ex.Message}", "danger");
+        }
+        catch (TimeoutRejectedException ex)
+        {
+            // Resilience pipeline timed out (commonly: API still starting up on first load).
+            Notify($"Failed to load documents: {ex.Message}", "danger");
+        }
+    }
+
+    private async Task Refresh()
+    {
+        await ReloadAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles(maximumFileCount: 20))
+        {
+            if (!string.Equals(file.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                Notify($"{file.Name} is not a PDF", "warning");
+                continue;
+            }
+
+            var (doc, error) = await Api.UploadAsync(file);
+            if (error is not null)
+            {
+                Notify($"Failed: {error}", "danger");
+                continue;
+            }
+
+            if (doc is not null && !_documents.Exists(d => d.Id == doc.Id))
+            {
+                _documents.Insert(0, new DocumentDto
+                {
+                    Id = doc.Id, FileName = doc.FileName, Status = doc.Status, CreatedAt = doc.CreatedAt
+                });
+            }
+
+            Notify($"Uploaded {file.Name}", "success");
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task RunSearch()
+    {
+        _activeSearch = _searchText.Trim();
+        await ReloadAsync();
+        StateHasChanged();
+    }
+
+    private async Task ClearSearch()
+    {
+        _searchText = "";
+        _activeSearch = "";
+        await ReloadAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnSearchKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await RunSearch();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        if (await Api.DeleteAsync(id))
+        {
+            _documents.RemoveAll(d => d.Id == id);
+            Notify("Document deleted", "success");
+        }
+        else
+        {
+            Notify("Delete failed", "danger");
+        }
+        StateHasChanged();
+    }
+
+    private void Notify(string message, string level)
+    {
+        var toast = new Toast(message, level);
+        _toasts.Add(toast);
+        _ = Task.Delay(TimeSpan.FromSeconds(4)).ContinueWith(_ =>
+            InvokeAsync(() => { _toasts.Remove(toast); StateHasChanged(); }));
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Events.OnChanged -= HandleChanged;
+        return ValueTask.CompletedTask; // the scoped DocumentEventStream is disposed with the circuit
+    }
+}

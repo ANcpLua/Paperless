@@ -20,20 +20,17 @@ ENV DOCKER_BUILD=true
 WORKDIR /src
 
 # Root-level MSBuild + NuGet configuration must be present BEFORE restore so:
-#   - global.json's msbuild-sdks section resolves ANcpLua.NET.Sdk.Web 3.4.32
+#   - global.json's msbuild-sdks section resolves ANcpLua.NET.Sdk.Web
 #   - nuget.config clears default sources and adds nuget.org explicitly
 #   - Directory.Packages.props (CPM) + Version.props supply central versions
 COPY ["global.json", "nuget.config", "Directory.Packages.props", "Version.props", "./"]
 
-# Copy project files for restore. Paperless.Contracts is a ProjectReference
-# from PaperlessREST.csproj, so its csproj must exist in the build context
-# before restore touches PaperlessREST.csproj.
-COPY ["Paperless.Contracts/Paperless.Contracts.csproj", "Paperless.Contracts/"]
+# Copy the project file and restore. (Paperless.Contracts was folded into
+# PaperlessREST in #39 — there is no separate Contracts project to copy.)
 COPY ["PaperlessREST/PaperlessREST.csproj", "PaperlessREST/"]
 RUN dotnet restore "PaperlessREST/PaperlessREST.csproj"
 
-# Copy source files (REST + the referenced Contracts project)
-COPY ["Paperless.Contracts/", "Paperless.Contracts/"]
+# Copy source files
 COPY ["PaperlessREST/", "PaperlessREST/"]
 
 WORKDIR "/src/PaperlessREST"

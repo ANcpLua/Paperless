@@ -103,9 +103,9 @@ services:
             - "80:80"
         volumes:
             - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
-            - ./PaperlessREST/wwwroot:/usr/share/nginx/html:ro
         depends_on:
             paperless-rest: { condition: service_started }
+            paperless-blazor: { condition: service_started }
         environment:
             TZ: ${TZ}
         healthcheck:
@@ -152,6 +152,25 @@ services:
             - ./PaperlessREST/sample-data/input:${BATCH__INPUTPATH}
             - ./PaperlessREST/sample-data/archive:${BATCH__ARCHIVEPATH}
             - ./PaperlessREST/sample-data/error:${BATCH__ERRORPATH}
+
+    paperless-blazor:
+        container_name: paperless-blazor
+        image: ${PAPERLESS_BLAZOR_IMAGE:-paperless-blazor:latest}
+        build:
+            context: .
+            dockerfile: PaperlessUI.Blazor/Dockerfile
+        depends_on:
+            paperless-rest: { condition: service_started }
+            aspire-dashboard: { condition: service_started }
+        environment:
+            ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+            ASPNETCORE_URLS: http://+:8080
+            Paperless__ApiBaseUrl: http://paperless-rest:8080
+            # OTel env mirrors the sibling services for consistency (no OTel SDK is
+            # wired in any app yet, so these are currently inert — kept aligned).
+            OTEL_EXPORTER_OTLP_ENDPOINT: http://aspire-dashboard:18889
+            OTEL_SERVICE_NAME: paperless-blazor
+            TZ: ${TZ}
 
     paperless-services:
         container_name: paperless-services
