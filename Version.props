@@ -38,7 +38,7 @@
     <TestcontainersVersion>4.11.0</TestcontainersVersion>
 
     <!-- Domain libraries -->
-    <CreatePdfNETVersion>3.0.4</CreatePdfNETVersion>
+    <CreatePdfNETVersion>3.0.5</CreatePdfNETVersion>
     <DotNetEnvVersion>3.2.0</DotNetEnvVersion>
     <ElasticClientsElasticsearchVersion>9.4.0</ElasticClientsElasticsearchVersion>
     <ErrorOrXVersion>5.3.0</ErrorOrXVersion>
