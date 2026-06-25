@@ -1,11 +1,14 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
+import { DocumentsService } from '../../features/documents/data/documents.service';
+import { ThemeService } from '../../core/theme/theme.service';
 
 @Component({
   selector: 'app-navbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive],
   templateUrl: './app-navbar.component.html',
-  styleUrl: './app-navbar.component.css',
 })
-export class AppNavbarComponent {}
+export class AppNavbarComponent {
+  protected readonly theme = inject(ThemeService);
+  protected readonly docs = inject(DocumentsService);
+}

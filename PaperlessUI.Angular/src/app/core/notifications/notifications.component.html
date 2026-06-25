@@ -1,0 +1,17 @@
+<div
+  class="position-fixed bottom-0 end-0 m-3"
+  style="z-index: 1050; max-width: 350px"
+  data-testid="notifications"
+>
+  @for (n of service.notifications(); track n.id) {
+    <div class="alert alert-{{ n.type }} alert-dismissible fade show" role="alert">
+      <span>{{ n.message }}</span>
+      <button
+        class="btn-close"
+        type="button"
+        aria-label="Close"
+        (click)="service.dismiss(n.id)"
+      ></button>
+    </div>
+  }
+</div>

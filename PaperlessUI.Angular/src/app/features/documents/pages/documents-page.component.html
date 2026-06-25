@@ -1,4 +1,73 @@
-<section class="documents-page">
-  <h1>Documents</h1>
-  <p>Document list lands here. Backend wiring follows in the next PR once <code>openapi-typescript</code> generates the contract.</p>
-</section>
+<div class="container-xl py-4">
+  <h1 class="text-center mb-4">
+    <i class="bi bi-file-earmark-text"></i> Paperless OCR System
+  </h1>
+
+  <app-upload-zone (filesSelected)="onFiles($event)" />
+
+  <div class="input-group mb-4">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <label class="visually-hidden" for="searchInput">Search documents</label>
+    <input
+      id="searchInput"
+      class="form-control"
+      type="text"
+      placeholder="Search documents…"
+      data-testid="search-input"
+      [value]="searchTerm()"
+      (input)="searchTerm.set($any($event.target).value)"
+      (keyup.enter)="onSearch()"
+    />
+    <button class="btn btn-outline-primary" type="button" data-testid="search-btn" (click)="onSearch()">
+      Search
+    </button>
+    <button class="btn btn-outline-secondary" type="button" data-testid="clear-btn" (click)="onClear()">
+      Clear
+    </button>
+  </div>
+
+  <div class="alert alert-info mb-4" role="alert">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-info-circle me-2"></i>
+      <div>
+        <strong>Batch Processing:</strong> Monitor and manage batch jobs via the
+        <a class="alert-link" href="/hangfire">Hangfire Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Documents</h3>
+    <button
+      class="btn btn-sm btn-outline-primary"
+      type="button"
+      data-testid="refresh-btn"
+      (click)="docs.load()"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <div data-testid="documents-container">
+    @if (docs.loading()) {
+      <div class="text-center text-muted py-5">
+        <div class="spinner-border" role="status"></div>
+      </div>
+    } @else if (docs.visible().length === 0) {
+      <div class="text-center text-muted py-5" data-testid="empty-state">
+        <i class="bi bi-inbox fs-1"></i>
+        <p>
+          {{
+            docs.currentSearch()
+              ? 'No documents match your search'
+              : 'No documents uploaded yet'
+          }}
+        </p>
+      </div>
+    } @else {
+      @for (doc of docs.visible(); track doc.id) {
+        <app-document-card [doc]="doc" (delete)="docs.remove($event)" />
+      }
+    }
+  </div>
+</div>

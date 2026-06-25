@@ -13,7 +13,7 @@
   <PropertyGroup>
     <FrontendRoot>$(MSBuildProjectDirectory)/</FrontendRoot>
     <PnpmExe Condition="'$(PnpmExe)' == ''">pnpm</PnpmExe>
-    <DistDir>$(FrontendRoot)dist/paperless-ui-angular</DistDir>
+    <DistDir>$(FrontendRoot)dist/PaperlessUI.Angular</DistDir>
     <RunFrontendOnBuild Condition="'$(RunFrontendOnBuild)' == ''">false</RunFrontendOnBuild>
   </PropertyGroup>
 
