@@ -26,7 +26,7 @@
 		<PackageReference Include="Nuke.Common" Version="10.1.0"/>
 		<PackageReference Include="Nuke.Components" Version="10.1.0"/>
 		<PackageReference Include="Nuke.Tooling.Generator" Version="10.1.0" />
-		<PackageReference Include="DotCov.Nuke" Version="0.1.1" />
+		<PackageReference Include="DotCov.Nuke" Version="0.3.0" />
 		<!-- Transitive security overrides through Nuke.Common's NuGet.Resolver chain:
 		     NuGet.Packaging 6.12.1 (GHSA-g4vj-cjjj-v7hg) and
 		     System.Security.Cryptography.Xml 9.0.0 (GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf).
