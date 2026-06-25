@@ -65,7 +65,23 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "coverageReporters": ["text-summary", "text", "html", "lcovonly"],
+            "coverageExclude": [
+              "src/main.ts",
+              "src/app/app.config.ts",
+              "src/app/app.routes.ts",
+              "src/app/core/api/generated/**"
+            ],
+            "coverageThresholds": {
+              "perFile": true,
+              "statements": 100,
+              "branches": 100,
+              "functions": 100,
+              "lines": 100
+            }
+          }
         }
       }
     }
