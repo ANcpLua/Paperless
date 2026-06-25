@@ -70,9 +70,11 @@ bld/
 .env.test.local
 .env.production.local
 
-# Docker volumes and data
+# Docker volumes and data (root-anchored: these are runtime volume dirs at the repo
+# root, not source folders — an unanchored `data/` also swallowed PaperlessUI.Angular's
+# features/documents/data/ source).
 postgres-data/
-data/
+/data/
 media/
 
 # Temporary files
