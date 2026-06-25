@@ -10,7 +10,7 @@ services:
     # binding to anything other than 127.0.0.1.
     aspire-dashboard:
         container_name: paperless-dashboard
-        image: mcr.microsoft.com/dotnet/aspire-dashboard:latest@sha256:cb04a30c7b815476474184564635f60c206d78855261731d8d99a6549bbf483a
+        image: mcr.microsoft.com/dotnet/aspire-dashboard:latest@sha256:1d584e33121714f6d41442339f847b6e2af7ae8193d3575757459566c83aaadd
         ports:
             - "18888:18888"   # Dashboard UI
             - "4317:18889"    # OTLP gRPC endpoint
