@@ -61,14 +61,13 @@ public class SharedContainerFixture : ContainerFixtureBase
 
 	protected override async ValueTask DisposeSutAsync()
 	{
-		// _host is assigned in ConfigureSutAsync. If init throws before that line
-		// (e.g. a container wait-strategy times out), _host is still null; the base
-		// guards this call so a naive _host.StopAsync() NRE cannot mask the real
-		// InitializeAsync exception in xUnit's collection-fixture cleanup report.
+		// Null-guarded because a failed InitializeAsync (e.g. a container wait-strategy
+		// timeout) returns before _host is assigned. When the host exists, stop it
+		// gracefully then dispose it — no best-effort catch: a shutdown fault is real
+		// and must surface, not hide behind the init exception.
 		if (_host is not null)
 		{
-			try { await _host.StopAsync(); }
-			catch { /* best-effort: don't mask the InitializeAsync exception */ }
+			await _host.StopAsync();
 			_host.Dispose();
 		}
 	}

@@ -4,7 +4,7 @@ namespace Paperless.TestSupport;
 ///     Template-method base for the integration-test container fixtures. Owns the
 ///     shared container lifecycle (RabbitMQ + MinIO + Elasticsearch, plus an optional
 ///     Postgres), MinIO bucket creation, Elasticsearch readiness polling, the
-///     Elasticsearch document/search polling helpers, and guarded teardown.
+///     Elasticsearch document/search polling helpers, and ordered teardown.
 ///     <para>
 ///         Derived fixtures supply the system-under-test by overriding
 ///         <see cref="ConfigureSutAsync" /> (which must assign <see cref="Services" />)
@@ -73,17 +73,18 @@ public abstract class ContainerFixtureBase : IAsyncLifetime
 
 	public async ValueTask DisposeAsync()
 	{
-		// Guard SUT teardown and swallow per-container Dispose failures so that an
-		// exception thrown during InitializeAsync (e.g. a wait-strategy timeout) is
-		// not masked by a secondary NRE/dispose error during xUnit fixture cleanup.
-		try { await DisposeSutAsync(); } catch { /* best-effort */ }
-
-		try { await _rabbit.DisposeAsync(); } catch { /* best-effort */ }
-		try { await _minio.DisposeAsync(); } catch { /* best-effort */ }
-		try { await _elastic.DisposeAsync(); } catch { /* best-effort */ }
+		// SUT first (it consumes the containers), then the infra. Plain awaits, no
+		// best-effort catch: a teardown failure is a real fault that must surface.
+		// DisposeSutAsync overrides null-guard their own SUT, so a failed
+		// InitializeAsync cannot NRE here, and Testcontainers' Ryuk reaper cleans up
+		// any container a mid-teardown throw leaves running.
+		await DisposeSutAsync();
+		await _rabbit.DisposeAsync();
+		await _minio.DisposeAsync();
+		await _elastic.DisposeAsync();
 		if (_postgres is not null)
 		{
-			try { await _postgres.DisposeAsync(); } catch { /* best-effort */ }
+			await _postgres.DisposeAsync();
 		}
 	}
 
