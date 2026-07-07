@@ -685,55 +685,55 @@ knowledge_base:
     usage: enabled
   linked_repositories:
   - repository: ANcpLua/ANcpLua.Agents
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/ANcpLua.Analyzers
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/ANcpLua.NET.Sdk
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
-  - repository: O-ANcppLua/ANcpLua.OtelConventions.Api
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+  - repository: ANcpLua/ANcpLua.OtelConventions.Api
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/ANcpLua.Roslyn.Utilities
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/Arqio
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/BSc_2025_Alexander_Nachtmann
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/C64AIToolChain
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/ErrorOrX
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
-  - repository: O-ANcppLua/Nuke.OpenTelemetry.Conventions
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+  - repository: ANcpLua/Nuke.OpenTelemetry.Conventions
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/ancplua-claude-plugins
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/dotcov
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/nhmw-digital-collection
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
-  - repository: O-ANcppLua/qyl
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+  - repository: ANcpLua/qyl
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/safe-autoresearch
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/typespec-otel-semconv
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
   - repository: ANcpLua/yt-transcript
-    instructions: Related ANcpLua/O-ANcppLua repository. Use for cross-repo API, package,
+    instructions: Related ANcpLua/ANcpLua repository. Use for cross-repo API, package,
       build, telemetry, and agent workflow context when reviewing changes.
 code_generation:
   docstrings:

@@ -1,0 +1,29 @@
+<div
+  class="border border-2 rounded p-4 text-center bg-body-tertiary mb-4"
+  [class.border-primary]="!dragging()"
+  [class.border-info]="dragging()"
+  [class.bg-info]="dragging()"
+  [class.bg-opacity-10]="dragging()"
+  data-testid="upload-zone"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave()"
+  (drop)="onDrop($event)"
+>
+  <i class="bi bi-cloud-upload fs-1 text-primary"></i>
+  <h4 class="mt-3 text-body">Upload PDF Documents</h4>
+  <p class="text-body-secondary">Drag and drop PDF files here or click to browse</p>
+  <label class="visually-hidden" for="fileInput">Choose PDF files</label>
+  <input
+    #fileInput
+    id="fileInput"
+    class="d-none"
+    type="file"
+    accept=".pdf"
+    multiple
+    data-testid="file-input"
+    (change)="onChange($event)"
+  />
+  <button class="btn btn-primary mt-2" type="button" (click)="browse()">
+    <i class="bi bi-folder-open"></i> Choose Files
+  </button>
+</div>

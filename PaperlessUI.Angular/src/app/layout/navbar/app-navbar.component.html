@@ -1,14 +1,25 @@
-<nav class="app-navbar">
-  <a class="app-navbar__brand" routerLink="/documents">Paperless</a>
-  <ul class="app-navbar__links">
-    <li>
-      <a routerLink="/documents" routerLinkActive="is-active">Documents</a>
-    </li>
-    <li>
-      <a routerLink="/upload" routerLinkActive="is-active">Upload</a>
-    </li>
-    <li>
-      <a routerLink="/search" routerLinkActive="is-active">Search</a>
-    </li>
-  </ul>
-</nav>
+<button
+  class="btn btn-outline-secondary position-fixed top-0 end-0 m-3"
+  style="z-index: 1050"
+  type="button"
+  aria-label="Toggle light / dark"
+  data-testid="theme-toggle"
+  (click)="theme.toggle()"
+>
+  <i
+    class="bi"
+    [class.bi-sun]="theme.theme() === 'dark'"
+    [class.bi-moon]="theme.theme() === 'light'"
+  ></i>
+</button>
+
+@if (docs.liveDisconnected()) {
+  <div
+    class="alert alert-danger position-fixed top-0 end-0 m-3"
+    style="margin-top: 60px !important"
+    role="alert"
+    data-testid="sse-status"
+  >
+    <i class="bi bi-wifi-off"></i> Live Updates Disconnected
+  </div>
+}
