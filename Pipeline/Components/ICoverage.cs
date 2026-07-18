@@ -81,7 +81,10 @@ internal interface ICoverage : ITest
 				ReportTypes.Cobertura,
 				ReportTypes.TextSummary,
 				ReportTypes.Badges)
-			.SetAssemblyFilters("-Microsoft.*", "-System.*", "-xunit.*", "-*.Tests")
+			// "-*.Tests" does not match Paperless.TestSupport, so the shared fixtures were
+			// reported as product code until [assembly: ExcludeFromCodeCoverage] was added
+			// there. That attribute is the mechanism; this pattern is the backstop.
+			.SetAssemblyFilters("-Microsoft.*", "-System.*", "-xunit.*", "-*.Tests", "-*.TestSupport")
 			.SetClassFilters("-*.Migrations.*", "-*.Generated.*", "-*+<*>d__*");
 
 		if (IsServerBuild && GitVersion is not null)

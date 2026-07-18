@@ -67,3 +67,4 @@ ignore:
   - "**/bin/**"
   - "PaperlessREST.Tests/**"            # test code
   - "PaperlessServices.Tests/**"
+  - "Paperless.TestSupport/**"          # shared test fixtures — infrastructure, not product
