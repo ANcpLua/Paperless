@@ -137,13 +137,7 @@ public static class ServiceCollectionExtensions
 				o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 			services.AddExceptionHandler<GlobalExceptionHandler>();
-			services.AddProblemDetails(static options =>
-				options.CustomizeProblemDetails = static ctx =>
-				{
-					ctx.ProblemDetails.Extensions["trace_id"] = Activity.Current?.Id ?? ctx.HttpContext.TraceIdentifier;
-					ctx.ProblemDetails.Extensions["instance"] =
-						$"{ctx.HttpContext.Request.Method} {ctx.HttpContext.Request.Path}";
-				});
+			services.AddProblemDetails();
 			services.ConfigureOptions<ProblemDetailsEnricher>();
 
 			services.AddHealthChecks();
@@ -238,15 +232,24 @@ public static class ServiceCollectionExtensions
 		{
 			services.AddOptionsWithValidateOnStart<MinioOptions>()
 				.BindConfiguration(MinioOptions.SectionName)
-				.ValidateDataAnnotations();
+				.ValidateDataAnnotations()
+				.Validate(
+					static options => options.Endpoint is { IsAbsoluteUri: true } endpoint &&
+					                  (endpoint.Scheme == Uri.UriSchemeHttp ||
+					                   endpoint.Scheme == Uri.UriSchemeHttps) &&
+					                  string.IsNullOrEmpty(endpoint.UserInfo) &&
+					                  endpoint.AbsolutePath == "/" &&
+					                  string.IsNullOrEmpty(endpoint.Query) &&
+					                  string.IsNullOrEmpty(endpoint.Fragment),
+					$"{MinioOptions.SectionName}:Endpoint must be an absolute HTTP or HTTPS origin");
 
 			services.AddSingleton<IMinioClient>(static sp =>
 			{
 				var opts = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
 				return new MinioClient()
-					.WithEndpoint(opts.EndpointUri.Host, opts.EndpointUri.Port)
+					.WithEndpoint(opts.Endpoint.Host, opts.Endpoint.Port)
 					.WithCredentials(opts.AccessKey, opts.SecretKey)
-					.WithSSL(opts.UseSsl)
+					.WithSSL(opts.Endpoint.Scheme == Uri.UriSchemeHttps)
 					.Build();
 			});
 

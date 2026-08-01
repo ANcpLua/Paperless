@@ -12,15 +12,8 @@ internal readonly record struct ExceptionInfo(int StatusCode, LogLevel Level, st
 		{
 			ValidationException => new ExceptionInfo(StatusCodes.Status400BadRequest, LogLevel.Information,
 				"validation_error"),
-			ArgumentException or InvalidOperationException or JsonException or BadHttpRequestException
-				=> new ExceptionInfo(StatusCodes.Status400BadRequest, LogLevel.Warning, "bad_request"),
-			UnauthorizedAccessException => new ExceptionInfo(StatusCodes.Status403Forbidden, LogLevel.Warning,
-				"forbidden"),
-			KeyNotFoundException or FileNotFoundException
-				=> new ExceptionInfo(StatusCodes.Status404NotFound, LogLevel.Information, "not_found"),
-			OperationCanceledException => new ExceptionInfo(HttpStatusCodes.ClientClosedRequest, LogLevel.Debug,
-				"cancelled"),
-			TimeoutException => new ExceptionInfo(StatusCodes.Status504GatewayTimeout, LogLevel.Error, "timeout"),
+			BadHttpRequestException => new ExceptionInfo(StatusCodes.Status400BadRequest, LogLevel.Warning,
+				"bad_request"),
 			_ => new ExceptionInfo(StatusCodes.Status500InternalServerError, LogLevel.Error, "internal_error")
 		};
 }
@@ -59,21 +52,42 @@ public sealed class GlobalExceptionHandler(
 			HttpContext = context,
 			Exception = exception,
 			ProblemDetails = exception is ValidationException validationEx
-				? new HttpValidationProblemDetails(
-					new Dictionary<string, string[]>
-					{
-						{
-							validationEx.ValidationResult.MemberNames.FirstOrDefault()!,
-							[validationEx.ValidationResult.ErrorMessage!]
-						}
-					})
+				? CreateValidationProblemDetails(validationEx, info)
+				: new ProblemDetails
 				{
-					Status = info.StatusCode, Type = $"urn:paperless:error:{info.Code}"
+					Status = info.StatusCode,
+					Type = $"urn:paperless:error:{info.Code}",
+					Detail = exception is BadHttpRequestException ? "The request was invalid." : null
 				}
-				: new ProblemDetails { Status = info.StatusCode, Type = $"urn:paperless:error:{info.Code}" }
 		};
 
 		return await problemDetails.TryWriteAsync(problemDetailsContext);
+	}
+
+	private static HttpValidationProblemDetails CreateValidationProblemDetails(
+		ValidationException exception,
+		ExceptionInfo info)
+	{
+		var message = exception.ValidationResult.ErrorMessage ?? exception.Message;
+		Dictionary<string, string[]> errors = [];
+
+		foreach (var memberName in exception.ValidationResult.MemberNames
+			         .Where(static name => !string.IsNullOrWhiteSpace(name))
+			         .Distinct(StringComparer.Ordinal))
+		{
+			errors[memberName] = [message];
+		}
+
+		if (errors.Count == 0)
+		{
+			errors[string.Empty] = [message];
+		}
+
+		return new HttpValidationProblemDetails(errors)
+		{
+			Status = info.StatusCode,
+			Type = $"urn:paperless:error:{info.Code}"
+		};
 	}
 }
 
@@ -87,8 +101,10 @@ public sealed class ProblemDetailsEnricher(
 	{
 		var pd = context.ProblemDetails;
 		var httpContext = context.HttpContext;
+		bool isDevelopment = env.IsDevelopment();
 
 		pd.Extensions["trace_id"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+		pd.Extensions["instance"] = $"{httpContext.Request.Method} {httpContext.Request.Path}";
 		pd.Extensions["timestamp"] = timeProvider.GetUtcNow().ToString("O");
 
 		if (httpContext.GetEndpoint() is RouteEndpoint { RoutePattern.RawText: var pattern })
@@ -96,30 +112,30 @@ public sealed class ProblemDetailsEnricher(
 			pd.Extensions["route"] = pattern;
 		}
 
-		pd.Detail = (pd, context.Exception) switch
+		if (pd is HttpValidationProblemDetails validation && validation.Errors.Count > 0)
 		{
-			(HttpValidationProblemDetails { Errors.Count: > 0 } validation, _) =>
-				$"Validation failed with {validation.Errors.Values.Sum(arr => arr.Length)} error(s).",
-			(_, { } ex) when env.IsDevelopment() => ex.Message,
-			({ Status: >= 500 }, _) when !env.IsDevelopment() =>
-				"An internal error occurred. Please contact support if the problem persists.",
-			(_, { } ex) => ex.Message,
-			_ => pd.Detail
-		};
-
-		if (!env.IsDevelopment() || context.Exception is not ({ InnerException: not null } or { StackTrace: not null }))
+			pd.Detail = $"Validation failed with {validation.Errors.Values.Sum(arr => arr.Length)} error(s).";
+		}
+		else if (isDevelopment && context.Exception is not null)
+		{
+			pd.Detail = context.Exception.Message;
+		}
+		else if (!isDevelopment && pd.Status >= StatusCodes.Status500InternalServerError)
+		{
+			pd.Detail = "An internal error occurred. Please contact support if the problem persists.";
+		}
+		var exception = context.Exception;
+		if (!isDevelopment || exception is null ||
+		    (exception.InnerException is null && exception.StackTrace is null))
 		{
 			return;
 		}
 
+		pd.Extensions["debug"] = new
 		{
-			var ex = context.Exception;
-			pd.Extensions["debug"] = new
-			{
-				exception_type = ex.GetType().FullName,
-				inner_exception = ex.InnerException?.Message,
-				stack_trace = ex.StackTrace
-			};
-		}
+			exception_type = exception.GetType().FullName,
+			inner_exception = exception.InnerException?.Message,
+			stack_trace = exception.StackTrace
+		};
 	}
 }

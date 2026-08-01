@@ -31,14 +31,13 @@ public sealed class BatchOrchestrator(
 		var paths = ClaimFiles();
 		int processed = 0, quarantined = 0;
 
-		switch (paths.Count)
+		if (paths.Count == 0)
 		{
-			case 0:
-				logger.LogDebug("Batch job '{JobId}' found no files", BatchOptions.JobId);
-				break;
-			case > 0:
-				logger.LogDebug("Batch job '{JobId}' processing {Count} file(s)", BatchOptions.JobId, paths.Count);
-				break;
+			logger.LogDebug("Batch job '{JobId}' found no files", BatchOptions.JobId);
+		}
+		else
+		{
+			logger.LogDebug("Batch job '{JobId}' processing {Count} file(s)", BatchOptions.JobId, paths.Count);
 		}
 
 		foreach (var path in paths)
@@ -100,14 +99,10 @@ public sealed class BatchOrchestrator(
 		}
 	}
 
-	internal async Task<bool> ProcessFileAsync(string path, CancellationToken ct)
+	private async Task<bool> ProcessFileAsync(string path, CancellationToken ct)
 	{
-		// Trim the .processing suffix only; .Replace would strip embedded occurrences
-		// in pathological filenames like "report.processing.xml.processing".
 		var fileName = Path.GetFileName(path);
-		var originalName = fileName.EndsWith(ProcessingExt, StringComparison.Ordinal)
-			? fileName[..^ProcessingExt.Length]
-			: fileName;
+		var originalName = fileName[..^ProcessingExt.Length];
 
 		logger.LogInformation("Processing file: {File}", originalName);
 

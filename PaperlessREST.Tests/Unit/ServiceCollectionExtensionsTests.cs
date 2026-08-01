@@ -26,7 +26,7 @@ public sealed class ServiceCollectionExtensionsTests
 		services.AddSingleton(client);
 		services.AddSingleton<IOptions<MinioOptions>>(Options.Create(new MinioOptions
 		{
-			Endpoint = "localhost:9000",
+			Endpoint = new Uri("http://localhost:9000"),
 			AccessKey = "k",
 			SecretKey = "s",
 			BucketName = Bucket
@@ -179,7 +179,7 @@ public sealed class ServiceCollectionExtensionsTests
 	{
 		MinioOptions opts = new()
 		{
-			Endpoint = "host:9000",
+			Endpoint = new Uri("http://host:9000"),
 			AccessKey = "k",
 			SecretKey = "s",
 			BucketName = "b"
@@ -241,12 +241,12 @@ public sealed class ServiceCollectionExtensionsTests
 		app.IsDev.Should().BeFalse();
 	}
 
-	// ──────────────────────────────────────────────────────────────────
 	// AddDependencies-backed lambdas (ProblemDetails, Hangfire, OpenApi, ApiExplorer)
 	// and MapEndpoints in Development environment.
-	// ──────────────────────────────────────────────────────────────────
 
-	private static WebApplicationBuilder CreateWiredBuilder(string environment)
+	private static WebApplicationBuilder CreateWiredBuilder(
+		string environment,
+		string minioEndpoint = "http://localhost:9000")
 	{
 		var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 		{
@@ -256,19 +256,19 @@ public sealed class ServiceCollectionExtensionsTests
 		{
 			["ConnectionStrings:PaperlessDb"] = "Host=localhost;Database=test;Username=u;Password=p",
 			["ConnectionStrings:Hangfire"] = "Host=localhost;Database=hf;Username=u;Password=p",
-			["RabbitMQ:Uri"] = "amqp://guest:guest@localhost:5672/",
-			["Storage:Minio:Endpoint"] = "localhost:9000",
+			["RabbitMQ:Uri"] = "amqp://localhost:5672/",
+			["Storage:Minio:Endpoint"] = minioEndpoint,
 			["Storage:Minio:AccessKey"] = "k",
 			["Storage:Minio:SecretKey"] = "s",
 			["Storage:Minio:BucketName"] = "b",
 			["Elasticsearch:Uri"] = "http://localhost:9200",
 			["Elasticsearch:DefaultIndex"] = "docs",
-			["BatchProcessing:InputPath"] = "/in",
-			["BatchProcessing:ArchivePath"] = "/arch",
-			["BatchProcessing:ErrorPath"] = "/err",
-			["BatchProcessing:FilePattern"] = "*.xml",
-			["BatchProcessing:CronExpression"] = "0 0 * * *",
-			["BatchProcessing:TimeZoneId"] = "UTC"
+			["Batch:InputPath"] = "/in",
+			["Batch:ArchivePath"] = "/arch",
+			["Batch:ErrorPath"] = "/err",
+			["Batch:FilePattern"] = "*.xml",
+			["Batch:CronExpression"] = "0 0 * * *",
+			["Batch:TimeZoneId"] = "UTC"
 		});
 		builder.AddDependencies();
 
@@ -286,6 +286,34 @@ public sealed class ServiceCollectionExtensionsTests
 			.OfType<RouteEndpoint>()
 			.Select(e => e.RoutePattern.RawText ?? string.Empty)
 			.ToHashSet(StringComparer.Ordinal);
+
+	[Theory]
+	[InlineData("http://minio.local:9000")]
+	[InlineData("https://minio.local:9443")]
+	public void AddDependencies_WithAbsoluteMinioEndpoint_BuildsClient(string endpoint)
+	{
+		var builder = CreateWiredBuilder("Production", endpoint);
+		using var app = builder.Build();
+
+		app.Services.GetRequiredService<IMinioClient>().Should().NotBeNull();
+	}
+
+	[Theory]
+	[InlineData("minio.local:9000")]
+	[InlineData("ftp://minio.local:21")]
+	[InlineData("http://user:password@minio.local:9000")]
+	[InlineData("http://minio.local:9000/prefix")]
+	[InlineData("http://minio.local:9000?region=local")]
+	[InlineData("http://minio.local:9000#fragment")]
+	public void AddDependencies_WithInvalidMinioEndpoint_RejectsOptions(string endpoint)
+	{
+		var builder = CreateWiredBuilder("Production", endpoint);
+		using var app = builder.Build();
+		Action resolve = () => _ = app.Services.GetRequiredService<IOptions<MinioOptions>>().Value;
+
+		resolve.Should().Throw<OptionsValidationException>()
+			.WithMessage("*absolute HTTP or HTTPS origin*");
+	}
 
 	[Fact]
 	public void MapEndpoints_WhenIsDev_RegistersDevelopmentOnlyRoutes()
@@ -361,34 +389,12 @@ public sealed class ServiceCollectionExtensionsTests
 		scalarOpts.Theme.Should().Be(ScalarTheme.Kepler);
 	}
 
-	private static Action<ProblemDetailsOptions> GetInlineProblemDetailsConfigure(IServiceCollection services)
-	{
-		// AddProblemDetails(opts => ...) registers a ConfigureNamedOptions<ProblemDetailsOptions>
-		// whose Action is the production lambda at L141-146. Find it (ImplementationInstance, NOT
-		// the ProblemDetailsEnricher transient).
-		foreach (var d in services)
-		{
-			if (d.ServiceType != typeof(IConfigureOptions<ProblemDetailsOptions>) ||
-			    d.ImplementationInstance is not ConfigureNamedOptions<ProblemDetailsOptions> named ||
-			    named.Action is null)
-			{
-				continue;
-			}
-
-			return named.Action;
-		}
-
-		throw new InvalidOperationException("Inline ProblemDetails configure action not found.");
-	}
-
 	[Fact]
-	public void AddDependencies_ProblemDetailsCustomization_PopulatesTraceIdAndInstanceFromHttpContextWhenNoActivity()
+	public void AddDependencies_ProblemDetailsCustomization_ResolvesCompleteProductionCallback()
 	{
 		var builder = CreateWiredBuilder("Production");
-		var configure = GetInlineProblemDetailsConfigure(builder.Services);
-
-		ProblemDetailsOptions opts = new();
-		configure(opts);
+		using var app = builder.Build();
+		var opts = app.Services.GetRequiredService<IOptions<ProblemDetailsOptions>>().Value;
 		opts.CustomizeProblemDetails.Should().NotBeNull();
 
 		var saved = Activity.Current;
@@ -399,10 +405,21 @@ public sealed class ServiceCollectionExtensionsTests
 			http.Request.Method = "POST";
 			http.Request.Path = "/api/v1/documents";
 			http.TraceIdentifier = "trace-from-context-42";
+			http.SetEndpoint(new RouteEndpoint(
+				_ => Task.CompletedTask,
+				RoutePatternFactory.Parse("/api/v1/documents"),
+				0,
+				new EndpointMetadataCollection(),
+				"UploadDocument"));
 			ProblemDetailsContext ctx = new()
 			{
 				HttpContext = http,
-				ProblemDetails = new ProblemDetails()
+				ProblemDetails = new ProblemDetails
+				{
+					Status = StatusCodes.Status500InternalServerError,
+					Detail = "sensitive implementation detail"
+				},
+				Exception = new InvalidOperationException("sensitive implementation detail")
 			};
 
 			opts.CustomizeProblemDetails!(ctx);
@@ -411,6 +428,13 @@ public sealed class ServiceCollectionExtensionsTests
 				.WhoseValue.Should().Be("trace-from-context-42");
 			ctx.ProblemDetails.Extensions.Should().ContainKey("instance")
 				.WhoseValue.Should().Be("POST /api/v1/documents");
+			ctx.ProblemDetails.Extensions.Should().ContainKey("timestamp")
+				.WhoseValue.Should().BeOfType<string>().Which.Should().NotBeNullOrWhiteSpace();
+			ctx.ProblemDetails.Extensions.Should().ContainKey("route")
+				.WhoseValue.Should().Be("/api/v1/documents");
+			ctx.ProblemDetails.Extensions.Should().NotContainKey("debug");
+			ctx.ProblemDetails.Detail.Should().Be(
+				"An internal error occurred. Please contact support if the problem persists.");
 		}
 		finally
 		{
@@ -422,10 +446,8 @@ public sealed class ServiceCollectionExtensionsTests
 	public void AddDependencies_ProblemDetailsCustomization_UsesActivityIdWhenAvailable()
 	{
 		var builder = CreateWiredBuilder("Production");
-		var configure = GetInlineProblemDetailsConfigure(builder.Services);
-
-		ProblemDetailsOptions opts = new();
-		configure(opts);
+		using var app = builder.Build();
+		var opts = app.Services.GetRequiredService<IOptions<ProblemDetailsOptions>>().Value;
 		opts.CustomizeProblemDetails.Should().NotBeNull();
 
 		using Activity activity = new("unit-test-span");

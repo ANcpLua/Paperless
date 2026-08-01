@@ -15,13 +15,11 @@ public class SharedContainerCollection : ICollectionFixture<SharedContainerFixtu
 	public const string Name = "SharedContainer";
 }
 
-public class SharedContainerFixture : ContainerFixtureBase
+public class SharedContainerFixture() : ContainerFixtureBase(usesPostgres: false)
 {
 	static SharedContainerFixture() => TestEnv.Load();
 
-	protected override bool UsesPostgres => false;
-
-	private IHost _host = null!;
+	private IHost? _host;
 
 	protected override async ValueTask ConfigureSutAsync()
 	{
@@ -34,7 +32,6 @@ public class SharedContainerFixture : ContainerFixtureBase
 			["Storage:Minio:AccessKey"] = MinioAccessKey,
 			["Storage:Minio:SecretKey"] = MinioSecretKey,
 			["Storage:Minio:BucketName"] = BucketName,
-			["Storage:Minio:UseSsl"] = Environment.GetEnvironmentVariable("MINIO_USE_SSL") ?? "false",
 			["Elasticsearch:Uri"] = ElasticsearchUri,
 			["Elasticsearch:DefaultIndex"] = IndexName
 		});
@@ -61,24 +58,28 @@ public class SharedContainerFixture : ContainerFixtureBase
 
 	protected override async ValueTask DisposeSutAsync()
 	{
-		// Null-guarded because a failed InitializeAsync (e.g. a container wait-strategy
-		// timeout) returns before _host is assigned. When the host exists, stop it
-		// gracefully then dispose it — no best-effort catch: a shutdown fault is real
-		// and must surface, not hide behind the init exception.
-		if (_host is not null)
+		if (_host is null) return;
+
+		try
 		{
 			await _host.StopAsync();
+		}
+		finally
+		{
 			_host.Dispose();
 		}
 	}
 
-	public async Task<string> UploadPdfAsync(string content)
+	public async Task<string> UploadPdfAsync(string content) =>
+		await UploadPdfAsync(await TestPdf.BytesAsync(content));
+
+	public async Task<string> UploadPdfAsync(byte[] content)
 	{
 		var storageKey =
 			$"documents/{TimeProvider.System.GetUtcNow():yyyy-MM}/{Guid.NewGuid():N}/test-{Guid.NewGuid():N}.pdf";
 		var client = Services.GetRequiredService<IMinioClient>();
 
-		await using var stream = new MemoryStream(await TestPdf.BytesAsync(content));
+		await using var stream = new MemoryStream(content, writable: false);
 		await client.PutObjectAsync(new PutObjectArgs()
 			.WithBucket(BucketName)
 			.WithObject(storageKey)

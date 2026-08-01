@@ -43,8 +43,8 @@ public abstract class DocumentServiceTestBase : IDisposable
 		_mocks.VerifyNoOtherCalls();
 	}
 
-	protected DocumentService CreateSut() =>
-		new(Repository.Object, Storage.Object, Search.Object, Publisher.Object, Clock, Logger);
+	protected DocumentService CreateSut(IDocumentStorageService? storage = null) =>
+		new(Repository.Object, storage ?? Storage.Object, Search.Object, Publisher.Object, Clock, Logger);
 
 	/// <summary>Asserts exactly one log entry at <paramref name="level" /> whose message contains every fragment.</summary>
 	protected void ShouldHaveLog(LogLevel level, params string[] fragments) =>

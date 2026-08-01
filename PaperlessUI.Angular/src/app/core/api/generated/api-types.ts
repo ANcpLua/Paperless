@@ -24,14 +24,6 @@ export interface components {
       cursor?: string | null;
     };
 
-    /** Query parameters for full-text document search. */
-    SearchQuery: {
-      /** 1..100 chars. */
-      query: string;
-      /** 1..100. Non-nullable C# `int` (server-defaulted to DefaultResultLimit). */
-      limit: number;
-    };
-
     /** Document metadata returned by the API (GET /documents, GET /documents/{id}). */
     DocumentDto: {
       /** uuid */
@@ -102,7 +94,6 @@ export interface components {
 }
 
 export type PaginationQuery = components['schemas']['PaginationQuery'];
-export type SearchQuery = components['schemas']['SearchQuery'];
 export type DocumentDto = components['schemas']['DocumentDto'];
 export type CreateDocumentResponse = components['schemas']['CreateDocumentResponse'];
 export type DocumentSearchResultDto = components['schemas']['DocumentSearchResultDto'];

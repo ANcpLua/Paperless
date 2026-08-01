@@ -9,9 +9,7 @@ public class CreatePdfExtractor(ILogger<CreatePdfExtractor> logger) : IPdfExtrac
 	{
 		try
 		{
-			cancellationToken.ThrowIfCancellationRequested();
 			string text = await Pdf.Load(pdfStream).OcrAsync(options: null, cancellationToken);
-			cancellationToken.ThrowIfCancellationRequested();
 
 			if (string.IsNullOrWhiteSpace(text))
 			{
@@ -21,7 +19,7 @@ public class CreatePdfExtractor(ILogger<CreatePdfExtractor> logger) : IPdfExtrac
 			logger.LogInformation("Extracted {CharCount} characters from PDF", text.Length);
 			return text;
 		}
-		catch (Exception ex)
+		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
 			logger.LogError(ex, "OCR extraction failed");
 			return OcrErrors.ExtractionFailed(ex.Message);

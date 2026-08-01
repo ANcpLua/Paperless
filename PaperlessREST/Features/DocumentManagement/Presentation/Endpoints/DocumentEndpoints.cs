@@ -32,26 +32,41 @@ public static class DocumentEndpoints
 		{
 			Items = items.ConvertAll(static d => d.ToDocumentDto()),
 			HasMore = hasMore,
-			NextCursor = hasMore && items.Count > 0 ? items[^1].Id : null
+			NextCursor = hasMore ? items[^1].Id : null
 		};
 	}
 
 	/// <summary>
-	///     Full-text search over OCR content via Elasticsearch. <c>query</c>/<c>limit</c> bind from the
-	///     query string directly (ErrorOrX's <c>[AsParameters]</c> binder doesn't set <c>required</c>
-	///     init-only members, so the <c>SearchQuery</c> DTO can't be used as the bind target here).
+	///     Full-text search over OCR content via Elasticsearch. Nullable bind targets preserve the
+	///     optional HTTP limit; the handler applies the default and owns query/limit validation.
 	/// </summary>
 	[Get("/search")]
 	[EnableRateLimiting(RateLimitPolicies.SearchOperations)]
 	public static async Task<ErrorOr<List<DocumentSearchResultDto>>> SearchDocuments(
-		string query,
+		string? query,
 		IDocumentService documentService,
 		CancellationToken cancellationToken,
-		int limit = SearchConstraints.DefaultResultLimit) =>
-		await documentService
-			.SearchDocumentsAsync(query, limit, cancellationToken)
-			.Select(static r => r.ToDocumentSearchResultDto())
-			.ToListAsync(cancellationToken);
+		int? limit = null)
+	{
+		if (string.IsNullOrEmpty(query) || query.Length > SearchConstraints.QueryMaxLength)
+		{
+			return Error.Validation("Query",
+				$"Search query must be between {SearchConstraints.QueryMinLength} and {SearchConstraints.QueryMaxLength} characters");
+		}
+
+		if (limit is < 1 or > SearchConstraints.MaxResultLimit)
+		{
+			return Error.Validation("Limit",
+				$"Limit must be between 1 and {SearchConstraints.MaxResultLimit}");
+		}
+
+		var results = await documentService.SearchDocumentsAsync(
+			query,
+			limit ?? SearchConstraints.DefaultResultLimit,
+			cancellationToken);
+
+		return results.Select(static r => r.ToDocumentSearchResultDto()).ToList();
+	}
 
 	/// <summary>Gets a document by id. <c>DocumentErrors.NotFound</c> → 404.</summary>
 	[Get("/{id:guid}")]
@@ -100,7 +115,7 @@ public static class DocumentEndpoints
 				$"File size cannot exceed {FileUploadConstraints.MaxFileSizeBytes / FileUploadConstraints.BytesPerMegabyte:F0} MB");
 		}
 
-		var contentType = file.ContentType?.Split(';')[0].Trim() ?? "";
+		var contentType = file.ContentType.Split(';')[0].Trim();
 		if (!contentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
 		{
 			return Error.Validation("File", "Only PDF files are allowed");

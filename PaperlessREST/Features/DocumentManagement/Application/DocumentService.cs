@@ -1,5 +1,4 @@
-using System.Net;
-using System.Net.Sockets;
+using Minio.Exceptions;
 using Result = ErrorOr.Result;
 
 namespace PaperlessREST.Features.DocumentManagement.Application;
@@ -39,7 +38,7 @@ public interface IDocumentService
 		Guid? cursor = null,
 		CancellationToken cancellationToken = default);
 
-	IAsyncEnumerable<DocumentSearchResult> SearchDocumentsAsync(
+	Task<IReadOnlyCollection<DocumentSearchResult>> SearchDocumentsAsync(
 		string query,
 		int limit,
 		CancellationToken cancellationToken = default);
@@ -105,13 +104,16 @@ public sealed class DocumentService(
 		}
 		catch (Exception ex)
 		{
-			if (TryMapStorageException(ex, document.StoragePath) is not { } storageError)
+			if (TryMapStorageException(ex, cancellationToken) is not { } storageError)
 			{
-				// Unrecognized exception - let it propagate to GlobalExceptionHandler
 				throw;
 			}
 
-			logger.LogWarning(ex, "Storage error: {ErrorCode}", storageError.Code);
+			logger.LogWarning(
+				ex,
+				"Storage error {ErrorCode} for {StoragePath}",
+				storageError.Code,
+				document.StoragePath);
 			return storageError;
 		}
 
@@ -186,11 +188,11 @@ public sealed class DocumentService(
 		CancellationToken cancellationToken = default) =>
 		repository.GetDocumentsPagedAsync(pageSize, cursor, cancellationToken);
 
-	public IAsyncEnumerable<DocumentSearchResult> SearchDocumentsAsync(
+	public Task<IReadOnlyCollection<DocumentSearchResult>> SearchDocumentsAsync(
 		string query,
 		int limit,
 		CancellationToken cancellationToken = default) =>
-		search.SearchAsync<DocumentSearchResult>(query, limit, cancellationToken);
+		search.SearchAsync(query, limit, cancellationToken);
 
 	public async ValueTask<ErrorOr<Document>> GetDocumentByIdAsync(
 		Guid id,
@@ -211,20 +213,9 @@ public sealed class DocumentService(
 			return DocumentErrors.NotFound(id);
 		}
 
-		await Task.WhenAll(
-			repository.DeleteAsync(id, cancellationToken),
-			storage.DeleteAsync(document.StoragePath, cancellationToken));
-
-		try
-		{
-			await search.DeleteAsync(id, cancellationToken);
-		}
-		catch (Exception ex)
-		{
-			logger.LogWarning(ex,
-				"Failed to delete document {DocumentId} from search index - expected if not yet indexed",
-				id);
-		}
+		await search.DeleteAsync(id, cancellationToken);
+		await storage.DeleteAsync(document.StoragePath, cancellationToken);
+		await repository.DeleteAsync(id, cancellationToken);
 
 		logger.LogInformation("Document {DocumentId} deleted successfully", id);
 		return Result.Deleted;
@@ -234,28 +225,37 @@ public sealed class DocumentService(
 	///     Maps storage exceptions to domain errors for proper HTTP status codes.
 	/// </summary>
 	/// <returns>Domain error for known infrastructure failures, null for unknown exceptions.</returns>
-	private static Error? TryMapStorageException(Exception ex, string storagePath) => ex switch
+	private static Error? TryMapStorageException(
+		Exception exception,
+		CancellationToken cancellationToken)
 	{
-		// Transient storage failures → 503 + Retry-After. Error.Custom(503, …) carries the status
-		// in Error.Type and the retry hint in metadata; ErrorOrX renders a 503 ProblemDetails with
-		// a "retryAfter" extension. (Previously Error.Unexpected → 503 via the hand-rolled glue.)
-		TimeoutException => Error.Custom(503,
-			"Document.StorageTimeout",
-			$"Storage timeout while processing {storagePath}",
-			new Dictionary<string, object> { ["retryAfter"] = 30 }),
+		if (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested)
+		{
+			return Error.Custom(503,
+				"Document.StorageTimeout",
+				"The storage operation timed out.",
+				new Dictionary<string, object> { ["retryAfter"] = 30 });
+		}
 
-		HttpRequestException { StatusCode: { } code and >= HttpStatusCode.InternalServerError } =>
-			Error.Custom(503,
+		if (exception is UnexpectedMinioException
+		    {
+			    Response.Code: "InternalError" or "ServiceUnavailable" or "SlowDown" or "RequestTimeout"
+		    })
+		{
+			return Error.Custom(503,
 				"Document.StorageServerError",
-				$"Storage service returned {(int)code} for {storagePath}",
-				new Dictionary<string, object> { ["retryAfter"] = 30 }),
+				"The storage service is temporarily unavailable.",
+				new Dictionary<string, object> { ["retryAfter"] = 30 });
+		}
 
-		IOException { InnerException: SocketException } =>
-			Error.Custom(503,
+		if (exception is HttpRequestException { StatusCode: null } or ConnectionException)
+		{
+			return Error.Custom(503,
 				"Document.StorageConnectionFailed",
-				$"Cannot connect to storage service for {storagePath}",
-				new Dictionary<string, object> { ["retryAfter"] = 30 }),
+				"The storage service could not be reached.",
+				new Dictionary<string, object> { ["retryAfter"] = 30 });
+		}
 
-		_ => null
-	};
+		return null;
+	}
 }

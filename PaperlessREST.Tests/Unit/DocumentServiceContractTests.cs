@@ -1,5 +1,7 @@
 using System.Net.Sockets;
+using System.Text;
 using AwesomeAssertions.Execution;
+using Minio.Exceptions;
 
 namespace PaperlessREST.Tests.Unit;
 
@@ -35,12 +37,14 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 		string? pathGivenToStorage = null;
 		long lengthGivenToStorage = -1;
 		CancellationToken tokenGivenToStorage = default;
+		Stream? streamGivenToStorage = null;
 		string? routingKeyGivenToPublisher = null;
 		OcrCommand? commandGivenToPublisher = null;
 
 		Storage.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), FileSize, ct))
 			.Callback<Stream, string, long, CancellationToken>((stream, path, length, token) =>
 			{
+				streamGivenToStorage = stream;
 				pathGivenToStorage = path;
 				lengthGivenToStorage = length;
 				tokenGivenToStorage = token;
@@ -81,6 +85,8 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 		pathGivenToStorage.Should().Be(expectedStoragePath);
 		lengthGivenToStorage.Should().Be(FileSize);
 		tokenGivenToStorage.Should().Be(ct);
+		streamGivenToStorage.Should().NotBeNull();
+		streamGivenToStorage!.CanRead.Should().BeFalse("DocumentService owns the opened upload stream");
 
 		routingKeyGivenToPublisher.Should().NotBeNullOrWhiteSpace();
 		commandGivenToPublisher.Should().BeEquivalentTo(
@@ -89,64 +95,108 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 		ShouldHaveLog(LogLevel.Information, "uploaded successfully", saved.Id.ToString());
 	}
 
-	public static IEnumerable<TheoryDataRow<Exception, string>> KnownStorageFailures()
+	[Fact]
+	public async Task UploadDocumentAsync_MinIoNetworkFailure_ReturnsRetriableConnectionError()
 	{
-		yield return new TheoryDataRow<Exception, string>(
-				new TimeoutException("storage timed out"), "Document.StorageTimeout")
-			.WithTestDisplayName("TimeoutException => StorageTimeout (503 + retryAfter)");
+		using StubHttpMessageHandler handler = new((_, _) =>
+			Task.FromException<HttpResponseMessage>(new HttpRequestException(
+				"connection refused",
+				new SocketException((int)SocketError.ConnectionRefused))));
+		using HttpClient http = new(handler, disposeHandler: false);
+		using MinioClient minio = new();
+		IMinioClient client = ConfigureMinioClient(minio, http);
 
-		yield return new TheoryDataRow<Exception, string>(
-				new HttpRequestException("storage unavailable", null, HttpStatusCode.ServiceUnavailable),
-				"Document.StorageServerError")
-			.WithTestDisplayName("HttpRequestException 5xx => StorageServerError (503 + retryAfter)");
+		ErrorOr<Document> result = await UploadThroughMinioAsync(client, TestContext.Current.CancellationToken);
 
-		yield return new TheoryDataRow<Exception, string>(
-				new IOException("socket failed", new SocketException((int)SocketError.ConnectionRefused)),
-				"Document.StorageConnectionFailed")
-			.WithTestDisplayName("IOException(SocketException) => StorageConnectionFailed (503 + retryAfter)");
-	}
-
-	[Theory]
-	[MemberData(nameof(KnownStorageFailures))]
-	public async Task UploadDocumentAsync_KnownStorageFailure_ReturnsRetriableErrorAndDoesNotPersistOrPublish(
-		Exception storageException, string expectedCode)
-	{
-		CancellationToken ct = TestContext.Current.CancellationToken;
-		UploadDocumentRequest request = UploadDocumentRequestBuilder.ValidPdf()
-			.WithFileName(FileName)
-			.WithFileSize(FileSize)
-			.Build();
-
-		Storage.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), FileSize, ct))
-			.ThrowsAsync(storageException);
-
-		ErrorOr<Document> result = await CreateSut().UploadDocumentAsync(request, ct);
-
-		using AssertionScope _ = new();
-		result.IsError.Should().BeTrue();
-		((int)result.FirstError.Type).Should().Be(503);
-		result.FirstError.Code.Should().Be(expectedCode);
-		result.FirstError.Description.Should().Contain("documents/2026-06/");
-		result.FirstError.Metadata.Should().ContainKey("retryAfter").WhoseValue.Should().Be(30);
-		ShouldHaveLog(LogLevel.Warning, "Storage error", expectedCode);
-		// No repository/publisher setup is intentional: strict mocks prove nothing was persisted or published.
+		AssertRetriableStorageError(
+			result,
+			"Document.StorageConnectionFailed",
+			"The storage service could not be reached.");
 	}
 
 	[Fact]
-	public async Task UploadDocumentAsync_UnknownStorageFailure_PropagatesOriginalAndDoesNotPersistOrPublish()
+	public async Task UploadDocumentAsync_MinIoRequestTimeout_ReturnsRetriableTimeoutError()
 	{
-		CancellationToken ct = TestContext.Current.CancellationToken;
-		UploadDocumentRequest request = UploadDocumentRequestBuilder.ValidPdf().WithFileName(FileName).Build();
-		InvalidOperationException expected = new("bug outside the mapped storage failure set");
+		using StubHttpMessageHandler handler = new(
+			async (_, cancellationToken) =>
+			{
+				await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+				return new HttpResponseMessage(HttpStatusCode.OK);
+			});
+		using HttpClient http = new(handler, disposeHandler: false);
+		using MinioClient minio = new();
+		IMinioClient client = ConfigureMinioClient(minio, http, requestTimeoutMilliseconds: 25);
 
-		Storage.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<long>(), ct))
-			.ThrowsAsync(expected);
+		ErrorOr<Document> result = await UploadThroughMinioAsync(client, CancellationToken.None);
 
-		Func<Task> act = () => CreateSut().UploadDocumentAsync(request, ct);
+		AssertRetriableStorageError(
+			result,
+			"Document.StorageTimeout",
+			"The storage operation timed out.");
+	}
 
-		InvalidOperationException thrown = (await act.Should().ThrowAsync<InvalidOperationException>()).Which;
-		thrown.Should().BeSameAs(expected);
-		// No repository/publisher setup is intentional: strict mocks prove nothing was persisted or published.
+	[Fact]
+	public async Task UploadDocumentAsync_MinIoTransientXmlError_ReturnsRetriableServerError()
+	{
+		using StubHttpMessageHandler handler = new((_, _) => Task.FromResult(new HttpResponseMessage(
+			HttpStatusCode.InternalServerError)
+		{
+			Content = new StringContent(
+				MinioErrorXml("InternalError"),
+				Encoding.UTF8,
+				"application/xml")
+		}));
+		using HttpClient http = new(handler, disposeHandler: false);
+		using MinioClient minio = new();
+		IMinioClient client = ConfigureMinioClient(minio, http);
+
+		ErrorOr<Document> result = await UploadThroughMinioAsync(client, TestContext.Current.CancellationToken);
+
+		AssertRetriableStorageError(
+			result,
+			"Document.StorageServerError",
+			"The storage service is temporarily unavailable.");
+	}
+
+	[Fact]
+	public async Task UploadDocumentAsync_MinIoCallerCancellation_PropagatesExactToken()
+	{
+		using CancellationTokenSource cancellation = new();
+		await cancellation.CancelAsync();
+		using StubHttpMessageHandler handler = new((_, token) =>
+		{
+			token.ThrowIfCancellationRequested();
+			return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+		});
+		using HttpClient http = new(handler, disposeHandler: false);
+		using MinioClient minio = new();
+		IMinioClient client = ConfigureMinioClient(minio, http);
+
+		Func<Task> act = async () => await UploadThroughMinioAsync(client, cancellation.Token);
+
+		OperationCanceledException thrown = (await act.Should().ThrowAsync<OperationCanceledException>()).Which;
+		thrown.CancellationToken.Should().Be(cancellation.Token);
+	}
+
+	[Fact]
+	public async Task UploadDocumentAsync_MinIoPermanentError_PropagatesSdkException()
+	{
+		using StubHttpMessageHandler handler = new((_, _) => Task.FromResult(new HttpResponseMessage(
+			HttpStatusCode.Forbidden)
+		{
+			Content = new StringContent(
+				MinioErrorXml("InvalidAccessKeyId"),
+				Encoding.UTF8,
+				"application/xml")
+		}));
+		using HttpClient http = new(handler, disposeHandler: false);
+		using MinioClient minio = new();
+		IMinioClient client = ConfigureMinioClient(minio, http);
+
+		Func<Task> act = async () =>
+			await UploadThroughMinioAsync(client, TestContext.Current.CancellationToken);
+
+		await act.Should().ThrowAsync<AuthorizationException>();
 	}
 
 	// ── ProcessOcrResultAsync ─────────────────────────────────────────────
@@ -302,23 +352,84 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 	// ── DeleteDocumentAsync ───────────────────────────────────────────────
 
 	[Fact]
-	public async Task DeleteDocumentAsync_DocumentExists_DeletesRepositoryAndStorageThenTreatsSearchDeleteAsBestEffort()
+	public async Task DeleteDocumentAsync_DocumentExists_DeletesSearchStorageAndRepository()
 	{
 		CancellationToken ct = TestContext.Current.CancellationToken;
 		Document document = new DocumentBuilder().Build();
 
 		Repository.Setup(r => r.GetByIdAsync(document.Id, ct)).ReturnsAsync(document);
+		Search.Setup(s => s.DeleteAsync(document.Id, ct)).Returns(Task.CompletedTask);
+		Storage.Setup(s => s.DeleteAsync(document.StoragePath, ct)).Returns(Task.CompletedTask);
 		Repository.Setup(r => r.DeleteAsync(document.Id, ct)).ReturnsAsync(true);
-		Storage.Setup(s => s.DeleteAsync(document.StoragePath, ct)).ReturnsAsync(true);
-		Search.Setup(s => s.DeleteAsync(document.Id, ct)).ThrowsAsync(new InvalidOperationException("search down"));
 
 		ErrorOr<Deleted> result = await CreateSut().DeleteDocumentAsync(document.Id, ct);
 
 		using AssertionScope _ = new();
 		result.IsError.Should().BeFalse();
 		result.Value.Should().Be(Result.Deleted);
-		ShouldHaveLog(LogLevel.Warning, "search index", document.Id.ToString());
 		ShouldHaveLog(LogLevel.Information, "deleted successfully", document.Id.ToString());
+	}
+
+	public static IEnumerable<TheoryDataRow<Exception>> SearchDeletionFailures()
+	{
+		yield return new TheoryDataRow<Exception>(new InvalidOperationException("search down"))
+			.WithTestDisplayName("unexpected search failure");
+		yield return new TheoryDataRow<Exception>(new OperationCanceledException("search canceled"))
+			.WithTestDisplayName("search cancellation");
+	}
+
+	[Theory]
+	[MemberData(nameof(SearchDeletionFailures))]
+	public async Task DeleteDocumentAsync_SearchFailure_PropagatesAndLeavesStorageAndRepositoryForRetry(
+		Exception expected)
+	{
+		CancellationToken ct = TestContext.Current.CancellationToken;
+		Document document = new DocumentBuilder().Build();
+
+		Repository.Setup(r => r.GetByIdAsync(document.Id, ct)).ReturnsAsync(document);
+		Search.Setup(s => s.DeleteAsync(document.Id, ct)).ThrowsAsync(expected);
+
+		Func<Task> act = () => CreateSut().DeleteDocumentAsync(document.Id, ct);
+
+		Exception thrown = (await act.Should().ThrowAsync<Exception>()).Which;
+		thrown.Should().BeSameAs(expected);
+	}
+
+	[Fact]
+	public async Task DeleteDocumentAsync_StorageFailure_PropagatesAndLeavesRepositoryForRetry()
+	{
+		CancellationToken ct = TestContext.Current.CancellationToken;
+		Document document = new DocumentBuilder().Build();
+		InvalidOperationException expected = new("storage down");
+
+		Repository.Setup(r => r.GetByIdAsync(document.Id, ct)).ReturnsAsync(document);
+		Search.Setup(s => s.DeleteAsync(document.Id, ct)).Returns(Task.CompletedTask);
+		Storage.Setup(s => s.DeleteAsync(document.StoragePath, ct)).ThrowsAsync(expected);
+
+		Func<Task> act = () => CreateSut().DeleteDocumentAsync(document.Id, ct);
+
+		InvalidOperationException thrown = (await act.Should().ThrowAsync<InvalidOperationException>()).Which;
+		thrown.Should().BeSameAs(expected);
+	}
+
+	[Fact]
+	public async Task DeleteDocumentAsync_StorageCancellation_PropagatesCallerTokenAndLeavesRepositoryForRetry()
+	{
+		using CancellationTokenSource cancellation = new();
+		await cancellation.CancelAsync();
+		CancellationToken ct = cancellation.Token;
+		Document document = new DocumentBuilder().Build();
+		OperationCanceledException expected = new(ct);
+
+		Repository.Setup(r => r.GetByIdAsync(document.Id, ct)).ReturnsAsync(document);
+		Search.Setup(s => s.DeleteAsync(document.Id, ct)).Returns(Task.CompletedTask);
+		Storage.Setup(s => s.DeleteAsync(document.StoragePath, ct)).ThrowsAsync(expected);
+
+		Func<Task> act = () => CreateSut().DeleteDocumentAsync(document.Id, ct);
+
+		OperationCanceledException thrown = (await act.Should().ThrowAsync<OperationCanceledException>()).Which;
+		thrown.Should().BeSameAs(expected);
+		thrown.CancellationToken.Should().Be(ct);
 	}
 
 	[Fact]
@@ -402,7 +513,7 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 	// ── SearchDocumentsAsync ──────────────────────────────────────────────
 
 	[Fact]
-	public async Task SearchDocumentsAsync_ForwardsExactQueryLimitAndToken_AndStreamsResults()
+	public async Task SearchDocumentsAsync_ForwardsExactQueryLimitAndToken_AndReturnsResults()
 	{
 		CancellationToken ct = TestContext.Current.CancellationToken;
 		DocumentSearchResult[] expectedResults =
@@ -419,15 +530,86 @@ public sealed class DocumentServiceContractTests : DocumentServiceTestBase
 			}
 		];
 
-		Search.Setup(s => s.SearchAsync<DocumentSearchResult>("invoice", 25, ct))
-			.Returns(expectedResults.ToAsyncEnumerable());
+		Search.Setup(s => s.SearchAsync("invoice", 25, ct))
+			.ReturnsAsync(expectedResults);
 
-		List<DocumentSearchResult> actual = [];
-		await foreach (DocumentSearchResult result in CreateSut().SearchDocumentsAsync("invoice", 25, ct))
-		{
-			actual.Add(result);
-		}
+		IReadOnlyCollection<DocumentSearchResult> actual =
+			await CreateSut().SearchDocumentsAsync("invoice", 25, ct);
 
 		actual.Should().Equal(expectedResults);
+	}
+
+	private async Task<ErrorOr<Document>> UploadThroughMinioAsync(
+		IMinioClient minio,
+		CancellationToken cancellationToken)
+	{
+		DocumentStorageService storage = new(
+			minio,
+			Options.Create(new MinioOptions
+			{
+				Endpoint = new Uri("http://minio.test:9000"),
+				AccessKey = "access-key",
+				SecretKey = "secret-key",
+				BucketName = "test-bucket"
+			}),
+			NullLogger<DocumentStorageService>.Instance);
+		UploadDocumentRequest request = UploadDocumentRequestBuilder.ValidPdf()
+			.WithFileName(FileName)
+			.WithFileSize(FileSize)
+			.Build();
+
+		return await CreateSut(storage).UploadDocumentAsync(request, cancellationToken);
+	}
+
+	private void AssertRetriableStorageError(
+		ErrorOr<Document> result,
+		string expectedCode,
+		string expectedDescription)
+	{
+		using AssertionScope _ = new();
+		result.IsError.Should().BeTrue();
+		((int)result.FirstError.Type).Should().Be(503);
+		result.FirstError.Code.Should().Be(expectedCode);
+		result.FirstError.Description.Should().Be(expectedDescription);
+		result.FirstError.Description.Should().NotContain("documents/");
+		result.FirstError.Metadata.Should().ContainKey("retryAfter").WhoseValue.Should().Be(30);
+		ShouldHaveLog(LogLevel.Warning, "Storage error", expectedCode, "documents/2026-06/");
+	}
+
+	private static IMinioClient ConfigureMinioClient(
+		MinioClient minio,
+		HttpClient http,
+		int requestTimeoutMilliseconds = 0)
+	{
+		IMinioClient configured = minio
+			.WithEndpoint("minio.test", 9000)
+			.WithCredentials("access-key", "secret-key")
+			.WithRegion("us-east-1")
+			.WithHttpClient(http)
+			.Build();
+
+		return requestTimeoutMilliseconds > 0
+			? configured.WithTimeout(requestTimeoutMilliseconds)
+			: configured;
+	}
+
+	private static string MinioErrorXml(string code) => $$"""
+		<Error>
+		  <Code>{{code}}</Code>
+		  <Message>storage request failed</Message>
+		  <Resource>/test-bucket/document.pdf</Resource>
+		  <BucketName>test-bucket</BucketName>
+		  <RequestId>test-request</RequestId>
+		  <HostId>test-host</HostId>
+		</Error>
+		""";
+
+	private sealed class StubHttpMessageHandler(
+		Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> sendAsync) : HttpMessageHandler
+	{
+		protected override Task<HttpResponseMessage> SendAsync(
+			HttpRequestMessage request,
+			CancellationToken cancellationToken) =>
+			sendAsync(request, cancellationToken);
 	}
 }

@@ -8,7 +8,7 @@ public sealed class StorageServiceTests : IDisposable
 
 	private const string ValidFilePath = "documents/2024-01/test-document.pdf";
 	private const string TestBucketName = "test-bucket";
-	private const string TestEndpoint = "localhost:9000";
+	private const string TestEndpoint = "http://localhost:9000";
 	private const string TestAccessKey = "minioadmin";
 	private const string TestSecretKey = "minioadmin";
 	private readonly FakeLogCollector _logCollector = new();
@@ -28,7 +28,7 @@ public sealed class StorageServiceTests : IDisposable
 		_minioClient = _mocks.Create<IMinioClient>();
 		_options = Options.Create(new MinioOptions
 		{
-			Endpoint = TestEndpoint,
+			Endpoint = new Uri(TestEndpoint),
 			AccessKey = TestAccessKey,
 			SecretKey = TestSecretKey,
 			BucketName = TestBucketName
@@ -216,5 +216,22 @@ public sealed class StorageServiceTests : IDisposable
 
 		// Assert
 		await act.Should().ThrowExactlyAsync<BucketNotFoundException>();
+	}
+
+	[Fact]
+	public async Task DownloadAsync_CanceledRequest_PropagatesExactCallerCancellation()
+	{
+		using CancellationTokenSource cancellation = new();
+		await cancellation.CancelAsync();
+		OperationCanceledException expected = new(cancellation.Token);
+		_minioClient.Setup(m => m.GetObjectAsync(It.IsAny<GetObjectArgs>(), cancellation.Token))
+			.ThrowsAsync(expected);
+
+		Func<Task> act = () => CreateSut().DownloadAsync(ValidFilePath, cancellation.Token);
+
+		OperationCanceledException thrown =
+			(await act.Should().ThrowExactlyAsync<OperationCanceledException>()).Which;
+		thrown.Should().BeSameAs(expected);
+		thrown.CancellationToken.Should().Be(cancellation.Token);
 	}
 }

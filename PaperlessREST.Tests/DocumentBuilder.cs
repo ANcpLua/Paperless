@@ -215,23 +215,3 @@ public sealed class UploadDocumentRequestBuilder
 		return new UploadDocumentRequest { File = fileMock.Object };
 	}
 }
-
-public sealed class SearchQueryBuilder
-{
-	private int _limit = 10;
-	private string _query = "search";
-
-	public SearchQueryBuilder WithQuery(string query)
-	{
-		_query = query;
-		return this;
-	}
-
-	public SearchQueryBuilder WithLimit(int limit)
-	{
-		_limit = limit;
-		return this;
-	}
-
-	public SearchQuery Build() => new() { Query = _query, Limit = _limit };
-}

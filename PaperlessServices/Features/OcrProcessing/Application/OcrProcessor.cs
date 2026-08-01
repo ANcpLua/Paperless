@@ -55,6 +55,10 @@ public class OcrProcessor(
 			Stream stream = await storageService.DownloadAsync(filePath, cancellationToken);
 			return stream;
 		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			throw;
+		}
 		catch (Exception ex)
 		{
 			logger.LogError(ex, "Failed to download file: {FilePath}", filePath);
