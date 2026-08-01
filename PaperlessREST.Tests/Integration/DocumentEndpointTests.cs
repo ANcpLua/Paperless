@@ -210,17 +210,17 @@ public sealed class DocumentEndpointTests : IAsyncLifetime
 	[Fact]
 	public async Task GetSummary_ExistingDocument_ReturnsSummary()
 	{
-		const string summary = "A concise account statement summary.";
+		const string Summary = "A concise account statement summary.";
 		var docId = await SeedDocumentAsync(
 			$"{TestFilePrefix}-summary-{Guid.NewGuid():N}.pdf",
-			summary);
+			Summary);
 
 		using var response = await _fixture.Client.GetAsync(
 			$"{DocumentsEndpoint}/{docId}/summary",
 			TestContext.Current.CancellationToken);
 		var result = await ReadSuccessJsonAsync<SummaryDto>(response);
 
-		result.Summary.Should().Be(summary);
+		result.Summary.Should().Be(Summary);
 	}
 
 	#endregion

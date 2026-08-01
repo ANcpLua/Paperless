@@ -374,11 +374,11 @@ public static class BatchOrchestratorTests
 		public async Task OriginalFileNameContainingProcessing_PreservesEmbeddedTextWhenArchived()
 		{
 			// Arrange
-			const string originalFileName = "report.processing.xml";
-			CreateTestFile(originalFileName);
+			const string OriginalFileName = "report.processing.xml";
+			CreateTestFile(OriginalFileName);
 
 			_reportProcessor.Setup(p => p.ProcessAsync(
-					It.Is<string>(path => path.EndsWith($"{originalFileName}.processing", StringComparison.Ordinal)),
+					It.Is<string>(path => path.EndsWith($"{OriginalFileName}.processing", StringComparison.Ordinal)),
 					It.IsAny<CancellationToken>()))
 				.ReturnsAsync(new ProcessingResult(1, 0));
 
@@ -390,7 +390,7 @@ public static class BatchOrchestratorTests
 			// Assert
 			_fileSystem.Directory.GetFiles(ArchivePath)
 				.Should().ContainSingle(path => Path.GetFileName(path)
-					.StartsWith($"{originalFileName}.", StringComparison.Ordinal));
+					.StartsWith($"{OriginalFileName}.", StringComparison.Ordinal));
 		}
 
 		#endregion
