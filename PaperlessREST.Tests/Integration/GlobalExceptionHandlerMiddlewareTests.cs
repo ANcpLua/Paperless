@@ -28,14 +28,14 @@ public sealed class GlobalExceptionHandlerMiddlewareTests
 	#region Tests - ValidationException
 
 	[Fact]
-	public async Task Request_ValidationException_Returns400WithProblemDetails()
+	public async Task Request_ValidationExceptionWithMembers_ReturnsEveryDistinctNonblankMember()
 	{
 		// Arrange
 		await using TestHostContext ctx = await CreateTestHostAsync();
 
 		// Act
 		HttpResponseMessage response = await ctx.Client.GetAsync(
-			$"{ThrowEndpoint}?{ExceptionTypeParam}={ExceptionTypeValidation}",
+			$"{ThrowEndpoint}?{ExceptionTypeParam}={ExceptionTypeValidationMembers}",
 			TestContext.Current.CancellationToken);
 
 		// Assert
@@ -48,89 +48,76 @@ public sealed class GlobalExceptionHandlerMiddlewareTests
 		problem.Should().NotBeNull();
 		problem!.Status.Should().Be(Status400BadRequest);
 		problem.Type.Should().Be(ValidationErrorType);
-		problem.Errors.Should().ContainKey(FieldName);
-		problem.Errors[FieldName].Should().Contain(FieldError);
+		problem.Errors.Should().BeEquivalentTo(new Dictionary<string, string[]>
+		{
+			[FieldName] = [FieldError],
+			[SecondFieldName] = [FieldError]
+		});
 	}
 
-	#endregion
-
-	#region Tests - Forbidden Exception
-
 	[Fact]
-	public async Task Request_UnauthorizedAccessException_Returns403WithProblemDetails()
+	public async Task Request_ValidationExceptionWithoutMembers_ReturnsModelLevelError()
 	{
 		// Arrange
 		await using TestHostContext ctx = await CreateTestHostAsync();
 
 		// Act
 		HttpResponseMessage response = await ctx.Client.GetAsync(
-			$"{ThrowEndpoint}?{ExceptionTypeParam}={ExceptionTypeUnauthorized}",
+			$"{ThrowEndpoint}?{ExceptionTypeParam}={ExceptionTypeValidationModel}",
 			TestContext.Current.CancellationToken);
 
 		// Assert
-		response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-		response.Content.Headers.ContentType?.MediaType.Should().Be(ContentTypeJson);
-
-		ProblemDetails? problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(
+		response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+		HttpValidationProblemDetails? problem = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>(
 			TestContext.Current.CancellationToken);
 
 		problem.Should().NotBeNull();
-		problem!.Status.Should().Be(Status403Forbidden);
-		problem.Type.Should().Be(ForbiddenType);
-	}
-
-	#endregion
-
-	#region Tests - Timeout Exception
-
-	[Fact]
-	public async Task Request_TimeoutException_Returns504WithProblemDetails()
-	{
-		// Arrange
-		await using TestHostContext ctx = await CreateTestHostAsync();
-
-		// Act
-		HttpResponseMessage response = await ctx.Client.GetAsync(
-			$"{ThrowEndpoint}?{ExceptionTypeParam}={ExceptionTypeTimeout}",
-			TestContext.Current.CancellationToken);
-
-		// Assert
-		response.StatusCode.Should().Be(HttpStatusCode.GatewayTimeout);
-		response.Content.Headers.ContentType?.MediaType.Should().Be(ContentTypeJson);
-
-		ProblemDetails? problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(
-			TestContext.Current.CancellationToken);
-
-		problem.Should().NotBeNull();
-		problem!.Status.Should().Be(Status504GatewayTimeout);
-		problem.Type.Should().Be(TimeoutType);
+		problem!.Errors.Should().ContainSingle()
+			.Which.Should().BeEquivalentTo(new KeyValuePair<string, string[]>(string.Empty, [FieldError]));
 	}
 
 	#endregion
 
 	#region Tests - Internal Server Error
 
-	[Fact]
-	public async Task Request_UnhandledException_Returns500WithProblemDetails()
+	[Theory]
+	[MemberData(nameof(UnownedExceptionTypes))]
+	public async Task Request_UnownedException_ReturnsSanitized500ProblemDetails(string exceptionType)
 	{
 		// Arrange
 		await using TestHostContext ctx = await CreateTestHostAsync();
 
 		// Act
 		HttpResponseMessage response = await ctx.Client.GetAsync(
-			$"{ThrowEndpoint}?{ExceptionTypeParam}={ExceptionTypeNotSupported}",
+			$"{ThrowEndpoint}?{ExceptionTypeParam}={exceptionType}",
 			TestContext.Current.CancellationToken);
 
 		// Assert
 		response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
 		response.Content.Headers.ContentType?.MediaType.Should().Be(ContentTypeJson);
+		string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+		body.Should().NotContain(SensitiveInternalErrorMessage);
 
-		ProblemDetails? problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(
-			TestContext.Current.CancellationToken);
+		ProblemDetails? problem = JsonSerializer.Deserialize<ProblemDetails>(body, JsonSerializerOptions.Web);
 
 		problem.Should().NotBeNull();
 		problem!.Status.Should().Be(Status500InternalServerError);
 		problem.Type.Should().Be(InternalErrorType);
+		problem.Detail.Should().Be(GenericInternalErrorDetail);
+		problem.Extensions.Should().NotContainKey("debug");
+	}
+
+	public static IEnumerable<ITheoryDataRow> UnownedExceptionTypes()
+	{
+		yield return new TheoryDataRow<string>(ExceptionTypeArgument);
+		yield return new TheoryDataRow<string>(ExceptionTypeArgumentNull);
+		yield return new TheoryDataRow<string>(ExceptionTypeInvalidOperation);
+		yield return new TheoryDataRow<string>(ExceptionTypeKeyNotFound);
+		yield return new TheoryDataRow<string>(ExceptionTypeFileNotFound);
+		yield return new TheoryDataRow<string>(ExceptionTypeUnauthorized);
+		yield return new TheoryDataRow<string>(ExceptionTypeTimeout);
+		yield return new TheoryDataRow<string>(ExceptionTypeOperationCanceled);
+		yield return new TheoryDataRow<string>(ExceptionTypeNotSupported);
 	}
 
 	#endregion
@@ -163,12 +150,11 @@ public sealed class GlobalExceptionHandlerMiddlewareTests
 
 	private const string ValidationErrorType = "urn:paperless:error:validation_error";
 	private const string BadRequestType = "urn:paperless:error:bad_request";
-	private const string NotFoundType = "urn:paperless:error:not_found";
-	private const string ForbiddenType = "urn:paperless:error:forbidden";
-	private const string TimeoutType = "urn:paperless:error:timeout";
 	private const string InternalErrorType = "urn:paperless:error:internal_error";
 
-	private const string ExceptionTypeValidation = "validation";
+	private const string ExceptionTypeValidationMembers = "validation-members";
+	private const string ExceptionTypeValidationModel = "validation-model";
+	private const string ExceptionTypeBadHttpRequest = "bad-http-request";
 	private const string ExceptionTypeArgument = "argument";
 	private const string ExceptionTypeArgumentNull = "argumentnull";
 	private const string ExceptionTypeInvalidOperation = "invalidoperation";
@@ -176,94 +162,48 @@ public sealed class GlobalExceptionHandlerMiddlewareTests
 	private const string ExceptionTypeFileNotFound = "filenotfound";
 	private const string ExceptionTypeUnauthorized = "unauthorized";
 	private const string ExceptionTypeTimeout = "timeout";
+	private const string ExceptionTypeOperationCanceled = "operation-canceled";
 	private const string ExceptionTypeNotSupported = "notsupported";
 
 	private const string FieldName = "Email";
+	private const string SecondFieldName = "Name";
 	private const string FieldError = "Email is required";
-	private const string NotFoundMessage = "Document not found";
-	private const string BadRequestMessage = "Invalid request";
-	private const string ForbiddenMessage = "Access denied";
-	private const string TimeoutMessage = "Operation timed out";
-	private const string InternalErrorMessage = "Something went wrong";
+	private const string BadRequestMessage = "Malformed request containing sensitive input";
+	private const string SafeBadRequestDetail = "The request was invalid.";
+	private const string SensitiveInternalErrorMessage = "Database password was exposed";
+	private const string GenericInternalErrorDetail =
+		"An internal error occurred. Please contact support if the problem persists.";
 
 	private const int Status400BadRequest = StatusCodes.Status400BadRequest;
-	private const int Status403Forbidden = StatusCodes.Status403Forbidden;
-	private const int Status404NotFound = StatusCodes.Status404NotFound;
 	private const int Status500InternalServerError = StatusCodes.Status500InternalServerError;
-	private const int Status504GatewayTimeout = StatusCodes.Status504GatewayTimeout;
 
 	#endregion
 
-	#region Tests - BadRequest Exceptions
+	#region Tests - BadHttpRequestException
 
-	public static IEnumerable<ITheoryDataRow> BadRequestExceptions()
-	{
-		yield return new TheoryDataRow<string>(ExceptionTypeArgument)
-			.WithTestDisplayName("Argument → 400");
-		yield return new TheoryDataRow<string>(ExceptionTypeArgumentNull)
-			.WithTestDisplayName("ArgumentNull → 400");
-		yield return new TheoryDataRow<string>(ExceptionTypeInvalidOperation)
-			.WithTestDisplayName("InvalidOperation → 400");
-	}
-
-	[Theory]
-	[MemberData(nameof(BadRequestExceptions))]
-	public async Task Request_BadRequestException_Returns400WithProblemDetails(string exceptionType)
+	[Fact]
+	public async Task Request_BadHttpRequestException_ReturnsSanitized400ProblemDetails()
 	{
 		// Arrange
 		await using TestHostContext ctx = await CreateTestHostAsync();
 
 		// Act
 		HttpResponseMessage response = await ctx.Client.GetAsync(
-			$"{ThrowEndpoint}?{ExceptionTypeParam}={exceptionType}",
+			$"{ThrowEndpoint}?{ExceptionTypeParam}={ExceptionTypeBadHttpRequest}",
 			TestContext.Current.CancellationToken);
 
 		// Assert
 		response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 		response.Content.Headers.ContentType?.MediaType.Should().Be(ContentTypeJson);
 
-		ProblemDetails? problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(
-			TestContext.Current.CancellationToken);
+		string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+		body.Should().NotContain(BadRequestMessage);
+		ProblemDetails? problem = JsonSerializer.Deserialize<ProblemDetails>(body, JsonSerializerOptions.Web);
 
 		problem.Should().NotBeNull();
 		problem!.Status.Should().Be(Status400BadRequest);
 		problem.Type.Should().Be(BadRequestType);
-	}
-
-	#endregion
-
-	#region Tests - NotFound Exceptions
-
-	public static IEnumerable<ITheoryDataRow> NotFoundExceptions()
-	{
-		yield return new TheoryDataRow<string>(ExceptionTypeKeyNotFound)
-			.WithTestDisplayName("KeyNotFound → 404");
-		yield return new TheoryDataRow<string>(ExceptionTypeFileNotFound)
-			.WithTestDisplayName("FileNotFound → 404");
-	}
-
-	[Theory]
-	[MemberData(nameof(NotFoundExceptions))]
-	public async Task Request_NotFoundException_Returns404WithProblemDetails(string exceptionType)
-	{
-		// Arrange
-		await using TestHostContext ctx = await CreateTestHostAsync();
-
-		// Act
-		HttpResponseMessage response = await ctx.Client.GetAsync(
-			$"{ThrowEndpoint}?{ExceptionTypeParam}={exceptionType}",
-			TestContext.Current.CancellationToken);
-
-		// Assert
-		response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-		response.Content.Headers.ContentType?.MediaType.Should().Be(ContentTypeJson);
-
-		ProblemDetails? problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(
-			TestContext.Current.CancellationToken);
-
-		problem.Should().NotBeNull();
-		problem!.Status.Should().Be(Status404NotFound);
-		problem.Type.Should().Be(NotFoundType);
+		problem.Detail.Should().Be(SafeBadRequestDetail);
 	}
 
 	#endregion
@@ -321,6 +261,7 @@ public sealed class GlobalExceptionHandlerMiddlewareTests
 			{
 				webBuilder
 					.UseTestServer()
+					.UseEnvironment(Environments.Production)
 					.ConfigureServices(services =>
 					{
 						services.AddFakeLogging();
@@ -355,15 +296,21 @@ public sealed class GlobalExceptionHandlerMiddlewareTests
 	private static Exception CreateException(string exceptionType) =>
 		exceptionType switch
 		{
-			ExceptionTypeValidation => new ValidationException(new ValidationResult(FieldError, [FieldName]), null, null),
-			ExceptionTypeArgument => new ArgumentException(BadRequestMessage),
-			ExceptionTypeArgumentNull => new ArgumentNullException(nameof(exceptionType), BadRequestMessage),
-			ExceptionTypeInvalidOperation => new InvalidOperationException(BadRequestMessage),
-			ExceptionTypeKeyNotFound => new KeyNotFoundException(NotFoundMessage),
-			ExceptionTypeFileNotFound => new FileNotFoundException(NotFoundMessage),
-			ExceptionTypeUnauthorized => new UnauthorizedAccessException(ForbiddenMessage),
-			ExceptionTypeTimeout => new TimeoutException(TimeoutMessage),
-			ExceptionTypeNotSupported => new NotSupportedException(InternalErrorMessage),
+			ExceptionTypeValidationMembers => new ValidationException(
+				new ValidationResult(FieldError, [FieldName, SecondFieldName, FieldName, string.Empty, "  "]),
+				null,
+				null),
+			ExceptionTypeValidationModel => new ValidationException(new ValidationResult(FieldError), null, null),
+			ExceptionTypeBadHttpRequest => new BadHttpRequestException(BadRequestMessage),
+			ExceptionTypeArgument => new ArgumentException(SensitiveInternalErrorMessage),
+			ExceptionTypeArgumentNull => new ArgumentNullException(nameof(exceptionType), SensitiveInternalErrorMessage),
+			ExceptionTypeInvalidOperation => new InvalidOperationException(SensitiveInternalErrorMessage),
+			ExceptionTypeKeyNotFound => new KeyNotFoundException(SensitiveInternalErrorMessage),
+			ExceptionTypeFileNotFound => new FileNotFoundException(SensitiveInternalErrorMessage),
+			ExceptionTypeUnauthorized => new UnauthorizedAccessException(SensitiveInternalErrorMessage),
+			ExceptionTypeTimeout => new TimeoutException(SensitiveInternalErrorMessage),
+			ExceptionTypeOperationCanceled => new OperationCanceledException(SensitiveInternalErrorMessage),
+			ExceptionTypeNotSupported => new NotSupportedException(SensitiveInternalErrorMessage),
 			_ => new InvalidOperationException($"Unknown exception type: {exceptionType}")
 		};
 

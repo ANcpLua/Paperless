@@ -35,28 +35,34 @@ public static class FakeLoggerExtensions
 		timeout ??= TimeSpan.FromSeconds(5);
 		pollInterval ??= TimeSpan.FromMilliseconds(25);
 
-		using CancellationTokenSource cts =
-			CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-		cts.CancelAfter(timeout.Value);
+		using CancellationTokenSource timeoutCts = new(timeout.Value);
+		using CancellationTokenSource linkedCts =
+			CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken);
 
 		try
 		{
-			while (!cts.Token.IsCancellationRequested)
+			while (true)
 			{
 				if (condition(source.GetSnapshot()))
 				{
 					return true;
 				}
 
-				await Task.Delay(pollInterval.Value, cts.Token).ConfigureAwait(false);
+				await Task.Delay(pollInterval.Value, linkedCts.Token).ConfigureAwait(false);
 			}
 		}
-		catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+		catch (OperationCanceledException) when (
+			timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
 		{
-			// Timeout expired, not user cancellation
+			return condition(source.GetSnapshot());
 		}
-
-		return condition(source.GetSnapshot()); // Final check
+		catch (OperationCanceledException exception) when (cancellationToken.IsCancellationRequested)
+		{
+			throw new OperationCanceledException(
+				"Waiting for a log condition was canceled.",
+				exception,
+				cancellationToken);
+		}
 	}
 
 	/// <summary>

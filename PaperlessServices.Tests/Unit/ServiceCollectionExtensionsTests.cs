@@ -20,11 +20,10 @@ public sealed class ServiceCollectionExtensionsTests
 		Dictionary<string, string?> settings = new()
 		{
 			// MinioOptions (Storage:Minio) — required for validate-on-start
-			["Storage:Minio:Endpoint"] = "minio:9000",
+			["Storage:Minio:Endpoint"] = "http://minio:9000",
 			["Storage:Minio:AccessKey"] = "minioadmin",
 			["Storage:Minio:SecretKey"] = "minioadmin",
 			["Storage:Minio:BucketName"] = "documents",
-			["Storage:Minio:UseSsl"] = "false",
 			// ElasticsearchOptions — required for validate-on-start
 			["Elasticsearch:Uri"] = "http://elasticsearch:9200",
 			["Elasticsearch:DefaultIndex"] = "documents",
@@ -113,76 +112,45 @@ public sealed class ServiceCollectionExtensionsTests
 			.Should().Be(ServiceLifetime.Singleton);
 	}
 
-	// ═══════════════════════════════════════════════════════════════
-	// AddOcrServices() — MinIO endpoint-parsing branches
-	// ═══════════════════════════════════════════════════════════════
-
-	[Fact]
-	public void AddOcrServices_WithSchemelessEndpoint_PrefixesHttp()
+	[Theory]
+	[InlineData("http://minio.local:9000")]
+	[InlineData("https://minio.local:9443")]
+	public void AddOcrServices_WithAbsoluteHttpEndpoint_BuildsClient(string endpoint)
 	{
-		// Arrange — host:port form (the common case from compose.yaml / Testcontainers)
 		ServiceCollection services = new();
 		services.AddSingleton(BuildConfiguration(new Dictionary<string, string?>
 		{
-			["Storage:Minio:Endpoint"] = "minio.local:9000"
+			["Storage:Minio:Endpoint"] = endpoint
 		}));
 		services.AddLogging();
-
 		services.AddOcrServices();
 
-		using ServiceProvider sp = services.BuildServiceProvider();
-
-		// Act — resolving the singleton runs the parsing branch
-		IMinioClient client = sp.GetRequiredService<IMinioClient>();
-
-		// Assert — client constructs without throwing; the schemeless path
-		// (`if (!endpoint.Contains("://"))` => true) is executed.
-		client.Should().NotBeNull();
+		using ServiceProvider provider = services.BuildServiceProvider();
+		provider.GetRequiredService<IMinioClient>().Should().NotBeNull();
 	}
 
-	[Fact]
-	public void AddOcrServices_WithSchemedEndpoint_UsesEndpointVerbatim()
+	[Theory]
+	[InlineData("minio.local:9000")]
+	[InlineData("ftp://minio.local:21")]
+	[InlineData("http://user:password@minio.local:9000")]
+	[InlineData("http://minio.local:9000/prefix")]
+	[InlineData("http://minio.local:9000?region=local")]
+	[InlineData("http://minio.local:9000#fragment")]
+	public void AddOcrServices_WithInvalidEndpoint_RejectsOptions(string endpoint)
 	{
-		// Arrange — full URI form. Production short-circuits the http:// prefix.
 		ServiceCollection services = new();
 		services.AddSingleton(BuildConfiguration(new Dictionary<string, string?>
 		{
-			["Storage:Minio:Endpoint"] = "http://minio.local:9000"
+			["Storage:Minio:Endpoint"] = endpoint
 		}));
 		services.AddLogging();
-
 		services.AddOcrServices();
 
-		using ServiceProvider sp = services.BuildServiceProvider();
+		using ServiceProvider provider = services.BuildServiceProvider();
+		Action resolve = () => _ = provider.GetRequiredService<IOptions<MinioOptions>>().Value;
 
-		// Act — `if (!endpoint.Contains("://"))` is false, so prefix is skipped
-		IMinioClient client = sp.GetRequiredService<IMinioClient>();
-
-		// Assert
-		client.Should().NotBeNull();
-	}
-
-	[Fact]
-	public void AddOcrServices_WithUseSslTrue_BuildsClientWithSsl()
-	{
-		// Arrange — flipping UseSsl exercises the WithSSL(true) branch
-		ServiceCollection services = new();
-		services.AddSingleton(BuildConfiguration(new Dictionary<string, string?>
-		{
-			["Storage:Minio:Endpoint"] = "minio.secure:443",
-			["Storage:Minio:UseSsl"] = "true"
-		}));
-		services.AddLogging();
-
-		services.AddOcrServices();
-
-		using ServiceProvider sp = services.BuildServiceProvider();
-
-		// Act
-		IMinioClient client = sp.GetRequiredService<IMinioClient>();
-
-		// Assert
-		client.Should().NotBeNull();
+		resolve.Should().Throw<OptionsValidationException>()
+			.WithMessage("*absolute HTTP or HTTPS origin*");
 	}
 
 	// ═══════════════════════════════════════════════════════════════

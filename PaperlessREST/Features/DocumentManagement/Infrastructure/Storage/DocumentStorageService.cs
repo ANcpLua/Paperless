@@ -3,7 +3,7 @@ namespace PaperlessREST.Features.DocumentManagement.Infrastructure.Storage;
 public interface IDocumentStorageService
 {
 	Task UploadAsync(Stream stream, string storagePath, long length, CancellationToken cancellationToken = default);
-	Task<bool> DeleteAsync(string storagePath, CancellationToken cancellationToken = default);
+	Task DeleteAsync(string storagePath, CancellationToken cancellationToken = default);
 }
 
 public sealed class DocumentStorageService(
@@ -27,23 +27,14 @@ public sealed class DocumentStorageService(
 		logger.LogInformation("Document uploaded to storage at {StoragePath}", storagePath);
 	}
 
-	public async Task<bool> DeleteAsync(string storagePath, CancellationToken cancellationToken = default)
+	public async Task DeleteAsync(string storagePath, CancellationToken cancellationToken = default)
 	{
-		try
-		{
-			await minio.RemoveObjectAsync(
-				new RemoveObjectArgs()
-					.WithBucket(_options.BucketName)
-					.WithObject(storagePath),
-				cancellationToken);
+		await minio.RemoveObjectAsync(
+			new RemoveObjectArgs()
+				.WithBucket(_options.BucketName)
+				.WithObject(storagePath),
+			cancellationToken);
 
-			logger.LogInformation("Document removed from storage at {StoragePath}", storagePath);
-			return true;
-		}
-		catch (Exception ex)
-		{
-			logger.LogError(ex, "Failed to remove document from storage at {StoragePath}", storagePath);
-			return false;
-		}
+		logger.LogInformation("Document removed from storage at {StoragePath}", storagePath);
 	}
 }

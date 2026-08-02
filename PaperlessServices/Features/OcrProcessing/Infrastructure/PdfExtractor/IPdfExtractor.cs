@@ -10,9 +10,7 @@ public interface IPdfExtractor
 	/// </summary>
 	/// <param name="pdfStream">The PDF file stream to process.</param>
 	/// <param name="cancellationToken">
-	///     Cooperative cancellation. Checked before and after the underlying OCR call
-	///     because the library does not natively accept a token; honours graceful
-	///     shutdown so the slowest worker step does not block container teardown.
+	///     Cooperative cancellation passed through to CreatePdf.NET and propagated to the caller.
 	/// </param>
 	/// <returns>Extracted text or error.</returns>
 	Task<ErrorOr<string>> ExtractTextAsync(Stream pdfStream, CancellationToken cancellationToken = default);

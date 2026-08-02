@@ -33,25 +33,25 @@ public static class ServiceCollectionExtensions
 			services
 				.AddOptionsWithValidateOnStart<MinioOptions>()
 				.BindConfiguration(MinioOptions.SectionName)
-				.ValidateDataAnnotations();
+				.ValidateDataAnnotations()
+				.Validate(
+					static options => options.Endpoint is { IsAbsoluteUri: true } endpoint &&
+					                  (endpoint.Scheme == Uri.UriSchemeHttp ||
+					                   endpoint.Scheme == Uri.UriSchemeHttps) &&
+					                  string.IsNullOrEmpty(endpoint.UserInfo) &&
+					                  endpoint.AbsolutePath == "/" &&
+					                  string.IsNullOrEmpty(endpoint.Query) &&
+					                  string.IsNullOrEmpty(endpoint.Fragment),
+					$"{MinioOptions.SectionName}:Endpoint must be an absolute HTTP or HTTPS origin");
 
 			services.AddSingleton<IMinioClient>(sp =>
 			{
 				MinioOptions options = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
 
-				// Parse endpoint to handle both "host:port" and "http://host:port" formats
-				string endpoint = options.Endpoint;
-				if (!endpoint.Contains("://"))
-				{
-					endpoint = $"http://{endpoint}";
-				}
-
-				Uri uri = new(endpoint);
-
 				return new MinioClient()
-					.WithEndpoint(uri.Host, uri.Port)
+					.WithEndpoint(options.Endpoint.Host, options.Endpoint.Port)
 					.WithCredentials(options.AccessKey, options.SecretKey)
-					.WithSSL(options.UseSsl)
+					.WithSSL(options.Endpoint.Scheme == Uri.UriSchemeHttps)
 					.Build();
 			});
 

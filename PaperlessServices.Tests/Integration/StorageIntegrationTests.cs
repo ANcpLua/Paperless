@@ -6,17 +6,17 @@ public class StorageIntegrationTests(SharedContainerFixture fixture)
 	private IStorageService Storage => fixture.Services.GetRequiredService<IStorageService>();
 
 	[Fact]
-	public async Task UploadAndDownload_RoundTripSuccess()
+	public async Task UploadAndDownload_PreservesExactPdfBytesAndStartsAtBeginning()
 	{
-		// Arrange
-		var storagePath = await fixture.UploadPdfAsync("Storage round trip test");
+		byte[] expected = await TestPdf.BytesAsync("Storage round trip test");
+		string storagePath = await fixture.UploadPdfAsync(expected);
 
-		// Act
-		await using var stream = await Storage.DownloadAsync(storagePath, TestContext.Current.CancellationToken);
+		await using Stream stream = await Storage.DownloadAsync(storagePath, TestContext.Current.CancellationToken);
+		stream.Position.Should().Be(0);
+		await using MemoryStream downloaded = new();
+		await stream.CopyToAsync(downloaded, TestContext.Current.CancellationToken);
 
-		// Assert
-		stream.Should().NotBeNull();
-		stream.Length.Should().BePositive();
+		downloaded.ToArray().Should().Equal(expected);
 	}
 
 	[Fact]

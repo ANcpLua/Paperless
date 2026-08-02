@@ -26,6 +26,23 @@ public class OcrIntegrationTests(SharedContainerFixture fixture)
 	}
 
 	[Fact]
+	public async Task BlankPdf_ReturnsEmptyDocumentError()
+	{
+		string storagePath = await fixture.UploadPdfAsync(string.Empty);
+		OcrCommand command = new(
+			Guid.CreateVersion7(),
+			"blank.pdf",
+			storagePath,
+			TimeProvider.System.GetUtcNow());
+
+		ErrorOr<OcrEvent> result =
+			await OcrProcessor.ProcessDocumentAsync(command, TestContext.Current.CancellationToken);
+
+		result.IsError.Should().BeTrue();
+		result.FirstError.Code.Should().Be("Ocr.EmptyDocument");
+	}
+
+	[Fact]
 	public async Task ProcessMultipleDocuments_Concurrently()
 	{
 		// Arrange & Act

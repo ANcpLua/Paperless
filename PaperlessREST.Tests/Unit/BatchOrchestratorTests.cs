@@ -4,9 +4,7 @@ using TimeProvider = System.TimeProvider;
 namespace PaperlessREST.Tests.Unit;
 
 /// <summary>
-///     Unit tests for BatchOrchestrator organized by interaction pattern.
-///     ProcessAsync uses MockFileSystem for full flow tests.
-///     ProcessFile uses Mock&lt;IFileSystem&gt; for direct method testing.
+///     Full-flow unit tests for BatchOrchestrator using MockFileSystem.
 /// </summary>
 public static class BatchOrchestratorTests
 {
@@ -25,10 +23,8 @@ public static class BatchOrchestratorTests
 
 	#endregion
 
-	// ═══════════════════════════════════════════════════════════════
 	// PROCESS ASYNC TESTS
 	// Full flow tests using MockFileSystem (real fake file system)
-	// ═══════════════════════════════════════════════════════════════
 
 	public sealed class ProcessAsync : IDisposable
 	{
@@ -165,6 +161,38 @@ public static class BatchOrchestratorTests
 				.Should().Contain(l =>
 					l.Level == LogLevel.Warning &&
 					l.Message.Contains("no longer exists", StringComparison.OrdinalIgnoreCase));
+		}
+
+		[Fact]
+		public async Task ArchiveMoveFails_ThrowsInfrastructureErrorAndLeavesClaimedFile()
+		{
+			// Arrange
+			CreateTestFile("report.xml");
+
+			_reportProcessor.Setup(p => p.ProcessAsync(
+					It.Is<string>(path => path.EndsWith("report.xml.processing", StringComparison.Ordinal)),
+					It.IsAny<CancellationToken>()))
+				.ReturnsAsync(new ProcessingResult(1, 0));
+
+			using var interception = _fileSystem.Intercept.Event(
+				_ => throw new UnauthorizedAccessException("Access denied"),
+				change => change.ChangeType == WatcherChangeTypes.Renamed &&
+				          change.Path.StartsWith(ArchivePath, StringComparison.Ordinal));
+			BatchOrchestrator sut = CreateSut();
+
+			// Act
+			Func<Task> act = () => sut.ProcessAsync(CreateToken());
+
+			// Assert
+			IOException exception = (await act.Should().ThrowAsync<IOException>()).Which;
+			exception.Message.Should().Contain("Infrastructure error moving file");
+			exception.InnerException.Should().BeOfType<UnauthorizedAccessException>();
+			_fileSystem.Directory.GetFiles(InputPath)
+				.Should().ContainSingle(path => path.EndsWith("report.xml.processing", StringComparison.Ordinal));
+			_logCollector.GetSnapshot()
+				.Should().Contain(log =>
+					log.Level == LogLevel.Error &&
+					log.Message.Contains("Hangfire will retry", StringComparison.OrdinalIgnoreCase));
 		}
 
 		#endregion
@@ -340,6 +368,29 @@ public static class BatchOrchestratorTests
 				.Should().Contain(l =>
 					l.Level == LogLevel.Information &&
 					l.Message.Contains("Successfully processed", StringComparison.OrdinalIgnoreCase));
+		}
+
+		[Fact]
+		public async Task OriginalFileNameContainingProcessing_PreservesEmbeddedTextWhenArchived()
+		{
+			// Arrange
+			const string OriginalFileName = "report.processing.xml";
+			CreateTestFile(OriginalFileName);
+
+			_reportProcessor.Setup(p => p.ProcessAsync(
+					It.Is<string>(path => path.EndsWith($"{OriginalFileName}.processing", StringComparison.Ordinal)),
+					It.IsAny<CancellationToken>()))
+				.ReturnsAsync(new ProcessingResult(1, 0));
+
+			BatchOrchestrator sut = CreateSut();
+
+			// Act
+			await sut.ProcessAsync(CreateToken());
+
+			// Assert
+			_fileSystem.Directory.GetFiles(ArchivePath)
+				.Should().ContainSingle(path => Path.GetFileName(path)
+					.StartsWith($"{OriginalFileName}.", StringComparison.Ordinal));
 		}
 
 		#endregion
@@ -567,327 +618,6 @@ public static class BatchOrchestratorTests
 			// Assert
 			_fileSystem.Directory.Exists(ErrorPath).Should().BeTrue();
 			_fileSystem.Directory.GetFiles(ErrorPath).Should().ContainSingle();
-		}
-
-		#endregion
-	}
-
-	// ═══════════════════════════════════════════════════════════════
-	// PROCESS FILE TESTS (requires internal access)
-	// Direct tests using strict mocks for ProcessFileAsync
-	// ═══════════════════════════════════════════════════════════════
-
-	public sealed class ProcessFile : IDisposable
-	{
-		#region Constructor
-
-		public ProcessFile()
-		{
-			_fs = _mocks.Create<IFileSystem>();
-			_processor = _mocks.Create<IReportProcessor>();
-			_logger = new FakeLogger<BatchOrchestrator>(_logCollector);
-		}
-
-		#endregion
-
-		#region IDisposable
-
-		public void Dispose()
-		{
-			TestContext.Current.SendDiagnosticMessage("Full logs:\n{0}", _logCollector.GetFullLoggerText());
-			_mocks.VerifyAll();
-			_mocks.VerifyNoOtherCalls();
-		}
-
-		#endregion
-
-		#region Tests - File Not Found
-
-		[Fact]
-		public async Task WhenSourceFileDisappears_LogsWarning()
-		{
-			// Arrange
-			SetupSuccessfulProcessing();
-			SetupFileExists(false);
-			SetupDirectoryCreate();
-			SetupPathCombine();
-			// No file move setup - file doesn't exist
-
-			BatchOrchestrator sut = CreateSut();
-
-			// Act
-			await sut.ProcessFileAsync(
-				TestFilePath,
-				TestContext.Current.CancellationToken);
-
-			// Assert
-			_logCollector.GetSnapshot()
-				.Should().Contain(l =>
-					l.Level == LogLevel.Warning &&
-					l.Message.Contains("no longer exists", StringComparison.OrdinalIgnoreCase));
-		}
-
-		#endregion
-
-		#region Constants
-
-		private const string TestFilePath = "/batch/input/report.xml.processing";
-		private const string OriginalFileName = "report.xml";
-		private const int ProcessedCount = 5;
-		private const int SkippedCount = 2;
-
-		#endregion
-
-		#region Fields
-
-		private readonly MockRepository _mocks = new(MockBehavior.Strict) { DefaultValue = DefaultValue.Empty };
-		private readonly Mock<IFileSystem> _fs;
-		private readonly Mock<IReportProcessor> _processor;
-		private readonly Mock<TimeProvider> _time = new();
-		private readonly FakeLogCollector _logCollector = new();
-		private readonly FakeLogger<BatchOrchestrator> _logger;
-
-		#endregion
-
-		#region Helper Methods
-
-		private BatchOrchestrator CreateSut()
-		{
-			_time.Setup(t => t.GetUtcNow()).Returns(TimeProvider.System.GetUtcNow());
-			return new BatchOrchestrator(
-				Options.Create(CreateOptions()),
-				_fs.Object,
-				_time.Object,
-				_processor.Object,
-				_logger);
-		}
-
-		private void SetupFileExists(bool exists = true) =>
-			_fs.Setup(f => f.File.Exists(TestFilePath)).Returns(exists);
-
-		private void SetupDirectoryCreate() =>
-			_fs.Setup(f => f.DirectoryInfo.New(It.IsAny<string>()).Create());
-
-		private void SetupPathCombine() =>
-			_fs.Setup(f => f.Path.Combine(It.IsAny<string>(), It.IsAny<string>()))
-				.Returns((string a, string b) => $"{a}/{b}");
-
-		private void SetupFileMove(string destinationDir) =>
-			_fs.Setup(f => f.File.Move(
-				TestFilePath,
-				It.Is<string>(s => s.Contains(destinationDir))));
-
-		private void SetupFileMoveThrows(string destinationDir, Exception exception) =>
-			_fs.Setup(f => f.File.Move(
-					TestFilePath,
-					It.Is<string>(s => s.Contains(destinationDir))))
-				.Throws(exception);
-
-		private void SetupSuccessfulProcessing(int processed = ProcessedCount, int skipped = SkippedCount) =>
-			_processor.Setup(p => p.ProcessAsync(TestFilePath, It.IsAny<CancellationToken>()))
-				.ReturnsAsync(new ProcessingResult(processed, skipped));
-
-		private void SetupFailedProcessing(string errorCode, string errorMessage) =>
-			_processor.Setup(p => p.ProcessAsync(TestFilePath, It.IsAny<CancellationToken>()))
-				.ReturnsAsync(Error.Validation(errorCode, errorMessage));
-
-		#endregion
-
-		#region Tests - Success Path
-
-		[Fact]
-		public async Task WhenProcessorSucceeds_ReturnsTrue()
-		{
-			// Arrange
-			SetupSuccessfulProcessing();
-			SetupFileExists();
-			SetupDirectoryCreate();
-			SetupPathCombine();
-			SetupFileMove(ArchivePath);
-
-			BatchOrchestrator sut = CreateSut();
-
-			// Act
-			bool result = await sut.ProcessFileAsync(
-				TestFilePath,
-				TestContext.Current.CancellationToken);
-
-			// Assert
-			result.Should().BeTrue();
-		}
-
-		[Fact]
-		public async Task WhenProcessorSucceeds_MovesFileToArchive()
-		{
-			// Arrange
-			SetupSuccessfulProcessing();
-			SetupFileExists();
-			SetupDirectoryCreate();
-			SetupPathCombine();
-			SetupFileMove(ArchivePath);
-
-			BatchOrchestrator sut = CreateSut();
-
-			// Act
-			await sut.ProcessFileAsync(
-				TestFilePath,
-				TestContext.Current.CancellationToken);
-
-			// Assert - Move is verified via mock verification in Dispose
-		}
-
-		[Fact]
-		public async Task WhenProcessorSucceeds_LogsSuccess()
-		{
-			// Arrange
-			SetupSuccessfulProcessing();
-			SetupFileExists();
-			SetupDirectoryCreate();
-			SetupPathCombine();
-			SetupFileMove(ArchivePath);
-
-			BatchOrchestrator sut = CreateSut();
-
-			// Act
-			await sut.ProcessFileAsync(
-				TestFilePath,
-				TestContext.Current.CancellationToken);
-
-			// Assert
-			_logCollector.GetSnapshot()
-				.Should().Contain(l =>
-					l.Level == LogLevel.Information &&
-					l.Message.Contains("Successfully processed", StringComparison.OrdinalIgnoreCase) &&
-					l.Message.Contains(OriginalFileName, StringComparison.OrdinalIgnoreCase));
-		}
-
-		#endregion
-
-		#region Tests - Failure Path
-
-		[Fact]
-		public async Task WhenProcessorFails_ReturnsFalse()
-		{
-			// Arrange
-			SetupFailedProcessing("Report.InvalidXml", "XML parsing failed");
-			SetupFileExists();
-			SetupDirectoryCreate();
-			SetupPathCombine();
-			SetupFileMove(ErrorPath);
-
-			BatchOrchestrator sut = CreateSut();
-
-			// Act
-			bool result = await sut.ProcessFileAsync(
-				TestFilePath,
-				TestContext.Current.CancellationToken);
-
-			// Assert
-			result.Should().BeFalse();
-		}
-
-		[Fact]
-		public async Task WhenProcessorFails_MovesFileToErrorDirectory()
-		{
-			// Arrange
-			SetupFailedProcessing("Report.InvalidXml", "XML parsing failed");
-			SetupFileExists();
-			SetupDirectoryCreate();
-			SetupPathCombine();
-			SetupFileMove(ErrorPath);
-
-			BatchOrchestrator sut = CreateSut();
-
-			// Act
-			await sut.ProcessFileAsync(
-				TestFilePath,
-				TestContext.Current.CancellationToken);
-
-			// Assert - Move to error path verified via mock in Dispose
-		}
-
-		[Fact]
-		public async Task WhenProcessorFails_LogsError()
-		{
-			// Arrange
-			SetupFailedProcessing("Report.InvalidXml", "XML parsing failed");
-			SetupFileExists();
-			SetupDirectoryCreate();
-			SetupPathCombine();
-			SetupFileMove(ErrorPath);
-
-			BatchOrchestrator sut = CreateSut();
-
-			// Act
-			await sut.ProcessFileAsync(
-				TestFilePath,
-				TestContext.Current.CancellationToken);
-
-			// Assert
-			_logCollector.GetSnapshot()
-				.Should().Contain(l =>
-					l.Level == LogLevel.Error &&
-					l.Message.Contains("quarantined", StringComparison.OrdinalIgnoreCase) &&
-					l.Message.Contains("Report.InvalidXml", StringComparison.OrdinalIgnoreCase));
-		}
-
-		#endregion
-
-		#region Tests - Move File Exceptions (MoveFileOrThrow branch)
-
-		[Fact]
-		public async Task WhenFileMoveThrows_ThrowsIOExceptionWithInfrastructureMessage()
-		{
-			// Arrange - Simulate file system error during move
-			SetupSuccessfulProcessing();
-			SetupFileExists();
-			SetupDirectoryCreate();
-			SetupPathCombine();
-			SetupFileMoveThrows(ArchivePath, new UnauthorizedAccessException("Access denied"));
-
-			BatchOrchestrator sut = CreateSut();
-
-			// Act
-			Func<Task> act = () => sut.ProcessFileAsync(
-				TestFilePath,
-				TestContext.Current.CancellationToken);
-
-			// Assert - MoveFileOrThrow catches and rethrows as IOException
-			IOException thrown = (await act.Should().ThrowAsync<IOException>()).Which;
-			thrown.Message.Should().Contain("Infrastructure error moving file");
-			thrown.InnerException.Should().BeOfType<UnauthorizedAccessException>();
-		}
-
-		[Fact]
-		public async Task WhenFileMoveThrows_LogsError()
-		{
-			// Arrange
-			SetupSuccessfulProcessing();
-			SetupFileExists();
-			SetupDirectoryCreate();
-			SetupPathCombine();
-			SetupFileMoveThrows(ArchivePath, new UnauthorizedAccessException("Access denied"));
-
-			BatchOrchestrator sut = CreateSut();
-
-			// Act
-			try
-			{
-				await sut.ProcessFileAsync(
-					TestFilePath,
-					TestContext.Current.CancellationToken);
-			}
-			catch (IOException)
-			{
-				// Expected - swallow for log verification
-			}
-
-			// Assert - Should log error before rethrowing
-			_logCollector.GetSnapshot()
-				.Should().Contain(l =>
-					l.Level == LogLevel.Error &&
-					l.Message.Contains("Infrastructure error", StringComparison.OrdinalIgnoreCase) &&
-					l.Message.Contains("Hangfire will retry", StringComparison.OrdinalIgnoreCase));
 		}
 
 		#endregion

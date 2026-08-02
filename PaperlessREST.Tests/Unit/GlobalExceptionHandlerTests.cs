@@ -10,18 +10,11 @@ namespace PaperlessREST.Tests.Unit;
 public sealed class GlobalExceptionHandlerTests : IDisposable
 {
 	private const int Status400BadRequest = StatusCodes.Status400BadRequest;
-	private const int Status403Forbidden = StatusCodes.Status403Forbidden;
-	private const int Status404NotFound = StatusCodes.Status404NotFound;
 	private const int Status499ClientClosedRequest = HttpStatusCodes.ClientClosedRequest;
 	private const int Status500InternalServerError = StatusCodes.Status500InternalServerError;
-	private const int Status504GatewayTimeout = StatusCodes.Status504GatewayTimeout;
 
 	private const string CodeValidationError = "validation_error";
 	private const string CodeBadRequest = "bad_request";
-	private const string CodeForbidden = "forbidden";
-	private const string CodeNotFound = "not_found";
-	private const string CodeCancelled = "cancelled";
-	private const string CodeTimeout = "timeout";
 	private const string CodeInternalError = "internal_error";
 
 	private const string TestMessage = "test";
@@ -32,9 +25,8 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	private const string FieldName = "Field";
 	private const string FieldError = "Error";
 	private const string EmailFieldName = "Email";
+	private const string NameFieldName = "Name";
 	private const string EmailRequiredError = "Required";
-	private const string DocNotFoundMessage = "Doc not found";
-	private const string NotFoundMessage = "Not found";
 	private const string BadRequestMessage = "bad request";
 	private const string TestActivityName = "Test";
 	private readonly FakeLogCollector _logCollector = new();
@@ -71,34 +63,6 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		info.Code.Should().Be(CodeValidationError);
 	}
 
-	[Theory]
-	[MemberData(nameof(BadRequestExceptions))]
-	public void FromException_BadRequestExceptions_Returns400(Type exceptionType)
-	{
-		// Arrange
-		var exception = (Exception)Activator.CreateInstance(exceptionType, TestMessage)!;
-
-		// Act
-		var info = ExceptionInfo.FromException(exception);
-
-		// Assert
-		info.StatusCode.Should().Be(Status400BadRequest);
-		info.Level.Should().Be(LogLevel.Warning);
-		info.Code.Should().Be(CodeBadRequest);
-	}
-
-	public static IEnumerable<ITheoryDataRow> BadRequestExceptions()
-	{
-		yield return new TheoryDataRow<Type>(typeof(ArgumentException))
-			.WithTestDisplayName("ArgumentException → 400");
-		yield return new TheoryDataRow<Type>(typeof(ArgumentNullException))
-			.WithTestDisplayName("ArgumentNullException → 400");
-		yield return new TheoryDataRow<Type>(typeof(InvalidOperationException))
-			.WithTestDisplayName("InvalidOperationException → 400");
-		yield return new TheoryDataRow<Type>(typeof(JsonException))
-			.WithTestDisplayName("JsonException → 400");
-	}
-
 	[Fact]
 	public void FromException_BadHttpRequestException_Returns400()
 	{
@@ -110,98 +74,16 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 
 		// Assert
 		info.StatusCode.Should().Be(Status400BadRequest);
+		info.Level.Should().Be(LogLevel.Warning);
 		info.Code.Should().Be(CodeBadRequest);
 	}
 
-	[Fact]
-	public void FromException_UnauthorizedAccessException_Returns403()
-	{
-		// Arrange
-		UnauthorizedAccessException exception = new();
-
-		// Act
-		var info = ExceptionInfo.FromException(exception);
-
-		// Assert
-		info.StatusCode.Should().Be(Status403Forbidden);
-		info.Level.Should().Be(LogLevel.Warning);
-		info.Code.Should().Be(CodeForbidden);
-	}
-
 	[Theory]
-	[MemberData(nameof(NotFoundExceptions))]
-	public void FromException_NotFoundExceptions_Returns404(Type exceptionType)
+	[MemberData(nameof(UnownedExceptions))]
+	public void FromException_UnownedException_ReturnsSanitized500(Type exceptionType)
 	{
 		// Arrange
-		var exception = (Exception)Activator.CreateInstance(exceptionType, NotFoundMessage)!;
-
-		// Act
-		var info = ExceptionInfo.FromException(exception);
-
-		// Assert
-		info.StatusCode.Should().Be(Status404NotFound);
-		info.Level.Should().Be(LogLevel.Information);
-		info.Code.Should().Be(CodeNotFound);
-	}
-
-	public static IEnumerable<ITheoryDataRow> NotFoundExceptions()
-	{
-		yield return new TheoryDataRow<Type>(typeof(KeyNotFoundException))
-			.WithTestDisplayName("KeyNotFoundException → 404");
-		yield return new TheoryDataRow<Type>(typeof(FileNotFoundException))
-			.WithTestDisplayName("FileNotFoundException → 404");
-	}
-
-	[Fact]
-	public void FromException_OperationCanceledException_Returns499()
-	{
-		// Arrange
-		OperationCanceledException exception = new();
-
-		// Act
-		var info = ExceptionInfo.FromException(exception);
-
-		// Assert
-		info.StatusCode.Should().Be(Status499ClientClosedRequest);
-		info.Level.Should().Be(LogLevel.Debug);
-		info.Code.Should().Be(CodeCancelled);
-	}
-
-	[Fact]
-	public void FromException_TaskCanceledException_Returns499()
-	{
-		// Arrange - TaskCanceledException derives from OperationCanceledException
-		TaskCanceledException exception = new();
-
-		// Act
-		var info = ExceptionInfo.FromException(exception);
-
-		// Assert
-		info.StatusCode.Should().Be(Status499ClientClosedRequest);
-		info.Level.Should().Be(LogLevel.Debug);
-		info.Code.Should().Be(CodeCancelled);
-	}
-
-	[Fact]
-	public void FromException_TimeoutException_Returns504()
-	{
-		// Arrange
-		TimeoutException exception = new();
-
-		// Act
-		var info = ExceptionInfo.FromException(exception);
-
-		// Assert
-		info.StatusCode.Should().Be(Status504GatewayTimeout);
-		info.Level.Should().Be(LogLevel.Error);
-		info.Code.Should().Be(CodeTimeout);
-	}
-
-	[Fact]
-	public void FromException_UnknownException_Returns500()
-	{
-		// Arrange
-		NotSupportedException exception = new();
+		var exception = (Exception)Activator.CreateInstance(exceptionType, TestMessage)!;
 
 		// Act
 		var info = ExceptionInfo.FromException(exception);
@@ -210,6 +92,23 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		info.StatusCode.Should().Be(Status500InternalServerError);
 		info.Level.Should().Be(LogLevel.Error);
 		info.Code.Should().Be(CodeInternalError);
+	}
+
+	public static IEnumerable<ITheoryDataRow> UnownedExceptions()
+	{
+		yield return new TheoryDataRow<Type>(typeof(ArgumentException));
+		yield return new TheoryDataRow<Type>(typeof(ArgumentNullException));
+		yield return new TheoryDataRow<Type>(typeof(InvalidOperationException));
+		yield return new TheoryDataRow<Type>(typeof(JsonException));
+		yield return new TheoryDataRow<Type>(typeof(UnauthorizedAccessException));
+		yield return new TheoryDataRow<Type>(typeof(KeyNotFoundException))
+			.WithTestDisplayName("KeyNotFoundException → 500");
+		yield return new TheoryDataRow<Type>(typeof(FileNotFoundException))
+			.WithTestDisplayName("FileNotFoundException → 500");
+		yield return new TheoryDataRow<Type>(typeof(OperationCanceledException));
+		yield return new TheoryDataRow<Type>(typeof(TaskCanceledException));
+		yield return new TheoryDataRow<Type>(typeof(TimeoutException));
+		yield return new TheoryDataRow<Type>(typeof(NotSupportedException));
 	}
 
 	[Fact]
@@ -233,11 +132,12 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	}
 
 	[Fact]
-	public async Task TryHandleAsync_OperationCanceledWithoutCancellationRequested_CallsProblemDetails()
+	public async Task TryHandleAsync_OperationCanceledWithoutCancellationRequested_Returns500ProblemDetails()
 	{
 		// Arrange
 		var httpContext = CreateHttpContext();
-		SetupProblemDetailsService();
+		ProblemDetailsContext? captured = null;
+		SetupProblemDetailsServiceWithCapture(ctx => captured = ctx);
 		var sut = CreateSut();
 
 		// Act
@@ -246,14 +146,17 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 
 		// Assert
 		result.Should().BeTrue();
-		_problemDetailsService.Verify(p => p.TryWriteAsync(It.IsAny<ProblemDetailsContext>()), Times.Once);
+		httpContext.Response.StatusCode.Should().Be(Status500InternalServerError);
+		captured!.ProblemDetails.Status.Should().Be(Status500InternalServerError);
+		captured.ProblemDetails.Type.Should().Be($"urn:paperless:error:{CodeInternalError}");
+		captured.ProblemDetails.Detail.Should().BeNull();
 	}
 
 	[Fact]
-	public async Task TryHandleAsync_ValidationException_CreatesHttpValidationProblemDetails()
+	public async Task TryHandleAsync_ValidationExceptionWithoutMemberNames_UsesModelLevelErrorKey()
 	{
 		// Arrange
-		ValidationException exception = new(new ValidationResult(EmailRequiredError, [EmailFieldName]), null, null);
+		ValidationException exception = new(new ValidationResult(EmailRequiredError), null, null);
 		var httpContext = CreateHttpContext();
 
 		ProblemDetailsContext? captured = null;
@@ -268,8 +171,38 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		captured!.ProblemDetails.Should().BeOfType<HttpValidationProblemDetails>();
 
 		var validation = (HttpValidationProblemDetails)captured.ProblemDetails;
-		validation.Errors.Should().ContainKey(EmailFieldName).WhoseValue.Should().ContainSingle();
-		validation.Type.Should().Contain(CodeValidationError);
+		validation.Errors.Should().ContainSingle()
+			.Which.Should().BeEquivalentTo(new KeyValuePair<string, string[]>(string.Empty, [EmailRequiredError]));
+		validation.Status.Should().Be(Status400BadRequest);
+		validation.Type.Should().Be($"urn:paperless:error:{CodeValidationError}");
+	}
+
+	[Fact]
+	public async Task TryHandleAsync_ValidationExceptionWithMembers_AddsMessageToEachDistinctNonblankMember()
+	{
+		// Arrange
+		ValidationException exception = new(
+			new ValidationResult(
+				EmailRequiredError,
+				[EmailFieldName, NameFieldName, EmailFieldName, string.Empty, "  "]),
+			null,
+			null);
+		var httpContext = CreateHttpContext();
+
+		ProblemDetailsContext? captured = null;
+		SetupProblemDetailsServiceWithCapture(ctx => captured = ctx);
+		var sut = CreateSut();
+
+		// Act
+		await sut.TryHandleAsync(httpContext, exception, TestContext.Current.CancellationToken);
+
+		// Assert
+		var validation = captured!.ProblemDetails.Should().BeOfType<HttpValidationProblemDetails>().Subject;
+		validation.Errors.Should().BeEquivalentTo(new Dictionary<string, string[]>
+		{
+			[EmailFieldName] = [EmailRequiredError],
+			[NameFieldName] = [EmailRequiredError]
+		});
 	}
 
 	[Fact]
@@ -277,18 +210,23 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 	{
 		// Arrange
 		var httpContext = CreateHttpContext();
+		InvalidOperationException exception = new(TestMessage);
 		ProblemDetailsContext? captured = null;
 		SetupProblemDetailsServiceWithCapture(ctx => captured = ctx);
 		var sut = CreateSut();
 
 		// Act
-		await sut.TryHandleAsync(httpContext, new KeyNotFoundException(NotFoundMessage),
+		await sut.TryHandleAsync(httpContext, exception,
 			TestContext.Current.CancellationToken);
 
 		// Assert
 		captured.Should().NotBeNull();
 		captured!.ProblemDetails.Should().NotBeOfType<HttpValidationProblemDetails>();
-		captured.ProblemDetails.Status.Should().Be(Status404NotFound);
+		captured.ProblemDetails.Status.Should().Be(Status500InternalServerError);
+		captured.ProblemDetails.Type.Should().Be($"urn:paperless:error:{CodeInternalError}");
+		captured.ProblemDetails.Detail.Should().BeNull();
+		captured.HttpContext.Should().BeSameAs(httpContext);
+		captured.Exception.Should().BeSameAs(exception);
 	}
 
 	[Fact]
@@ -300,14 +238,14 @@ public sealed class GlobalExceptionHandlerTests : IDisposable
 		var sut = CreateSut();
 
 		// Act
-		await sut.TryHandleAsync(httpContext, new KeyNotFoundException(DocNotFoundMessage),
+		await sut.TryHandleAsync(httpContext, new KeyNotFoundException(TestMessage),
 			TestContext.Current.CancellationToken);
 
 		// Assert
 		_logCollector.GetSnapshot()
 			.Should().Contain(log =>
-				log.Level == LogLevel.Information &&
-				log.Message.Contains(CodeNotFound, StringComparison.Ordinal));
+				log.Level == LogLevel.Error &&
+				log.Message.Contains(CodeInternalError, StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -392,7 +330,6 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	private const string InnerExceptionMessage = "Inner";
 	private const string OriginalDetailMessage = "Original";
 	private const string DetailedDevError = "Detailed dev error";
-	private const string DocumentNotFoundMessage = "Document not found";
 	private const string TestEndpointName = "TestEndpoint";
 	private const string RoutePatternDocumentsId = "/api/documents/{id}";
 
@@ -552,19 +489,19 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	}
 
 	[Fact]
-	public void Enrich_InProduction_Non500_ShowsExceptionMessage()
+	public void Enrich_InProduction_Non500_PreservesSafeDetail()
 	{
 		// Arrange
 		_hostEnvironment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
-		ProblemDetails pd = new() { Status = Status404 };
-		KeyNotFoundException exception = new(DocumentNotFoundMessage);
+		ProblemDetails pd = new() { Status = Status400, Detail = OriginalDetailMessage };
+		BadHttpRequestException exception = new(DetailedDevError);
 		(var sut, var context) = CreateSutAndContext(pd, exception);
 
 		// Act
 		InvokeEnrich(sut, context);
 
 		// Assert
-		context.ProblemDetails.Detail.Should().Be(DocumentNotFoundMessage);
+		context.ProblemDetails.Detail.Should().Be(OriginalDetailMessage);
 	}
 
 	[Fact]
@@ -583,10 +520,10 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	}
 
 	[Fact]
-	public void Enrich_HttpValidationProblemDetails_EmptyErrors_FallsToExceptionMessage()
+	public void Enrich_HttpValidationProblemDetails_EmptyErrors_DoesNotExposeExceptionMessage()
 	{
-		// Arrange - Covers Errors.Count is 0 branch
-		HttpValidationProblemDetails validationPd = new(); // Empty errors
+		// Arrange
+		HttpValidationProblemDetails validationPd = new() { Detail = OriginalDetailMessage };
 		InvalidOperationException exception = new(DetailedDevError);
 		(var sut, var context) = CreateSutAndContext(
 			validationPd, exception);
@@ -594,8 +531,8 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		// Act
 		InvokeEnrich(sut, context);
 
-		// Assert - Falls through to exception message branch
-		context.ProblemDetails.Detail.Should().Be(DetailedDevError);
+		// Assert
+		context.ProblemDetails.Detail.Should().Be(OriginalDetailMessage);
 	}
 
 	[Fact]
@@ -676,10 +613,10 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 	}
 
 	[Fact]
-	public void Enrich_NullProblemDetailsStatus_WithException_ShowsExceptionMessage()
+	public void Enrich_NullProblemDetailsStatus_WithException_DoesNotExposeExceptionMessage()
 	{
-		// Arrange - ProblemDetails with null status (edge case)
-		ProblemDetails pd = new() { Status = null };
+		// Arrange
+		ProblemDetails pd = new() { Status = null, Detail = OriginalDetailMessage };
 		InvalidOperationException exception = new(DetailedDevError);
 		(var sut, var context) = CreateSutAndContext(
 			pd, exception);
@@ -688,7 +625,7 @@ public sealed class ProblemDetailsEnricherTests : IDisposable
 		InvokeEnrich(sut, context);
 
 		// Assert
-		context.ProblemDetails.Detail.Should().Be(DetailedDevError);
+		context.ProblemDetails.Detail.Should().Be(OriginalDetailMessage);
 	}
 
 	[Fact]

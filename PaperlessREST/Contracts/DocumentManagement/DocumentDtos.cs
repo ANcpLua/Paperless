@@ -29,22 +29,6 @@ public sealed record PaginationQuery
 }
 
 /// <summary>
-///     Query parameters for document search.
-/// </summary>
-[ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]
-public sealed record SearchQuery
-{
-	[StringLength(SearchConstraints.QueryMaxLength, MinimumLength = SearchConstraints.QueryMinLength,
-		ErrorMessage = "Search query must be between 1 and 100 characters")]
-	[Description("Search text to find in documents")]
-	public required string Query { get; init; }
-
-	[Range(1, SearchConstraints.MaxResultLimit, ErrorMessage = "Limit must be between 1 and 100")]
-	[Description("Maximum number of results to return")]
-	public int Limit { get; init; } = SearchConstraints.DefaultResultLimit;
-}
-
-/// <summary>
 ///     Represents document metadata returned by the API.
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Pure transport DTO - compiler-generated record members only")]

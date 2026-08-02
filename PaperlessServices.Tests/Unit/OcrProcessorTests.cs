@@ -129,9 +129,10 @@ public sealed class OcrProcessorTests : IDisposable
 	{
 		// Arrange
 		OcrCommand command = CreateCommand();
+		MemoryStream pdfStream = CreateValidPdfStream();
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
-			.ReturnsAsync(CreateValidPdfStream());
+			.ReturnsAsync(pdfStream);
 		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(ExtractedOcrText);
 		_searchIndex.Setup(i => i.IndexDocumentAsync(
@@ -149,6 +150,7 @@ public sealed class OcrProcessorTests : IDisposable
 		result.Value.JobId.Should().Be(s_testJobId);
 		result.Value.Status.Should().Be("Completed");
 		result.Value.Text.Should().Be(ExtractedOcrText);
+		pdfStream.CanRead.Should().BeFalse("OcrProcessor owns the downloaded stream");
 	}
 
 	// ═══════════════════════════════════════════════════════════════
@@ -270,6 +272,35 @@ public sealed class OcrProcessorTests : IDisposable
 		_pdfExtractor.Verify(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Never);
 	}
 
+	[Fact]
+	public async Task ProcessDocumentAsync_CallerCancelsDownload_PropagatesExactCancellationAndStopsProcessing()
+	{
+		OcrCommand command = CreateCommand();
+		using CancellationTokenSource cancellation = new();
+		await cancellation.CancelAsync();
+		OperationCanceledException expected = new(cancellation.Token);
+		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, cancellation.Token))
+			.ThrowsAsync(expected);
+
+		Func<Task> act = () => CreateSut().ProcessDocumentAsync(command, cancellation.Token);
+
+		OperationCanceledException thrown =
+			(await act.Should().ThrowExactlyAsync<OperationCanceledException>()).Which;
+		thrown.Should().BeSameAs(expected);
+		thrown.CancellationToken.Should().Be(cancellation.Token);
+		_pdfExtractor.Verify(
+			p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()),
+			Times.Never);
+		_searchIndex.Verify(
+			s => s.IndexDocumentAsync(
+				It.IsAny<Guid>(),
+				It.IsAny<string>(),
+				It.IsAny<string>(),
+				It.IsAny<DateTimeOffset?>(),
+				It.IsAny<CancellationToken>()),
+			Times.Never);
+	}
+
 	// ═══════════════════════════════════════════════════════════════
 	// TESTS: ProcessDocumentAsync - OCR Failure
 	// ═══════════════════════════════════════════════════════════════
@@ -279,9 +310,10 @@ public sealed class OcrProcessorTests : IDisposable
 	{
 		// Arrange
 		OcrCommand command = CreateCommand();
+		MemoryStream pdfStream = CreateValidPdfStream();
 
 		_storage.Setup(s => s.DownloadAsync(ValidStoragePath, It.IsAny<CancellationToken>()))
-			.ReturnsAsync(CreateValidPdfStream());
+			.ReturnsAsync(pdfStream);
 		_pdfExtractor.Setup(p => p.ExtractTextAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(Error.Failure("Ocr.Failed", "OCR extraction failed"));
 
@@ -294,6 +326,7 @@ public sealed class OcrProcessorTests : IDisposable
 		// Assert
 		result.IsError.Should().BeTrue();
 		result.FirstError.Code.Should().Be("Ocr.Failed");
+		pdfStream.CanRead.Should().BeFalse("OcrProcessor owns the downloaded stream on failure");
 	}
 
 	[Fact]
