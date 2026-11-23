@@ -9,7 +9,7 @@ public static class TestContainers
 {
 	private const string DefaultPostgresImage = "postgres:17-alpine";
 	private const string DefaultRabbitmqImage = "rabbitmq:4.3.0-management";
-	private const string DefaultMinioImage = "minio/minio:RELEASE.2025-09-07T16-13-09Z";
+	private const string DefaultMinioImage = "pgsty/minio:RELEASE.2026-08-04T00-00-00Z";
 
 	private const string DefaultElasticsearchImage =
 		"docker.elastic.co/elasticsearch/elasticsearch:9.1.3";
