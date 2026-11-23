@@ -35,7 +35,7 @@
     <TestablyAbstractionsTestingVersion>6.3.0</TestablyAbstractionsTestingVersion>
 
     <!-- Testcontainers (shared major version for the suite) -->
-    <TestcontainersVersion>4.11.0</TestcontainersVersion>
+    <TestcontainersVersion>4.15.0</TestcontainersVersion>
 
     <!-- Domain libraries -->
     <CreatePdfNETVersion>3.0.5</CreatePdfNETVersion>
